@@ -34,10 +34,12 @@ c
       real z1,z2,z3,an3pts,argume
       real xu,yu,zu,xv,yv,zv,dx,dy,pi,comp
       parameter (pi = 3.141592654)
-      xu=x2-x1                                                            ! Voici les composantes du vecteur u.
+      xu=x2-x1                                                            
+c Voici les composantes du vecteur u.
       yu=y2-y1
       zu=z2-z1
-      xv=x3-x2                                                            ! Voici les composantes du vecteur v.
+      xv=x3-x2   
+c Voici les composantes du vecteur v.
       yv=y3-y2
       zv=z3-z2
       if ((xv.eq.0.).and.(yv.eq.0.).and.(zv.eq.0.)) then
@@ -51,7 +53,7 @@ c
          stop
       endif
       argume=(xu*xv+yu*yv+zu*zv)/(sqrt(xu**2.+yu**2.+zu**2.)*
-     a        sqrt(xv**2.+yv**2.+zv**2.))
+     +sqrt(xv**2.+yv**2.+zv**2.))
       if (argume.ge.1.) then
          an3pts=0.
       elseif (argume.le.-1.) then

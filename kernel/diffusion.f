@@ -55,7 +55,8 @@ c  497(3), 2501-2516.
 c---------------------------------------- 
       if ((tranaa.le.1.).and.(tranaa.gt.0.)) then
          fonc_ae=fonc_a(rang)                                             ! value of the aerosol phase function
-         prob_a=(1.-exp(log(tranaa)*exp(-1.*altit/haer)*un/haer))*        ! Functions are normalized in the main code. See their division by 4pi
+c Functions are normalized in the main code. See their division by 4pi
+         prob_a=(1.-exp(log(tranaa)*exp(-1.*altit/haer)*un/haer))*
      +   secdif*fonc_ae
       else
          prob_a=0.

@@ -28,10 +28,11 @@ c    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 c
 c    Contact: martin.aube@cegepsherbrooke.qc.ca
 c
-c
-      subroutine anglesolide(omega,r1x,r1y,r1z,                           ! Debut de la routine sterad.
+c Debut de la routine sterad.
+      subroutine anglesolide(omega,r1x,r1y,r1z,
      +             r2x,r2y,r2z,r3x,r3y,r3z,r4x,r4y,r4z)
-      real*8 r1x,r1y,                                                     ! Variables utilisees pour le calcul d'omega.
+c Variables utilisees pour le calcul d'omega.
+      real*8 r1x,r1y,
      +   r1z,r2x,r2y,r2z,r3x,r3y,r3z,r4x,r4y,r4z,r1,r2,r3,r4,tet12,
      +   tet23,tet13,tet34,tet24,a,b,c,s,a123,a234,arg
        real omega
@@ -89,7 +90,8 @@ c
      +   dtan((s-c)/2.)).lt.0.) then 
          a123=0.
       else
-      a123=4.*datan(dsqrt(dtan(s/2.)*dtan((s-a)/2.)*dtan((s-b)/2.)*       ! Calcul de l'aire du triangle spherique borne par les vecteurs 1,2 et 3.
+c Calcul de l'aire du triangle spherique borne par les vecteurs 1,2 et 3.
+      a123=4.*datan(dsqrt(dtan(s/2.)*dtan((s-a)/2.)*dtan((s-b)/2.)*
      +   dtan((s-c)/2.)))      
       endif
 c         alp=2.*atan(sqrt(sin(s-b)*sin(s-c)/(sin(s)*sin(s-a))))          ! Autre methode pour calculer l'angle solide non utilisee.     
@@ -107,7 +109,8 @@ c         a123=alp+bet+gam-pi                                             ! Autr
      +   dtan((s-c)/2.)).lt.0.) then 
          a234=0.
       else
-       a234=4.*datan(dsqrt(dtan(s/2.)*dtan((s-a)/2.)*dtan((s-b)/2.)*      ! Calcul de l'aire du triangle spherique borne par les vecteurs 2,3 et 4.
+c Calcul de l'aire du triangle spherique borne par les vecteurs 2,3 et 4.
+       a234=4.*datan(dsqrt(dtan(s/2.)*dtan((s-a)/2.)*dtan((s-b)/2.)* 
      +   dtan((s-c)/2.)))  
      
       endif
