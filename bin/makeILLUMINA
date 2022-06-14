@@ -27,8 +27,8 @@ fi
 firstLine=`head -1 illum/__init__.py`
 version=${firstLine:15:-1}
 
-f2py3 -c illum/compute/*.f95 -m compute
-mv compute.*.so illum/
+f2py3 -c illum/*.f95 -m compute
+mv compute.*.so illum/compute/
 
 F77="gfortran"
 folder=`pwd`

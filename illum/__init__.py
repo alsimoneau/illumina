@@ -1,4 +1,4 @@
-__version__ = "2.2.0.20220613.19441862"
+__version__ = "2.2.0.20220614.01281228"
 
 try:
     from . import MultiScaleData, pytools
@@ -15,6 +15,6 @@ except ModuleNotFoundError:
     pass
 
 try:
-    from . import compute
+    from .compute import compute
 except ModuleNotFoundError:
     print("Couldn't import Fortran functions")

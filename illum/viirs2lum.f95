@@ -23,7 +23,7 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
   integer, intent(in) :: zones(N,N)
   real,    intent(in) :: angles(nangles)
   real,    intent(in) :: wav(nwav)
-  logical, intent(in) :: bands(nwav,nbands)
+  logical, intent(in) :: bands(nbands,nwav)
   real,    intent(in) :: sens(nwav)
   real,    intent(in) :: lops(nlops,nangles)
   real,    intent(in) :: spcts(nspcts,nwav)
@@ -36,17 +36,19 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
 
   ! Internal variables
   integer :: i,j,z,a,b,wl,s
-  real    :: norm
-  real    :: lamps(nzones,nsources,nangles,nwav)
-  real    :: mids(nangles + 1)
-  real    :: sinx(nangles)
-  real    :: Gdown(nzones,nsources,nwav), Gup(nzones,nsources,nwav)
-  real    :: integral(nzones)
-  real    :: phie(N,N)
-  real    :: ratio(nbands,nzones,nsources)
+  real :: norm
+  real :: lamps(nzones,nsources,nangles,nwav)
+  real :: mids(nangles + 1)
+  real :: sinx(nangles)
+  real :: Gdown(nzones,nsources,nwav), Gup(nzones,nsources,nwav)
+  real :: integral(nzones)
+  real :: phie(N,N)
+  real :: ratio(nbands,nzones,nsources)
 
   ! Defining usefull values
   real, parameter :: PI=4.D0*DATAN(1.D0)
+
+  print *,1
 
   mids = 0
   do a = 2, nangles
@@ -56,16 +58,20 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
     sinx(a) = 2 * PI * (COS(mids(a+1)) - COS(mids(a)))
   end do
 
+  print *,2
+
   ! Building lamp inventory
   do i = 1, nlamps
     do a = 1, nangles
       do wl = 1, nwav
-        j = sources(ivtr(i,4))
-        lamps(ivtr(i,1),j,a,wl) = lamps(ivtr(i,1),j,a,wl) &
-          + ivtr(i,2) * spcts(ivtr(i,3),wl) * lops(ivtr(i,4),a)
+        j = sources(INT(ivtr(i,4)))
+        lamps(INT(ivtr(i,1)),j,a,wl) = lamps(INT(ivtr(i,1)),j,a,wl) &
+          + ivtr(i,2) * spcts(INT(ivtr(i,3)),wl) * lops(INT(ivtr(i,4)),a)
       end do
     end do
   end do
+
+  print *,3
 
   ! Ensuring normalization
   do z = 1, nzones
@@ -77,7 +83,6 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
         end do
       end do
       norm = norm * ( wav(2) - wav(1) )
-      print *, "Zone norm:", norm
       do a = 1, nangles
         do wl = 1, nwav
           lamps(z,s,a,wl) = lamps(z,s,a,wl) / norm
@@ -85,6 +90,8 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
       end do
     end do
   end do
+
+  print *,4
 
   ! Inversion
   ! phie = DNB * S / int( R ( rho/pi Gdown + Gup ) ) dlambda
@@ -109,6 +116,8 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
     end do
   end do
 
+  print *,5
+
   do z = 1, nzones
     do s = 1, nsources
       do wl = 1, nwav
@@ -117,6 +126,8 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
       end do
     end do
   end do
+
+  print *,6
 
   do i = 1, N
     do j = 1, N
@@ -134,10 +145,12 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
     end do
   end do
 
+  print *,7
+
   do b = 1, nbands
     norm = 0
     do wl = 1, nwav
-      if ( bands(wl,b) ) then
+      if ( bands(b,wl) ) then
         do z = 1, nzones
           do s = 1, nsources
             do a = 1, nangles
@@ -154,6 +167,8 @@ subroutine viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
       end do
     end do
   end do
+
+  print *,8
 
   do i = 1, N
     do j = 1, N

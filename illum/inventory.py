@@ -6,6 +6,7 @@
 #
 # December 2021
 
+import illum.compute
 import illum.pytools as pt
 import numpy as np
 from illum import MultiScaleData as MSD
@@ -138,7 +139,7 @@ def from_zones(
     with open(dir_name + "lamps.lst", "w") as zfile:
         zfile.write("\n".join(sources) + "\n")
 
-    print("Making zone properties files.")
+    print("Making zone property files.")
 
     circles = MSD.from_domain("domain.ini")  # Same geolocalisation
     zonfile = np.loadtxt(
@@ -178,42 +179,42 @@ def from_zones(
             np.arange(1, len(zonfile) + 1)[:, None, None] == circles[i]
         )
 
-    a = np.deg2rad(angles)
-    mids = np.concatenate([[a[0]], np.mean([a[1:], a[:-1]], 0), [a[-1]]])
-    sinx = 2 * np.pi * (np.cos(mids[:-1]) - np.cos(mids[1:]))
+    spct_keys = list(spct.keys())
+    lop_keys = list(lop.keys())
 
-    # Pixel size in m^2
-    S = np.array([viirs_dat.pixel_size(i) ** 2 for i in range(len(viirs_dat))])
-
-    # Calculate zones lamps
-    zones = pt.make_zones(angles, lop, wav, spct, zonData, sources)
-
-    # phie = DNB * S / int( R ( rho/pi Gdown + Gup ) ) dlambda
-    Gdown = np.tensordot(
-        zones[:, :, angles > 90], sinx[angles > 90], axes=([2], [0])
+    zones_inventory = np.array(
+        [
+            [i, lamp[0], spct_keys.index(lamp[1]), lop_keys.index(lamp[2])]
+            for i, zon in enumerate(zonData)
+            for lamp in zon
+        ]
     )
-    Gup = (
-        np.tensordot(
-            zones[:, :, angles < 70], sinx[angles < 70], axes=([2], [0])
-        )
-        / sinx[angles < 70].sum()
-    )
-    integral = np.sum(viirs * (Gdown * refl / np.pi + Gup), (1, 2)) * (
-        wav[1] - wav[0]
-    )
+    zones_inventory[:, [0, 2, 3]] += 1  # Fortran indexing
 
-    phie = [
-        pt.safe_divide(
-            viirs_dat[i] * S[i],
-            np.sum(zon_mask[i] * integral[:, None, None], 0),
-        )
-        for i in range(len(S))
+    spcts = np.array(list(spct.values()))
+    lops = np.array(list(lop.values()))
+    sources_idx = [
+        list(sources).index(k) if k in sources else -1 for k in lop_keys
     ]
+    sources_idx = np.array(sources_idx) + 1
 
-    ratio = [
-        np.tensordot(zones[..., ind], sinx, axes=([2], [0])).mean(-1)
-        for ind in bool_array
-    ]
+    for i in range(len(circles)):
+        lumlp = illum.compute.viirs2lum(
+            nzones=len(zonData),
+            nsources=len(sources),
+            viirs=viirs_dat[i],
+            zones=circles[i],
+            angles=angles,
+            wav=wav,
+            bands=bool_array,
+            sens=viirs,
+            lops=lops,
+            spcts=spcts,
+            sources=sources_idx,
+            ivtr=zones_inventory,
+            pixsize=circles.pixel_size(i),
+            reflect=refl,
+        )
 
     for n in range(n_bins):
         r = [
