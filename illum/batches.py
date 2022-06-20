@@ -39,7 +39,7 @@ def MSDOpen(filename, cached={}):
     return ds
 
 
-@click.command()
+@click.command(name="batches")
 @click.argument("input_path", type=click.Path(exists=True), default=".")
 @click.argument("batch_name", required=False)
 @click.option(
@@ -68,7 +68,7 @@ def CLI_batches(input_path, compact, batch_size, batch_name=None):
     batches(input_path, compact, batch_size, batch_name)
 
 
-def batches(input_path=".", compact=True, batch_size=300, batch_name=None):
+def batches(input_path=".", compact=False, batch_size=300, batch_name=None):
     os.chdir(input_path)
 
     with open("inputs_params.in") as f:
