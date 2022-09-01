@@ -68,17 +68,17 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
    END DO
 
    ! Ensuring normalization
-   DO s = 1, nsources
-      DO z = 1, nzones
+   DO z = 1, nzones
+      DO s = 1, nsources
          norm = 0
-         DO wl = 1, nwav
-            DO a = 1, nangles
+         DO a = 1, nangles
+            DO wl = 1, nwav
                norm = norm + lamps(z, s, a, wl) * sinx(a)
             END DO
          END DO
          norm = norm * (wav(2) - wav(1))
-         DO wl = 1, nwav
-            DO a = 1, nangles
+         DO a = 1, nangles
+            DO wl = 1, nwav
                lamps(z, s, a, wl) = lamps(z, s, a, wl) / norm
             END DO
          END DO
