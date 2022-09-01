@@ -48,8 +48,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
    ! Defining usefull values
    REAL, PARAMETER :: PI = 4.D0 * DATAN(1.D0)
 
-   PRINT *, 1
-
    mids = 0
    DO a = 2, nangles
       mids(a) = (angles(a - 1) + angles(a)) / 2
@@ -57,8 +55,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
    DO a = 1, nangles
       sinx(a) = 2 * PI * (COS(mids(a + 1)) - COS(mids(a)))
    END DO
-
-   PRINT *, 2
 
    ! Building lamp inventory
    DO wl = 1, nwav
@@ -70,8 +66,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
          END DO
       END DO
    END DO
-
-   PRINT *, 3
 
    ! Ensuring normalization
    DO s = 1, nsources
@@ -90,8 +84,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
          END DO
       END DO
    END DO
-
-   PRINT *, 4
 
    ! Inversion
    ! phie = DNB * S / int( R ( rho/pi Gdown + Gup ) ) dlambda
@@ -116,8 +108,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
       END DO
    END DO
 
-   PRINT *, 5
-
    DO wl = 1, nwav
       DO s = 1, nsources
          DO z = 1, nzones
@@ -126,8 +116,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
          END DO
       END DO
    END DO
-
-   PRINT *, 6
 
    DO j = 1, N
       DO i = 1, N
@@ -147,8 +135,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
          END DO
       END DO
    END DO
-
-   PRINT *, 7
 
    DO b = 1, nbands
       norm = 0
@@ -170,8 +156,6 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
          END DO
       END DO
    END DO
-
-   PRINT *, 8
 
    DO j = 1, N
       DO i = 1, N

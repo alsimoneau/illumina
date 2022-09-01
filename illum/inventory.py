@@ -198,8 +198,8 @@ def from_zones(
     ]
     sources_idx = np.array(sources_idx) + 1
 
-    for i in range(len(circles)):
-        lumlp = illum.compute.viirs2lum(
+    lumlps = [
+        illum.compute.viirs2lum(
             nzones=len(zonData),
             nsources=len(sources),
             viirs=viirs_dat[i],
@@ -215,14 +215,12 @@ def from_zones(
             pixsize=circles.pixel_size(i),
             reflect=refl,
         )
+        for i in range(len(circles))
+    ]
 
-    for n in range(n_bins):
-        r = [
-            np.sum(zon_mask[layer][:, None] * ratio[n][:, :, None, None], 0)
-            for layer in range(len(phie))
-        ]
-        for i, s in enumerate(sources):
+    for n, wl in enumerate(x):
+        for s, source in enumerate(sources):
             new = MSD.from_domain("domain.ini")
-            for layer in range(len(new)):
-                new[layer] = phie[layer] * r[layer][i]
-            new.save(dir_name + "%s_%g_lumlp_%s" % (out_name, x[n], s))
+            for layer in range(len(circles)):
+                new[layer] = lumlps[layer][n, s]
+            new.save(dir_name + "%s_%g_lumlp_%s" % (out_name, wl, source))
