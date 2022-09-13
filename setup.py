@@ -29,6 +29,7 @@ setup(
         "h5py",
         "matplotlib",
         "numpy",
+        "opencv-python",
         "osmnx",
         "pandas",
         "pillow",
