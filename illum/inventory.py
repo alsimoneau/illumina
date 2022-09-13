@@ -6,9 +6,10 @@
 #
 # December 2021
 
+import numpy as np
+
 import illum.compute
 import illum.pytools as pt
-import numpy as np
 from illum import MultiScaleData as MSD
 
 
@@ -51,9 +52,10 @@ def from_lamps(
 
     for n in range(n_bins):
         for s in sources:
+            profile = lop[s].vertical_profile()
             np.savetxt(
                 dir_name + "fctem_wl_%g_lamp_%s.dat" % (x[n], s),
-                np.concatenate([lop[s], angles]).reshape((2, -1)).T,
+                np.concatenate([profile, angles]).reshape((2, -1)).T,
             )
 
     with open(dir_name + "lamps.lst", "w") as zfile:
@@ -87,7 +89,10 @@ def from_lamps(
                 for s in local_sources:
                     mask = photometry[:, 1][ind] == s
                     fctem = np.array(
-                        [spct[type] for type in photometry[:, 0][ind][mask]]
+                        [
+                            spct[type].data
+                            for type in photometry[:, 0][ind][mask]
+                        ]
                     )
                     fctem = np.sum(fctem * lumens[mask, None], 0)
 
@@ -131,9 +136,10 @@ def from_zones(
 
     for n in range(n_bins):
         for s in sources:
+            profile = lop[s].vertical_profile()
             np.savetxt(
                 dir_name + "fctem_wl_%g_lamp_%s.dat" % (x[n], s),
-                np.concatenate([lop[s], angles]).reshape((2, -1)).T,
+                np.concatenate([profile, angles]).reshape((2, -1)).T,
             )
 
     with open(dir_name + "lamps.lst", "w") as zfile:
@@ -208,8 +214,8 @@ def from_zones(
             wav=wav,
             bands=bool_array,
             sens=viirs,
-            lops=lops,
-            spcts=spcts,
+            lops=np.array([lops[k].vertical_profile() for k in lop_keys]),
+            spcts=np.array([spcts[k].data for k in spct_keys]),
             sources=sources_idx,
             ivtr=zones_inventory,
             pixsize=circles.pixel_size(i),

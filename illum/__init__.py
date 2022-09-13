@@ -1,18 +1,20 @@
-__version__ = "2.2.2.20220901.17545245"
+__version__ = "2.2.3.20220913.19334953"
 
-try:
-    from . import MultiScaleData, pytools
-    from .alternate import alternate
-    from .batches import batches
-    from .convert import convert
-    from .domain import domain
-    from .extract import extract
-    from .failed import failed
-    from .init import init
-    from .inputs import inputs
-    from .warp import warp
-except ModuleNotFoundError:
-    pass
+from . import (
+    AngularPowerDistribution,
+    MultiScaleData,
+    SpectralPowerDistribution,
+    pytools,
+)
+from .alternate import alternate
+from .batches import batches
+from .convert import convert
+from .domain import domain
+from .extract import extract
+from .failed import failed
+from .init import init
+from .inputs import inputs
+from .warp import warp
 
 try:
     from .compute import compute
