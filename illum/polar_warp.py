@@ -45,13 +45,17 @@ def blur_polar(image, outshape, center, rmax, log=True):
     return avg_image.astype(image.dtype)
 
 
-if __name__ == "__main__":
+def plot_test(image=None, center=None, rmax=None, res=100):
     import matplotlib.pyplot as plt
 
-    image = np.random.random(100, 100)
-    R, T = 1000, 1000
-    rmax = min(image.shape[0], image.shape[1]) / 2
-    center = (image.shape[0] - 1) / 2, (image.shape[1] - 1) / 2
+    if image is None:
+        image = np.random.random((1000, 1000))
+    if center is None:
+        center = (image.shape[0] - 1) / 2, (image.shape[1] - 1) / 2
+    if rmax is None:
+        rmax = min(image.shape[0], image.shape[1]) / 2
+
+    R = T = res
 
     image_cv = warp_polar(image, (T, R), center, rmax)
     inage_cv_inv = warp_polar(
@@ -66,13 +70,25 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(2, 3)
     axes[0, 0].set_title("Original")
     axes[0, 0].imshow(image)
+    axes[0, 0].plot(*center[::-1], "Pk")
+    axes[0, 0].plot(*center[::-1], "+w")
     axes[0, 1].set_title("Polar")
     axes[0, 1].imshow(image_cv)
     axes[0, 2].set_title("Inverse")
     axes[0, 2].imshow(inage_cv_inv)
+    axes[0, 2].plot(*center[::-1], "Pk")
+    axes[0, 2].plot(*center[::-1], "+w")
     axes[1, 0].set_title("Blurred")
     axes[1, 0].imshow(image_blurred)
+    axes[1, 0].plot(*center[::-1], "Pk")
+    axes[1, 0].plot(*center[::-1], "+w")
     axes[1, 1].set_title("Polar")
     axes[1, 1].imshow(image_warped)
     axes[1, 2].set_title("Inverse")
     axes[1, 2].imshow(image_warped_inv)
+    axes[1, 2].plot(*center[::-1], "Pk")
+    axes[1, 2].plot(*center[::-1], "+w")
+
+
+if __name__ == "__main__":
+    plot_test()
