@@ -18,6 +18,37 @@ def warp_polar(image, outshape, center, rmax, *, log=True, inverse=False):
     )
 
 
+def map_coordinates(
+    inshape, outshape, /, *, center=None, rmax=None, log=True, inverse=False
+):
+    center, rmax = polar_defaults(inshape, center, rmax)
+
+    if inverse:
+        y = np.arange(outshape[0])[:, None] - center[0]
+        x = np.arange(outshape[1]) - center[1]
+
+        theta = np.arctan2(y, x) % (2 * np.pi) * inshape[0] / (2 * np.pi)
+        r = np.sqrt(x * x + y * y)
+        if log:
+            r = np.log(r + 1) * inshape[1] / np.log(rmax - 1)
+        else:
+            r = r * inshape[1] / rmax
+
+        return np.array([theta, r])
+
+    else:
+        theta = np.linspace(0, 2 * np.pi, outshape[0], endpoint=False)[:, None]
+        if log:
+            r = np.geomspace(1, rmax, outshape[1], endpoint=False) - 1
+        else:
+            r = np.linspace(0, rmax, outshape[1], endpoint=False)
+
+        y = -r * np.sin(theta) + center[0]
+        x = r * np.cos(theta) + center[1]
+
+        return np.array([y, x])
+
+
 def blur_polar(image, outshape, center, rmax, log=True):
     indices = 1 + np.arange(np.product(outshape)).reshape(outshape)
     warped_idx = warp_polar(
@@ -42,32 +73,29 @@ def blur_polar(image, outshape, center, rmax, log=True):
     return avg_image.astype(image.dtype)
 
 
-def polar_warp(image, /, outshape, *, center=None, rmax=None):
-    shape2d = np.array(image.shape[:2])
+def polar_defaults(shape, center=None, rmax=None):
+    shape2d = np.array(shape[:2])
     if center is None:
         center = (shape2d - 1) / 2
     if rmax is None:
         rmax = np.sqrt(
             np.sum((np.max((center, shape2d - 1 - center), axis=0) + 0.5) ** 2)
         )
-
-    blurred = blur_polar(image, outshape, center, rmax)
-    return warp_polar(blurred, outshape, center, rmax)
+    return np.array(center), rmax
 
 
-def polar_unwarp(image, /, outshape, *, center=None, rmax=None):
-    shape2d = np.array(outshape)
-    if center is None:
-        center = (shape2d - 1) / 2
-    if rmax is None:
-        rmax = np.sqrt(
-            np.sum((np.max((center, shape2d - 1 - center), axis=0) + 0.5) ** 2)
-        )
-
-    return warp_polar(image, outshape, center, rmax, inverse=True)
+def polar_warp(image, /, shape, *, center=None, rmax=None, log=True):
+    center, rmax = polar_defaults(image.shape, center, rmax)
+    blurred = blur_polar(image, shape, center, rmax, log=log)
+    return warp_polar(blurred, shape, center, rmax, log=log)
 
 
-def plot_test(image=None, center=None, rmax=None, res=100):
+def polar_unwarp(image, /, shape, *, center=None, rmax=None, log=True):
+    center, rmax = polar_defaults(shape, center, rmax)
+    return warp_polar(image, shape, center, rmax, log=log, inverse=True)
+
+
+def plot_test(image=None, center=None, rmax=None, res=100, log=True):
     import matplotlib.pyplot as plt
 
     if image is None:
@@ -79,14 +107,14 @@ def plot_test(image=None, center=None, rmax=None, res=100):
 
     R = T = res
 
-    image_cv = warp_polar(image, (T, R), center, rmax)
+    image_cv = warp_polar(image, (T, R), center, rmax, log=log)
     inage_cv_inv = warp_polar(
-        image_cv, image.shape[:2], center, rmax, inverse=True
+        image_cv, image.shape[:2], center, rmax, log=log, inverse=True
     )
-    image_blurred = blur_polar(image, (T, R), center, rmax)
-    image_warped = warp_polar(image_blurred, (T, R), center, rmax)
+    image_blurred = blur_polar(image, (T, R), center, rmax, log=log)
+    image_warped = warp_polar(image_blurred, (T, R), center, rmax, log=log)
     image_warped_inv = warp_polar(
-        image_warped, image.shape[:2], center, rmax, inverse=True
+        image_warped, image.shape[:2], center, rmax, log=log, inverse=True
     )
 
     fig, axes = plt.subplots(2, 3)
