@@ -19,7 +19,7 @@ def warp_polar(image, outshape, center, rmax, *, log=True, inverse=False):
 
 
 def blur_polar(image, outshape, center, rmax, log=True):
-    indices = np.arange(np.product(outshape)).reshape(outshape)
+    indices = 1 + np.arange(np.product(outshape)).reshape(outshape)
     warped_idx = warp_polar(
         indices, image.shape[:2], center, rmax, log=log, inverse=True
     )
@@ -28,7 +28,7 @@ def blur_polar(image, outshape, center, rmax, log=True):
         avg_image = np.stack(
             [
                 illum.compute.average_index(
-                    np.product(outshape), warped_idx.T, image[:, :, idx].T
+                    np.product(outshape) + 1, warped_idx.T, image[:, :, idx].T
                 ).T
                 for idx in np.ndindex(image.shape[2:])
             ],
@@ -36,10 +36,35 @@ def blur_polar(image, outshape, center, rmax, log=True):
         ).reshape(image.shape)
     else:
         avg_image = illum.compute.average_index(
-            np.product(outshape), warped_idx.T, image.T
+            np.product(outshape) + 1, warped_idx.T, image.T
         ).T
 
     return avg_image.astype(image.dtype)
+
+
+def polar_warp(image, /, outshape, *, center=None, rmax=None):
+    shape2d = np.array(image.shape[:2])
+    if center is None:
+        center = (shape2d - 1) / 2
+    if rmax is None:
+        rmax = np.sqrt(
+            np.sum((np.max((center, shape2d - 1 - center), axis=0) + 0.5) ** 2)
+        )
+
+    blurred = blur_polar(image, outshape, center, rmax)
+    return warp_polar(blurred, outshape, center, rmax)
+
+
+def polar_unwarp(image, /, outshape, *, center=None, rmax=None):
+    shape2d = np.array(outshape)
+    if center is None:
+        center = (shape2d - 1) / 2
+    if rmax is None:
+        rmax = np.sqrt(
+            np.sum((np.max((center, shape2d - 1 - center), axis=0) + 0.5) ** 2)
+        )
+
+    return warp_polar(image, outshape, center, rmax, inverse=True)
 
 
 def plot_test(image=None, center=None, rmax=None, res=100):

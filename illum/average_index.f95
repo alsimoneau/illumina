@@ -24,6 +24,7 @@ SUBROUTINE average_index(nx, ny, index_max, indices, arr, average)
   END DO
 
   acc = MERGE(0._8, acc / N, N == 0)
+  acc(0) = 0
 
   DO j = 1, ny
     DO i = 1, nx
