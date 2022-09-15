@@ -5,12 +5,13 @@ import shutil
 from glob import glob
 
 import click
+import numpy as np
+import yaml
+
 import illum.AngularPowerDistribution as APD
 import illum.MultiScaleData as MSD
 import illum.pytools as pt
 import illum.SpectralPowerDistribution as SPD
-import numpy as np
-import yaml
 from illum.inventory import from_lamps, from_zones
 
 

@@ -134,7 +134,7 @@ class MultiScaleData:
             R = float(radii) / self.pixel_size(i)
             Y, X = _np.ogrid[:ny, :nx]
             d2 = (X - X0) ** 2 + (Y - Y0) ** 2
-            self[i][d2 <= R ** 2] = value
+            self[i][d2 <= R**2] = value
 
     def set_overlap(self, value=0):
         nb_core = self._attrs["nb_core"]
@@ -308,12 +308,12 @@ def scatter(ds, fmt=".", n_layer=None, area=False, **options):
 
         psize = ds.pixel_size(i) / 1000.0
         if area:
-            layer /= psize ** 2
+            layer /= psize**2
 
         N = n // 2 - buff
         x = _np.arange(-N, N + 1) * psize
         xx, yy = _np.meshgrid(x, x)
-        r = _np.sqrt(xx ** 2 + yy ** 2)
+        r = _np.sqrt(xx**2 + yy**2)
 
         L = layer[buff : n - buff, buff : n - buff]
 

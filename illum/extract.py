@@ -16,6 +16,7 @@ from glob import glob
 
 import click
 import numpy as np
+
 from illum import MultiScaleData as MSD
 from illum.pytools import load_bin
 

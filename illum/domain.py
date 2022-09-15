@@ -107,7 +107,7 @@ def domain():
     domain["extents"] = list()
 
     for i in range(domain["nb_layers"]):
-        psize = domain["scale_min"] * scale ** i
+        psize = domain["scale_min"] * scale**i
         buff = min(255 - R, domain["buffer"] * 1e3 // psize)
 
         print("Layer", i)

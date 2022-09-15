@@ -7,8 +7,9 @@ from subprocess import call
 import click
 import numpy as np
 import yaml
-from illum import MultiScaleData as MSD
 from PIL import Image
+
+from illum import MultiScaleData as MSD
 
 
 def OpenTIFF(path):

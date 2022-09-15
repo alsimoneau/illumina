@@ -4,11 +4,12 @@ import os
 import sys
 from collections import OrderedDict
 
-import illum
 import numpy as np
 import yaml
-from illum.pytools import LOP_norm
 from scipy import interpolate
+
+import illum
+from illum.pytools import LOP_norm
 
 
 def OPAC(wavelengths):

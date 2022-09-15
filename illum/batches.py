@@ -15,12 +15,13 @@ from glob import glob
 from itertools import product
 
 import click
-import illum
 import numpy as np
 import yaml
+from progressbar import progressbar
+
+import illum
 from illum import MultiScaleData as MSD
 from illum.pytools import save_bin
-from progressbar import progressbar
 
 progress = partial(progressbar, redirect_stdout=True)
 
