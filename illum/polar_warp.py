@@ -20,27 +20,22 @@ def warp_polar(image, R, T, center, rmax, *, log=True, inverse=False):
 
 
 def blur_polar(image, R, T, center, rmax, log=True):
-    indices = np.arange(1, 1 + R * T).reshape((R, T))
-    warped_idx = (
-        warp_cv(indices, *image.shape[:2], center, rmax, log=log, inverse=True)
-        + 1
+    indices = np.arange(R * T).reshape((R, T))
+    warped_idx = warp_cv(
+        indices, *image.shape[:2], center, rmax, log=log, inverse=True
     )
 
     data = image.astype("float64")
     if image.ndim > 2:
         avg_image = np.stack(
             [
-                compute.average_index(
-                    R * T + 1, warped_idx.T, data[:, :, idx].T
-                )
+                compute.average_index(R * T, warped_idx.T, data[:, :, idx].T)
                 for idx in np.ndindex(image.shape[2:])
             ],
             axis=-1,
         ).reshape(image.shape)
     else:
-        avg_image = illum.compute.average_index(
-            R * T + 1, warped_idx.T, data.T
-        )
+        avg_image = illum.compute.average_index(R * T, warped_idx.T, data.T)
 
     return avg_image.astype(image.dtype)
 

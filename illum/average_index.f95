@@ -1,36 +1,29 @@
-SUBROUTINE average_index(nx, ny, index_max, indices, data, average)
+SUBROUTINE average_index(nx, ny, index_max, indices, arr, average)
 
   IMPLICIT NONE
 
   INTEGER, INTENT(IN) :: nx, ny, index_max
-  INTEGER(KIND=4), INTENT(IN) :: indices(nx, ny)
-  REAL(KIND=8), INTENT(IN) :: data(nx, ny)
-  REAL(KIND=8), INTENT(OUT) :: average(nx, ny)
+  INTEGER(4), INTENT(IN) :: indices(nx, ny)
+  REAL(8), INTENT(IN) :: arr(nx, ny)
+  REAL(8), INTENT(OUT) :: average(nx, ny)
 
-  INTEGER :: i, j, z
-  INTEGER :: N(index_max)
-  REAL :: acc(index_max)
+  INTEGER :: i, j
+  INTEGER :: N(0:index_max)
+  REAL(8) :: acc(0:index_max)
 
-  DO i = 1, index_max
-    acc(i) = 0
-    N(i) = 0
-  END DO
+  acc = 0
+  N = 0
 
   DO j = 1, ny
     DO i = 1, nx
-      z = indices(i, j)
-      N(z) = N(z) + 1
-      acc(z) = acc(z) + data(i, j)
+      ASSOCIATE (z => indices(i, j))
+        N(z) = N(z) + 1
+        acc(z) = acc(z) + arr(i, j)
+      END ASSOCIATE
     END DO
   END DO
 
-  DO i = 1, index_max
-    IF (N(i) .EQ. 0) THEN
-      acc(i) = 0
-    ELSE
-      acc(i) = acc(i) / N(i)
-    END IF
-  END DO
+  acc = MERGE(0._8, acc / N, N == 0)
 
   DO j = 1, ny
     DO i = 1, nx
