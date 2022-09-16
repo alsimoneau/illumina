@@ -7,6 +7,7 @@ import illum.compute
 
 
 def warp_polar(image, outshape, center, rmax, *, log=True, inverse=False):
+    rmax = correct_rmax(rmax, image.shape if inverse else outshape)
     return cv2.warpPolar(
         src=image,
         dsize=outshape[::-1],  # rho, phi or x y
@@ -21,9 +22,10 @@ def warp_polar(image, outshape, center, rmax, *, log=True, inverse=False):
 def map_coordinates(
     inshape, outshape, /, *, center=None, rmax=None, log=True, inverse=False
 ):
-    center, rmax = polar_defaults(inshape, center, rmax)
-
     if inverse:
+        center, rmax = polar_defaults(outshape, center, rmax)
+        rmax = correct_rmax(rmax, inshape)
+
         y = np.arange(outshape[0])[:, None] - center[0]
         x = np.arange(outshape[1]) - center[1]
 
@@ -37,6 +39,9 @@ def map_coordinates(
         return np.array([theta, r])
 
     else:
+        center, rmax = polar_defaults(inshape, center, rmax)
+        rmax = correct_rmax(rmax, outshape)
+
         theta = np.linspace(0, 2 * np.pi, outshape[0], endpoint=False)[:, None]
         if log:
             r = np.geomspace(1, rmax, outshape[1], endpoint=False) - 1
@@ -81,7 +86,12 @@ def polar_defaults(shape, center=None, rmax=None):
         rmax = np.sqrt(
             np.sum((np.max((center, shape2d - 1 - center), axis=0) + 0.5) ** 2)
         )
+
     return np.array(center), rmax
+
+
+def correct_rmax(rmax, shape):
+    return np.power(rmax + 1, shape[1] / (shape[1] - 0.5))
 
 
 def polar_warp(image, /, shape, *, center=None, rmax=None, log=True):
@@ -100,19 +110,15 @@ def plot_test(image=None, center=None, rmax=None, res=100, log=True):
 
     if image is None:
         image = np.random.random((1000, 1000))
-    if center is None:
-        center = (image.shape[0] - 1) / 2, (image.shape[1] - 1) / 2
-    if rmax is None:
-        rmax = min(image.shape[0], image.shape[1]) / 2
+    center, rmax = polar_defaults(image.shape, center, rmax)
+    shape = (res, res)
 
-    R = T = res
-
-    image_cv = warp_polar(image, (T, R), center, rmax, log=log)
+    image_cv = warp_polar(image, shape, center, rmax, log=log)
     inage_cv_inv = warp_polar(
         image_cv, image.shape[:2], center, rmax, log=log, inverse=True
     )
-    image_blurred = blur_polar(image, (T, R), center, rmax, log=log)
-    image_warped = warp_polar(image_blurred, (T, R), center, rmax, log=log)
+    image_blurred = blur_polar(image, shape, center, rmax, log=log)
+    image_warped = warp_polar(image_blurred, shape, center, rmax, log=log)
     image_warped_inv = warp_polar(
         image_warped, image.shape[:2], center, rmax, log=log, inverse=True
     )

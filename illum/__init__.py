@@ -1,4 +1,4 @@
-__version__ = "2.2.4.20220915.20033780"
+__version__ = "2.2.4.20220916.13575544"
 
 from . import (
     AngularPowerDistribution,
@@ -14,7 +14,7 @@ from .extract import extract
 from .failed import failed
 from .init import init
 from .inputs import inputs
-from .polar_warp import polar_unwarp, polar_warp
+from .polar_warp import map_coordinates, polar_unwarp, polar_warp
 from .warp import warp
 
 try:
