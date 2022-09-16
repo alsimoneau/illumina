@@ -9,8 +9,8 @@
 import numpy as np
 
 import illum.compute
-import illum.pytools as pt
-from illum import MultiScaleData as MSD
+import illum.MultiScaleData as MSD
+import illum.utils as pt
 
 
 def from_lamps(

@@ -36,6 +36,7 @@ setup(
         "progressbar2",
         "pyproj",
         "pyyaml",
+        "rasterio",
         "scipy",
         "xmltodict",
     ],

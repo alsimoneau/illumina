@@ -55,7 +55,6 @@ def illum():
 functions = (
     (".alternate", "CLI_alternate"),
     (".batches", "CLI_batches"),
-    (".convert", "CLI_convert"),
     (".domain", "CLI_domain"),
     (".failed", "CLI_failed"),
     (".extract", "CLI_extract"),

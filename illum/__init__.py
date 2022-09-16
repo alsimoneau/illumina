@@ -1,14 +1,8 @@
-__version__ = "2.2.4.20220916.13575544"
+__version__ = "2.2.4.20220916.15114772"
 
-from . import (
-    AngularPowerDistribution,
-    MultiScaleData,
-    SpectralPowerDistribution,
-    pytools,
-)
+from . import AngularPowerDistribution, SpectralPowerDistribution
 from .alternate import alternate
 from .batches import batches
-from .convert import convert
 from .domain import domain
 from .extract import extract
 from .failed import failed
@@ -21,3 +15,20 @@ try:
     from .compute import compute
 except ModuleNotFoundError:
     print("Couldn't import Fortran functions")
+
+import os as _os
+
+try:
+    path = _os.path.dirname(
+        [
+            path
+            for path in _os.environ["PATH"].split(":")
+            if path.endswith("illumina/bin")
+        ][0]
+    )
+except IndexError:
+    raise ValueError(
+        "The 'illumina/bin' folder is not in the PATH environment variable."
+    )
+
+del _os

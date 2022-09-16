@@ -18,7 +18,7 @@ import click
 import numpy as np
 
 from illum import MultiScaleData as MSD
-from illum.pytools import load_bin
+from illum.utils import load_bin
 
 
 def MSDOpen(filename, cached={}):

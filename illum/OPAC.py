@@ -9,7 +9,7 @@ import yaml
 from scipy import interpolate
 
 import illum
-from illum.pytools import LOP_norm
+from illum.utils import LOP_norm
 
 
 def OPAC(wavelengths):

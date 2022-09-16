@@ -19,8 +19,8 @@ from scipy.interpolate import griddata
 import illum
 import illum.AngularPowerDistribution as APD
 import illum.MultiScaleData as MSD
-import illum.pytools as pt
 import illum.SpectralPowerDistribution as SPD
+import illum.utils as pt
 from illum.inventory import from_lamps, from_zones
 from illum.OPAC import OPAC
 
