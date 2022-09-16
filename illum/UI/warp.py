@@ -4,7 +4,6 @@ import os
 from glob import glob
 from subprocess import call
 
-import click
 import numpy as np
 import yaml
 from PIL import Image
@@ -163,27 +162,6 @@ def convert_correction_data(srcfiles):
             'UNIT["Degree",0.017453292519943295]'
             "]"
         )
-
-
-@click.command(name="warp")
-@click.argument("output_name", required=False)
-@click.argument("infiles", required=False, nargs=-1)
-def CLI_warp(output_name=None, infiles=[]):
-    """Warps the satellite imagery.
-
-    Warps the satellite imagery based on the domain defined in
-    'domain.ini'.
-
-    \b
-    Requires the folowing data:
-        Unzipped SRTM data in a folder named 'SRTM'.
-        If used, VIIRS data in a volder named 'VIIRS-DNB'.
-        If VIIRS data is used, the 'hydropolys.zip' file.
-
-    Can also be used on specific files, in wich case an output name and a list
-    of files to process must be given (the use of bash wildcards is encouraged)
-    """
-    warp(output_name, infiles)
 
 
 def warp(output_name=None, infiles=[]):

@@ -14,7 +14,6 @@ from copy import deepcopy as copy
 from functools import partial
 from glob import glob
 
-import click
 import numpy as np
 
 from illum import MultiScaleData as MSD
@@ -39,46 +38,6 @@ def add_arrays(a, b):
     c = a.copy()
     c[: len(b)] += b
     return c
-
-
-@click.command(name="extract")
-@click.argument("exec_dir", default=".", type=click.Path(exists=True))
-@click.option(
-    "-c",
-    "--contrib",
-    is_flag=True,
-    help="If present, extract contribution maps.",
-)
-@click.option(
-    "-p",
-    "--params",
-    multiple=True,
-    nargs=2,
-    help="Parameter name,value pair to extract."
-    " Can be provided more than once.",
-)
-@click.option(
-    "-f",
-    "--full",
-    is_flag=True,
-    help="If present, will extract all available outputs.",
-)
-@click.option(
-    "-x",
-    "--profile",
-    is_flag=True,
-    help="If present, extract profile along line of sight.",
-)
-def CLI_extract(exec_dir, contrib, params, full, profile):
-    """Extract Illumina outputs.
-
-    Will walk the EXEC_DIR to locate and extract illumina outputs.
-    May fail if some execution failed, so one should validate the completude
-    of the runs with 'illum failed' before using this.
-
-    If not given, EXEC_DIR will default to the current directory.
-    """
-    extract(exec_dir, contrib, params, full, profile)
 
 
 def extract(exec_dir, contrib=False, params=(), full=False, profile=False):

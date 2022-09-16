@@ -4,7 +4,6 @@ import os
 import shutil
 from glob import glob
 
-import click
 import numpy as np
 import yaml
 
@@ -13,29 +12,6 @@ import illum.MultiScaleData as MSD
 import illum.SpectralPowerDistribution as SPD
 import illum.utils as pt
 from illum.inventory import from_lamps, from_zones
-
-
-@click.command(name="alternate")
-@click.argument("name")
-@click.option(
-    "-z",
-    "--zones",
-    type=click.Path(exists=True),
-    help="New zones inventory filename.",
-)
-@click.option(
-    "-l",
-    "--lights",
-    type=click.Path(exists=True),
-    help="New discrete lights inventory filename.",
-)
-def CLI_alternate(name, zones, lights):
-    """Generates an alternate scenario at constant lumen.
-
-    This scenatio will be based on the content of the `Inputs` folder and
-    will be placed in a folder named `Inputs_NAME`.
-    """
-    alternate(name, zones, lights)
 
 
 def alternate(name, zones, lights):

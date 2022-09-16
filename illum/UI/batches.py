@@ -14,14 +14,13 @@ from functools import partial
 from glob import glob
 from itertools import product
 
-import click
 import numpy as np
 import yaml
 from progressbar import progressbar
 
 import illum
-from illum import MultiScaleData as MSD
-from illum.pytools import save_bin
+import illum.MultiScaleData as MSD
+from illum.utils import save_bin
 
 progress = partial(progressbar, redirect_stdout=True)
 
@@ -38,35 +37,6 @@ def MSDOpen(filename, cached={}):
     ds = MSD.Open(filename)
     cached[filename] = ds
     return ds
-
-
-@click.command(name="batches")
-@click.argument("input_path", type=click.Path(exists=True), default=".")
-@click.argument("batch_name", required=False)
-@click.option(
-    "-c",
-    "--compact",
-    is_flag=True,
-    help="If given, will chain similar executions. Reduces the overall number "
-    "of runs at the cost of longuer individual executions.",
-)
-@click.option(
-    "-N",
-    "--batch_size",
-    type=int,
-    default=300,
-    show_default=True,
-    help="Number of runs per produced batch file.",
-)
-def CLI_batches(input_path, compact, batch_size, batch_name=None):
-    """Makes the execution batches.
-
-    INPUT_PATH is the path to the folder containing the inputs.
-
-    BATCH_NAME is an optional name for the produced batch files.
-    It overwrites the one defined in 'inputs_params.in' is given.
-    """
-    batches(input_path, compact, batch_size, batch_name)
 
 
 def batches(input_path=".", compact=False, batch_size=300, batch_name=None):

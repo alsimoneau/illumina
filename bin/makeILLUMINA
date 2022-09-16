@@ -27,7 +27,7 @@ fi
 firstLine=`head -1 illum/__init__.py`
 version=${firstLine:15:-1}
 
-f2py3 -c -DF2PY_REPORT_ON_ARRAY_COPY=1 illum/*.f95 -m compute
+f2py3 -c -DF2PY_REPORT_ON_ARRAY_COPY=1 illum/compute/*.f95 -m compute
 mkdir -p illum/compute
 mv compute.*.so illum/compute/
 

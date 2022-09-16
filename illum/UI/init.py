@@ -4,15 +4,7 @@ import os
 import shutil
 from glob import glob
 
-import click
-
 import illum
-
-
-@click.command(name="init")
-def CLI_init():
-    """Initialize an execution folder."""
-    init()
 
 
 def init():

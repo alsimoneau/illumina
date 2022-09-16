@@ -4,25 +4,11 @@ import fnmatch
 import os
 from glob import glob
 
-import click
-
 
 def recursive_glob(rootdir=".", pattern="*"):
     for root, dirnames, filenames in os.walk(rootdir):
         for filename in fnmatch.filter(filenames, pattern):
             yield os.path.join(root, filename)
-
-
-@click.command(name="failed")
-@click.option(
-    "-e",
-    "--executable",
-    is_flag=True,
-    help="If given, returns the executable code to rerun failed executions.",
-)
-def CLI_failed(executable):
-    "Find failed ILLUMINA executions."
-    failed(executable)
 
 
 def failed(executable=False):

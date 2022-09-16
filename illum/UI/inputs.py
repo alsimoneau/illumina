@@ -11,7 +11,6 @@ import os
 import shutil
 from glob import glob
 
-import click
 import numpy as np
 import yaml
 from scipy.interpolate import griddata
@@ -25,14 +24,7 @@ from illum.inventory import from_lamps, from_zones
 from illum.OPAC import OPAC
 
 
-@click.command(name="inputs")
-def CLI_inputs():
-    """Prepares the executions inputs."""
-    inputs()
-
-
 def inputs():
-
     print("Preparing the inputs for the experiment.")
 
     dir_name = "Inputs/"
