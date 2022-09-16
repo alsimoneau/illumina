@@ -1,4 +1,4 @@
-__version__ = "2.2.4.20220916.15114772"
+__version__ = "2.2.4.20220916.15251599"
 
 from . import AngularPowerDistribution, SpectralPowerDistribution
 from .alternate import alternate
