@@ -55,25 +55,16 @@ def map_coordinates(
 
 
 def blur_polar(image, outshape, center, rmax, log=True):
-    indices = 1 + np.arange(np.product(outshape)).reshape(outshape)
+    indices = 1 + np.arange(np.prod(outshape)).reshape(outshape)
     warped_idx = warp_polar(
         indices, image.shape[:2], center, rmax, log=log, inverse=True
     )
 
-    if image.ndim > 2:
-        avg_image = np.stack(
-            [
-                illum.compute.average_index(
-                    np.product(outshape) + 1, warped_idx.T, image[:, :, idx].T
-                ).T
-                for idx in np.ndindex(image.shape[2:])
-            ],
-            axis=-1,
-        ).reshape(image.shape)
-    else:
-        avg_image = illum.compute.average_index(
-            np.product(outshape) + 1, warped_idx.T, image.T
-        ).T
+    avg_image = illum.compute.average_index(
+        image.reshape((-1, np.prod(image.shape[2:], dtype="uint8"))).T,
+        warped_idx.flatten(),
+        np.prod(outshape) + 1,
+    ).T.reshape(image.shape)
 
     return avg_image.astype(image.dtype)
 
