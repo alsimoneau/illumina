@@ -12,9 +12,9 @@ LIBS := $(wildcard illum/kernel/libs/*.f)
 all: ${BINS}
 
 bin/illumina: illum/kernel/illumina.f
-	sed -i "s/__version__/${version}/" $^
+	@sed -i "s/__version__/${version}/" $^
 	${FORT} ${FLAGS} $^ ${LIBS} -o $@
-	sed -i "s/${version}/__version__/" $^
+	@sed -i "s/${version}/__version__/" $^
 
 bin/%: illum/kernel/%.f
 	${FORT} ${FLAGS} $^ -o $@
