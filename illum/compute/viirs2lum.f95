@@ -46,7 +46,7 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
   REAL :: ratio(nbands, nzones, nsources)
 
   ! Defining usefull values
-  REAL(8), PARAMETER :: PI = 4.D0 * DATAN(1.D0)
+  REAL, PARAMETER :: PI = 4.0 * ATAN(1.0)
 
   mids = 0
   DO a = 2, nangles
@@ -61,27 +61,24 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
     DO a = 1, nangles
       DO i = 1, nlamps
         j = sources(INT(ivtr(i, 4)))
-        lamps(INT(ivtr(i, 1)), j, a, wl) = lamps(INT(ivtr(i, 1)), j, a, wl) &
-                                           + ivtr(i, 2) * spcts(INT(ivtr(i, 3)), wl) * lops(INT(ivtr(i, 4)), a)
+        ASSOCIATE (l => lamps(INT(ivtr(i, 1)), j, a, wl))
+          l = l + ivtr(i, 2) * spcts(INT(ivtr(i, 3)), wl) * lops(INT(ivtr(i, 4)), a)
+        END ASSOCIATE
       END DO
     END DO
   END DO
 
   ! Ensuring normalization
-  DO z = 1, nzones
-    DO s = 1, nsources
+  DO s = 1, nsources
+    DO z = 1, nzones
       norm = 0
-      DO a = 1, nangles
-        DO wl = 1, nwav
+      DO wl = 1, nwav
+        DO a = 1, nangles
           norm = norm + lamps(z, s, a, wl) * sinx(a)
         END DO
       END DO
       norm = norm * (wav(2) - wav(1))
-      DO a = 1, nangles
-        DO wl = 1, nwav
-          lamps(z, s, a, wl) = lamps(z, s, a, wl) / norm
-        END DO
-      END DO
+      lamps(z, s, :, :) = lamps(z, s, :, :) / norm
     END DO
   END DO
 
@@ -150,25 +147,17 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
         norm = norm + 1
       END IF
     END DO
-    DO s = 1, nsources
-      DO z = 1, nzones
-        ratio(b, z, s) = ratio(b, z, s) / norm
-      END DO
-    END DO
+    ratio(b, :, :) = ratio(b, :, :) / norm
   END DO
 
   DO j = 1, N
     DO i = 1, N
-      DO s = 1, nsources
-        DO z = 1, nzones
-          DO b = 1, nbands
-            IF (zones(i, j) == (z - 1)) THEN
-              lumlp(b, s, i, j) = lumlp(b, s, i, j) + ratio(b, z, s)
-            END IF
-          END DO
-          lumlp(b, s, i, j) = lumlp(b, s, i, j) * phie(i, j)
-        END DO
+      DO z = 1, nzones
+        IF (zones(i, j) == (z - 1)) THEN
+          lumlp(:, :, i, j) = lumlp(:, :, i, j) + ratio(:, z, :)
+        END IF
       END DO
+      lumlp(:, :, i, j) = lumlp(:, :, i, j) * phie(i, j)
     END DO
   END DO
 
