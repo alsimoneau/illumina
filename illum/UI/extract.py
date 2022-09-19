@@ -17,27 +17,7 @@ from glob import glob
 import numpy as np
 
 from illum import MultiScaleData as MSD
-from illum.utils import load_bin
-
-
-def MSDOpen(filename, cached={}):
-    if filename in cached:
-        return cached[filename]
-    ds = MSD.Open(filename)
-    cached[filename] = ds
-    return ds
-
-
-def chunker(seq, size):
-    return (seq[pos : pos + size] for pos in range(0, len(seq), size))
-
-
-def add_arrays(a, b):
-    if len(a) < len(b):
-        a, b = b, a
-    c = a.copy()
-    c[: len(b)] += b
-    return c
+from illum.utils import add_arrays, chunker, load_bin
 
 
 def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
@@ -145,7 +125,7 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
                             dirpath.split("exec")[0] + "/obs_data/*/blank.hdf5"
                         )[0]
 
-                    contributions[key] = copy(MSDOpen(blank))
+                    contributions[key] = copy(MSD.OpenCached(blank))
 
                 if oname == basename + ".out":
                     pcl_name = [s for s in filenames if "pcl.bin" in s][0]

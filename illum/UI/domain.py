@@ -6,30 +6,7 @@ import numpy as np
 import pyproj
 import yaml
 
-
-def eng_format(x, unit=""):
-    # Credit: 200_success on StackOverflow
-    # https://codereview.stackexchange.com/a/50971
-    #
-    # U+03BC is Greek lowercase mu
-    UNITS = (
-        [" ", " k", " M", " G"]
-        + ([None] * 10)
-        + [" f", " p", " n", " \u03bc", " m"]
-    )
-
-    power_of_1000 = int(math.floor(math.log10(x) // 3))
-    exponent = 3 * power_of_1000
-    prefix = UNITS[power_of_1000]
-    if prefix is None:
-        prefix = "*10^%d " % exponent
-
-    significand = x * 10 ** (-exponent)
-    return "%.2f%s%s" % (significand, prefix, unit)
-
-
-def round_odd(n):
-    return int(n - n % 2 + 1)
+from illum.utils import eng_format
 
 
 def domain():

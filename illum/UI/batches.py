@@ -31,14 +31,6 @@ def input_line(val, comment, n_space=30):
     return "%-*s ! %s" % (n_space, value_str, comment_str)
 
 
-def MSDOpen(filename, cached={}):
-    if filename in cached:
-        return cached[filename]
-    ds = MSD.Open(filename)
-    cached[filename] = ds
-    return ds
-
-
 def batches(input_path=".", compact=False, batch_size=300, batch_name=None):
     os.chdir(input_path)
 
