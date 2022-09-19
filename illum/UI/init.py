@@ -3,13 +3,12 @@
 import os
 import shutil
 from glob import glob
-
-import illum
+from importlib.resources import path
 
 
 def init():
     print("Initializing Illumina execution folder.")
-    illumpath = os.path.dirname(illum.__path__[0])
+    illumpath = path("illum", "data").as_posix()
 
     if not os.path.exists("Lights"):
         shutil.copytree(illumpath + "/Example/Lights", "Lights")

@@ -12,13 +12,13 @@ import shutil
 from collections import ChainMap, OrderedDict
 from functools import partial
 from glob import glob
+from importlib.resources import path
 from itertools import product
 
 import numpy as np
 import yaml
 from progressbar import progressbar
 
-import illum
 import illum.MultiScaleData as MSD
 from illum.utils import save_bin
 
@@ -184,9 +184,9 @@ def batches(input_path=".", compact=False, batch_size=300, batch_name=None):
                     fold_name + exp_name + "_fctem_%03d.dat" % i,
                 )
 
-            illumpath = os.path.dirname(illum.__path__[0])
+            illumpath = path("illum", "../bin/illumina")
             os.symlink(
-                os.path.abspath(illumpath + "/bin/illumina"),
+                os.path.abspath(illumpath),
                 fold_name + "illumina",
             )
 

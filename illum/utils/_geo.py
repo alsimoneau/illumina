@@ -8,7 +8,6 @@
 
 from math import ceil
 
-import illum.utils as u
 import numpy as np
 import osmnx as ox
 import pyproj
@@ -18,6 +17,8 @@ import scipy.ndimage
 import shapely.geometry
 import shapely.ops
 from progressbar import progressbar
+
+import illum.utils as u
 
 
 def transform(s_crs=4326, t_crs=4326):
