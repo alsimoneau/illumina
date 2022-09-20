@@ -2,17 +2,12 @@
 
 import os
 from glob import glob
-from subprocess import call
 
 import numpy as np
-import yaml
-from PIL import Image
+import rasterio as rio
 
+import illum.PolarArray as PA
 from illum import MultiScaleData as MSD
-
-
-def OpenTIFF(path):
-    return np.array(Image.open(path))
 
 
 def warp_files(srcfiles, projection, extent):

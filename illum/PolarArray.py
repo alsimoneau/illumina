@@ -59,8 +59,11 @@ class PolarArray:
             self._cRad,
             np.hstack([0, (np.arange(self._rmax) + 0.5)]) / self._rmax,
         )
-        dr = np.diff(r)[self._rmin :]
-        return 2 * np.pi / self.data.shape[0] * dr * self._scale * self.radii()
+        return (
+            (np.pi / self.data.shape[0])
+            * np.diff(r**2)[self._rmin :]
+            * self._scale**2
+        )
 
     def clip(self, radius):
         parr = copy(self)
