@@ -1,6 +1,4 @@
-__version__ = "2.2.4.20220920.14361929"
-
-import os
+__version__ = "2.2.4.20220920.14451817"
 
 from . import (
     AngularPowerDistribution,
@@ -16,19 +14,7 @@ try:
 except ModuleNotFoundError:
     print("Couldn't import Fortran functions")
 
+import importlib.resources
 
-# Grab illumina code folder path from environement variables
-try:
-    path = os.path.dirname(
-        [
-            path
-            for path in os.environ["PATH"].split(":")
-            if path.endswith("illumina/bin")
-        ][0]
-    )
-except IndexError:
-    raise ValueError(
-        "The 'illumina/bin' folder is not in the PATH environment variable."
-    )
-
-del os
+path = importlib.resources.files("illum").as_posix()
+del importlib
