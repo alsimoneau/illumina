@@ -1,32 +1,80 @@
 #!/usr/bin/env python3
 
-from dataclasses import dataclass
+from copy import copy
 
 import cv2
 import h5py
 import numpy as np
+import rasterio as rio
 
 import illum.compute
 
 
-@dataclass
 class PolarArray:
-    minRadius: int
-    maxRadius: float
-    center: tuple
-    shape: tuple
-    data: np.array
-    crs: object
-    transform: object
+    def __init__(
+        self,
+        *,
+        data,
+        shape,
+        center,
+        maxRadius,
+        crs="None",
+        transform="None",
+        minRadius=0,
+        rmin=0,
+    ):
+        self.data = data
+        self.shape = shape
+        self.center = center
+        self.minRadius = minRadius
+        self.maxRadius = maxRadius
+        self.crs = crs
+        self.transform = transform
+
+        self._scale = 1.0 if self.transform == "None" else self.transform.a
+        self._rmin = rmin
+        self._rmax = self.data.shape[1]
+        self._cRad = _correct_rmax(self.maxRadius, self._rmax)
 
     def __repr__(self):
-        return f"PolarArray<{self.data.shape}>"
+        return (
+            f"PolarArray<scale={self._scale},"
+            f"[{self.data.shape[0]},{self._rmin}:{self._rmax}]>"
+        )
 
-    def to_array(self):
-        return to_array(self)
+    def radius_coordinate(self, radius):
+        return _radius_coordinate(
+            radius / self._scale, self.maxRadius, self._rmax
+        )
 
     def coords(self):
         return coords(self)
+
+    def radii(self):
+        r = np.geomspace(1, self._cRad, self._rmax, endpoint=False) - 1
+        return r[self._rmin :] * self._scale
+
+    def area(self):
+        r = -1 + np.power(
+            self._cRad,
+            np.hstack([0, (np.arange(self._rmax) + 0.5)]) / self._rmax,
+        )
+        dr = np.diff(r)[self._rmin :]
+        return 2 * np.pi / self.data.shape[0] * dr * self._scale * self.radii()
+
+    def clip(self, radius):
+        parr = copy(self)
+        a = round(self.radius_coordinate(radius))
+        parr.data = self.data[:, a:].copy()
+        parr.minRadius = radius
+        parr._rmin = a
+        return parr
+
+    def copy(self):
+        return copy(self)
+
+    def to_array(self):
+        return to_array(self)
 
     def save(self, filename, *args, **kwargs):
         return save(filename, self, *args, **kwargs)
@@ -35,6 +83,8 @@ class PolarArray:
 def load(filename):
     with h5py.File(filename, "r") as f:
         parr = PolarArray(data=f["data"][:], **f.attrs)
+    if parr.transform != "None":
+        parr.transform = rio.transform.Affine(*parr.transform)
     return parr
 
 
@@ -45,6 +95,8 @@ def save(filename, parr):
     with h5py.File(filename, "w") as f:
         attrs = parr.__dict__
         f.create_dataset("data", data=attrs.pop("data"))
+        if attrs["transform"] != "None":
+            attrs["transform"] = tuple(attrs["transform"])[:-3]
         f.attrs.update(attrs)
 
 
@@ -59,24 +111,26 @@ def from_array(
     crs="None",
     transform="None",
 ):
+    if rmax is not None and transform is not None:
+        rmax /= transform.a
+        rmin /= transform.a
+
     center, rmax = _polar_defaults(arr.shape, center, rmax)
     blur = _blur_polar(arr, outshape, center=center, rmax=rmax, log=True)
     data = _warp_polar(blur, outshape, center=center, rmax=rmax, log=True)
-    rmin = round(_radius_coordinate(rmin, rmax, data.shape))
 
     return PolarArray(
-        data=data[:, rmin:],
-        minRadius=rmin,
+        data=data,
         maxRadius=rmax,
         center=center,
         shape=arr.shape,
         crs=crs,
         transform=transform,
-    )
+    ).clip(rmin)
 
 
 def to_array(parr):
-    data = np.pad(parr.data, ((0, 0), (parr.minRadius, 0)))
+    data = np.pad(parr.data, ((0, 0), (parr._rmin, 0)))
     return _warp_polar(
         data, parr.shape, parr.center, parr.maxRadius, log=True, inverse=True
     )
@@ -90,7 +144,7 @@ def coords(parr):
         rmax=parr.maxRadius,
         log=True,
     )
-    return coords[:, :, parr.minRadius :]
+    return coords[:, :, parr._rmin :] * parr._scale
 
 
 # Utility functions

@@ -36,12 +36,13 @@ def geotransform(X, Y, GT):
 
 
 def estimate_utm_epsg(lon, lat):
-    return pyproj.database.query_utm_crs_info(
+    code = pyproj.database.query_utm_crs_info(
         datum_name="WGS84",
         area_of_interest=pyproj.aoi.AreaOfInterest(
             np.min(lon), np.min(lat), np.max(lon), np.max(lat)
         ),
     )[0].code
+    return int(code)
 
 
 def fishnet(bounds, res, xsize=None, ysize=None, cols=None, rows=None):

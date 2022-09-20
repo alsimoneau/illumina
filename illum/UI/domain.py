@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import rasterio as rio
 import yaml
 
 import illum.PolarArray as PA
@@ -11,23 +12,26 @@ def domain():
     with open("domain_params.in") as f:
         domain = yaml.safe_load(f)
 
-    obs_lat = domain.pop("latitude")
-    obs_lon = domain.pop("longitude")
+    lat = domain["latitude"]
+    lon = domain["longitude"]
+    rmin = domain["minRadius"]
+    rmax = domain["maxRadius"]
+    res = domain["resolution"]
+    Na = domain["Nangles"]
 
-    try:
-        if len(obs_lat) != len(obs_lon):
-            print("ERROR: Latitude and Longitude must have the same length.")
-            exit()
-    except TypeError:  # lat and lon not lists
-        obs_lat = [obs_lat]
-        obs_lon = [obs_lon]
+    epsg = u.estimate_utm_epsg(lon, lat)
+    x, y = u.transform(s_crs=epsg)(lon, lat)
+    n = round(rmax / res) + 0.5
+    transform = rio.transform.from_origin(
+        west=x - n * res, north=y + n * res, xsize=res, ysize=res
+    )
 
-    epsg = u.estimate_utm_epsg(obs_lon, obs_lat)
-    Nr = round(domain["Nangles"] * np.log(domain["maxRadius"]) / 2 / np.pi)
+    Nr = round(Na * np.log(rmax) / 2 / np.pi)
 
-    PA.from_array(
-        np.zeros((1, 1)),
-        (domain["Nangles"], Nr),
-        rmax=domain["maxRadius"],
-        crs=epsg,
-    ).save("domain")
+    arr = np.zeros((1, 1))
+    parr = PA.from_array(
+        arr, (Na, Nr), rmin=rmin, rmax=rmax, crs=epsg, transform=transform
+    )
+    parr.center = (int(n), int(n))
+    parr.shape = (int(2 * n), int(2 * n))
+    parr.save("domain")
