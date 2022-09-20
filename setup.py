@@ -50,6 +50,6 @@ setup(
     },
     entry_points="""
         [console_scripts]
-        illum=illum.UI.main:illum
+        illum=illum.UI.main:main
     """,
 )

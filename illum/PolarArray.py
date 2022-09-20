@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 import cv2
+import h5py
 import numpy as np
 
 import illum.compute
@@ -10,10 +11,16 @@ import illum.compute
 
 @dataclass
 class PolarArray:
+    minRadius: int
     maxRadius: float
     center: tuple
     shape: tuple
     data: np.array
+    crs: object
+    transform: object
+
+    def __repr__(self):
+        return f"PolarArray<{self.data.shape}>"
 
     def to_array(self):
         return to_array(self)
@@ -21,33 +28,69 @@ class PolarArray:
     def coords(self):
         return coords(self)
 
+    def save(self, filename, *args, **kwargs):
+        return save(filename, self, *args, **kwargs)
 
-def from_array(arr, /, outshape, *, center=None, rmax=None):
+
+def load(filename):
+    with h5py.File(filename, "r") as f:
+        parr = PolarArray(data=f["data"][:], **f.attrs)
+    return parr
+
+
+def save(filename, parr):
+    if filename[:-5] != ".parr":
+        filename += ".parr"
+
+    with h5py.File(filename, "w") as f:
+        attrs = parr.__dict__
+        f.create_dataset("data", data=attrs.pop("data"))
+        f.attrs.update(attrs)
+
+
+def from_array(
+    arr,
+    /,
+    outshape,
+    *,
+    center=None,
+    rmin=0,
+    rmax=None,
+    crs="None",
+    transform="None",
+):
     center, rmax = _polar_defaults(arr.shape, center, rmax)
     blur = _blur_polar(arr, outshape, center=center, rmax=rmax, log=True)
     data = _warp_polar(blur, outshape, center=center, rmax=rmax, log=True)
+    rmin = round(_radius_coordinate(rmin, rmax, data.shape))
+
     return PolarArray(
-        data=data,
+        data=data[:, rmin:],
+        minRadius=rmin,
         maxRadius=rmax,
         center=center,
         shape=arr.shape,
+        crs=crs,
+        transform=transform,
     )
 
 
 def to_array(parr):
+    data = np.pad(parr.data, ((0, 0), (parr.minRadius, 0)))
     return _warp_polar(
-        parr.data, parr.shape, parr.center, parr.rmax, log=True, inverse=True
+        data, parr.shape, parr.center, parr.maxRadius, log=True, inverse=True
     )
 
 
 def coords(parr):
-    return _map_coordinates(
+    coords = _map_coordinates(
         parr.data.shape,
         parr.shape,
         center=parr.center,
-        rmax=parr.rmax,
+        rmax=parr.maxRadius,
         log=True,
     )
+    return coords[:, :, parr.minRadius :]
 
 
 # Utility functions
@@ -65,8 +108,21 @@ def _polar_defaults(shape, center=None, rmax=None):
     return np.array(center), rmax
 
 
-def _correct_rmax(rmax, shape):
-    return np.power(rmax + 1, shape[1] / (shape[1] - 0.5))
+def _correct_rmax(rmax, size):
+    try:
+        size = size[1]
+    except TypeError:
+        pass
+    return np.power(rmax + 1, size / (size - 0.5))
+
+
+def _radius_coordinate(radius, rmax, size):
+    try:
+        size = size[1]
+    except TypeError:
+        pass
+    rmax = _correct_rmax(rmax, size)
+    return size * np.log(radius + 1) / np.log(rmax)
 
 
 def _map_coordinates(

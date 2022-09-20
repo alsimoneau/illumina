@@ -7,7 +7,7 @@ import illum
 
 @click.group()
 @click.version_option(illum.__version__, prog_name="Illumina model")
-def illum():
+def main():
     r"""Illumina model.
 
     See 'illum COMMAND --help' to read about specific subcommand.
@@ -50,7 +50,7 @@ def illum():
     pass  # Entry point
 
 
-@illum.command(name="alternate")
+@main.command(name="alternate")
 @click.argument("name")
 @click.option(
     "-z",
@@ -73,7 +73,7 @@ def alternate(name, zones, lights):
     illum.alternate(name, zones, lights)
 
 
-@illum.command(name="batches")
+@main.command(name="batches")
 @click.argument("input_path", type=click.Path(exists=True), default=".")
 @click.argument("batch_name", required=False)
 @click.option(
@@ -102,7 +102,7 @@ def batches(input_path, compact, batch_size, batch_name=None):
     illum.batches(input_path, compact, batch_size, batch_name)
 
 
-@illum.command(name="domain")
+@main.command(name="domain")
 def domain():
     """Defines the simulation domain.
 
@@ -113,7 +113,7 @@ def domain():
     illum.domain()
 
 
-@illum.command(name="extract")
+@main.command(name="extract")
 @click.argument("exec_dir", default=".", type=click.Path(exists=True))
 @click.option(
     "-c",
@@ -153,7 +153,7 @@ def extract(exec_dir, contrib, params, full, profile):
     illum.extract(exec_dir, contrib, params, full, profile)
 
 
-@illum.command(name="failed")
+@main.command(name="failed")
 @click.option(
     "-e",
     "--executable",
@@ -165,19 +165,19 @@ def failed(executable):
     illum.failed(executable)
 
 
-@illum.command(name="init")
+@main.command(name="init")
 def init():
     """Initialize an execution folder."""
     illum.init()
 
 
-@illum.command(name="inputs")
+@main.command(name="inputs")
 def inputs():
     """Prepares the executions inputs."""
     illum.inputs()
 
 
-@illum.command(name="warp")
+@main.command(name="warp")
 @click.argument("output_name", required=False)
 @click.argument("infiles", required=False, nargs=-1)
 def warp(output_name=None, infiles=[]):
