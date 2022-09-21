@@ -82,8 +82,8 @@ def to_ies(filename, apd, /):
     out = [
         "IES:LM-63-2019",
         "TILT=NONE",
-        f"1 {apd.lumens} 1.0 {apd.data.shape[0]} {apd.data.shape[1]} "  # cont.
-        f"{apd.type} 1 0 0 0",
+        f"1 {apd.lumens} 1.0"
+        f" {apd.data.shape[0]} {apd.data.shape[1]} {apd.type} 1 0 0 0",
         "1.0 1.0 0.0",
     ]
     with open(filename, "w") as f:
@@ -121,9 +121,7 @@ def vertical_profile(apd, /, *, integrated=False):
 
     profile = (
         np.average(
-            apd.data,
-            axis=1,
-            weights=np.diff(mids(apd.horizontal_angles)),
+            apd.data, axis=1, weights=np.diff(mids(apd.horizontal_angles))
         )
         if len(apd.horizontal_angles) > 1
         else apd.data[:, 0]
@@ -188,10 +186,7 @@ def interpolate(apd, /, *, step=1, method="linear"):
     )
 
     return AngularPowerDistribution(
-        lumens=apd.lumens,
-        vertical_angles=V,
-        horizontal_angles=H,
-        data=interp,
+        lumens=apd.lumens, vertical_angles=V, horizontal_angles=H, data=interp
     )
 
 

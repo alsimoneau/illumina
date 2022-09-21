@@ -185,10 +185,7 @@ def batches(input_path=".", compact=False, batch_size=300, batch_name=None):
                 )
 
             illumpath = path("illum", "../bin/illumina")
-            os.symlink(
-                os.path.abspath(illumpath),
-                fold_name + "illumina",
-            )
+            os.symlink(os.path.abspath(illumpath), fold_name + "illumina")
 
             # Copying layer data
             obs_fold = os.path.join("obs_data", coords, str(layer))
@@ -278,7 +275,8 @@ def batches(input_path=".", compact=False, batch_size=300, batch_name=None):
             (
                 (
                     P["reflection_radius"],
-                    "Radius around light sources where reflextions are computed",
+                    "Radius around light sources where reflextions are"
+                    " computed",
                 ),
             ),
             (

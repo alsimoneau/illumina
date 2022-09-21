@@ -39,7 +39,6 @@ def inputs():
         params["zones_inventory"] is not None
         and params["lamps_inventory"] is not None
     ):
-
         print("Validating the inventories.")
 
         lamps = np.loadtxt(params["lamps_inventory"], usecols=[0, 1])
@@ -70,8 +69,8 @@ def inputs():
         if len(failed):
             for i, lat, lon, zon_ind in sorted(failed):
                 print(
-                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null zone #%d"
-                    % (i, lat, lon, zon_ind)
+                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null"
+                    " zone #%d" % (i, lat, lon, zon_ind)
                 )
             raise SystemExit()
 

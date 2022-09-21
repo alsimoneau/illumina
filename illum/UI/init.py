@@ -19,8 +19,7 @@ def init():
     print("Initializing ILLUMINA execution folder.")
 
     shutil.copytree(
-        illumpath + os.sep.join(["", "data", "Example", "Lights"]),
-        "Lights",
+        illumpath + os.sep.join(["", "data", "Example", "Lights"]), "Lights"
     )
 
     example_files = glob(

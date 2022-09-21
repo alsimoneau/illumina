@@ -27,7 +27,6 @@ def from_lamps(
     refl,
     bool_array,
 ):
-
     print("Building inputs from discrete inventory.")
 
     # lamps distribution

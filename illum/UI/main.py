@@ -80,8 +80,10 @@ def alternate(name, zones, lights):
     "-c",
     "--compact",
     is_flag=True,
-    help="If given, will chain similar executions. Reduces the overall number "
-    "of runs at the cost of longuer individual executions.",
+    help=(
+        "If given, will chain similar executions. Reduces the overall number"
+        " of runs at the cost of longuer individual executions."
+    ),
 )
 @click.option(
     "-N",
@@ -126,8 +128,9 @@ def domain():
     "--params",
     multiple=True,
     nargs=2,
-    help="Parameter name,value pair to extract."
-    " Can be provided more than once.",
+    help=(
+        "Parameter name,value pair to extract. Can be provided more than once."
+    ),
 )
 @click.option(
     "-f",

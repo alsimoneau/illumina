@@ -1,0 +1,21 @@
+[flake8]
+# The following are ignored because black fixes them:
+# E201: Whitespace after '('
+# E202: Whitespace before ')'
+# E203: Whitespace before ':'
+# E225: Missing whitespaces around operator
+# E231: Missing whitespace after ','
+# E251: Unexpected spaces around keyword / parameter equals
+# E271: Multiple spaces after keyword
+# E301: Expected 1 blank lines
+# E302: Expected 2 blank lines
+# E303: Too many blank lines
+# E501: Line too long
+# W291: Trailing whitespace
+# W503: Line break occured before a binary operator
+extend-ignore = E201,E202,E203,E225,E231,E251,E271,E301,E302,E303,E501,W291,W503
+
+per-file-ignores =
+  # F401: Module imported but unused
+  # F403: 'from module import *' used; unable to detect undefined names
+  __init__.py: F401,F403,

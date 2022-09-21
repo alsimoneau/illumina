@@ -3,42 +3,35 @@
 import os
 from glob import glob
 
+import geopandas as gpd
 import numpy as np
 import rasterio as rio
+import rasterio.merge
+import rasterio.warp
 
 import illum.PolarArray as PA
-from illum import MultiScaleData as MSD
 
 
-def warp_files(srcfiles, projection, extent):
-    tmpfile = "tmp_warp.tiff"
-    if os.path.isfile(tmpfile):
-        os.remove(tmpfile)
+def warp(src, transform, crs=None, resampling="average"):
+    try:
+        arr, src_transform = rio.merge.merge(src)
+        src_crs = src[0].crs
+    except TypeError:
+        arr = src.read(1)
+        src_transform = src.transform
+        src_crs = src.crs
 
-    cmd = [
-        "gdalwarp",
-        "-t_srs",
-        projection,
-        "-te",
-        extent["xmin"],
-        extent["ymin"],
-        extent["xmax"],
-        extent["ymax"],
-        "-tr",
-        extent["pixel_size"],
-        extent["pixel_size"],
-        "-r",
-        "cubicspline",
-        "-dstnodata",
-        "0.",
-        *srcfiles,
-        tmpfile,
-    ]
-    cmd = list(map(str, cmd))
-    print("EXECUTING :", " ".join(cmd))
-    call(cmd)
+    if crs is None:
+        crs = src_crs
 
-    return OpenTIFF(tmpfile)
+    return rio.warp.reproject(
+        arr,
+        src_transform=src_transform,
+        src_crs=src_crs,
+        dst_transform=transform,
+        dst_crs=crs,
+        resampling=rio.enums.Resampling[resampling],
+    )
 
 
 def prep_shp(infile, projection, extent):
@@ -162,8 +155,8 @@ def convert_correction_data(srcfiles):
 def warp(output_name=None, infiles=[]):
     if output_name is not None and len(infiles) == 0:
         print(
-            "ERROR: If an output name is given, "
-            "files to process must also be provided."
+            "ERROR: If an output name is given, files to process must also be"
+            " provided."
         )
         raise SystemExit
 
@@ -206,8 +199,8 @@ def warp(output_name=None, infiles=[]):
         if not len(files):
             print("WARNING: Did not find VIIRS file(s).")
             print(
-                "If you don't intend to use zones inventory, "
-                "you can safely ignore this."
+                "If you don't intend to use zones inventory, you can safely"
+                " ignore this."
             )
         else:
             if not os.path.isfile("hydropolys.zip"):
@@ -224,16 +217,16 @@ def warp(output_name=None, infiles=[]):
             )
             if not correction:
                 print(
-                    "WARNING: Could not find correction files "
-                    "that matched the VIIRS files."
+                    "WARNING: Could not find correction files that matched the"
+                    " VIIRS files."
                 )
                 print(
-                    "If you indend to use it, please validate "
-                    "that you have the right ones."
+                    "If you indend to use it, please validate that you have"
+                    " the right ones."
                 )
                 print(
-                    "Note that only the VCMCFG dataset from VIIRS "
-                    "can be corrected."
+                    "Note that only the VCMCFG dataset from VIIRS can be"
+                    " corrected."
                 )
 
             data = [

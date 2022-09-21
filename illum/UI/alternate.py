@@ -29,7 +29,6 @@ def alternate(name, zones, lights):
         params = yaml.safe_load(f)
 
     if zones is not None and lights is not None:
-
         print("Validating the inventories.")
 
         lamps = np.loadtxt(lights, usecols=[0, 1])
@@ -60,8 +59,8 @@ def alternate(name, zones, lights):
         if len(failed):
             for i, lat, lon, zon_ind in sorted(failed):
                 print(
-                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null zone #%d"
-                    % (i, lat, lon, zon_ind)
+                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null"
+                    " zone #%d" % (i, lat, lon, zon_ind)
                 )
             raise SystemExit()
 
