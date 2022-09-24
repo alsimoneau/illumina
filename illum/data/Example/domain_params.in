@@ -1,6 +1,4 @@
 latitude: 45.4
 longitude: -71.9
-minRadius: 0
 maxRadius: 100000
-resolution: 5
 Nangles: 1000

@@ -6,107 +6,157 @@ from glob import glob
 import geopandas as gpd
 import numpy as np
 import rasterio as rio
+import rasterio.features
 import rasterio.merge
 import rasterio.warp
+import shapely.geometry
 
 import illum.PolarArray as PA
 
 
-def warp(src, transform, crs=None, resampling="average"):
-    try:
-        arr, src_transform = rio.merge.merge(src)
-        src_crs = src[0].crs
-    except TypeError:
-        arr = src.read(1)
-        src_transform = src.transform
-        src_crs = src.crs
+def open_multiple(path):
+    outs = []
+    for name in os.listdir(path):
+        name = os.path.join(path, name)
+        if os.path.isfile(name):
+            rst = rio.open(name)
+            outs.append((rst.read(1), rst.transform, rst.crs))
+        else:
+            files = os.listdir(name)
+            arr, transform = rio.merge.merge(
+                [rio.open(os.path.join(name, s)) for s in files]
+            )
+            crs = rio.open(os.path.join(name, files[0])).crs
+            outs.append((arr[0], transform, crs))
+    return outs
 
-    if crs is None:
-        crs = src_crs
 
-    return rio.warp.reproject(
+def reproject(
+    source,
+    center_coord,
+    src_transform=None,
+    src_crs=None,
+    src_nodata=None,
+    dst_crs=None,
+    dst_nodata=None,
+    resampling="average",
+):
+    transform, w, h = rio.warp.calculate_default_transform(
+        src_crs, dst_crs, *source.shape[1::-1], *source.bounds
+    )
+
+    arr = np.zeros((h, w))
+    rio.warp.reproject(
+        rio.band(source, 1),
         arr,
         src_transform=src_transform,
         src_crs=src_crs,
+        src_nodata=src_nodata,
         dst_transform=transform,
-        dst_crs=crs,
+        dst_crs=dst_crs,
+        dst_nodata=dst_nodata,
         resampling=rio.enums.Resampling[resampling],
     )
 
+    match src_nodata:
+        case None:
+            mask = np.ones(source.shape, dtype=bool)
+        case np.nan:
+            mask = ~np.isnan(source)
+        case _:
+            mask = source != src_nodata
+    rio.warp.reproject(
+        mask,
+        arr,
+        src_transform=src_transform,
+        src_crs=src_crs,
+        src_nodata=0,
+        dst_transform=transform,
+        dst_crs=dst_crs,
+        dst_nodata=0,
+        resampling=rio.enums.Resampling.nearest,
+    )
 
-def prep_shp(infile, projection, extent):
-    cmd = [
-        "ogr2ogr",
-        "-spat",
-        extent["xmin"],
-        extent["ymin"],
-        extent["xmax"],
-        extent["ymax"],
-        "-spat_srs",
-        projection,
-        "-t_srs",
-        projection,
-        "tmp_select.shp",
-        "/vsizip/" + os.path.abspath(infile),
-    ]
-    cmd = list(map(str, cmd))
-    print("EXECUTING :", " ".join(cmd))
-    call(cmd)
-
-    cmd = [
-        "ogr2ogr",
-        "tmp_merge.shp",
-        "tmp_select.shp",
-        "-dialect",
-        "sqlite",
-        "-sql",
-        "SELECT ST_Union(geometry) AS geometry FROM tmp_select",
-    ]
-    print("EXECUTING :", " ".join(cmd))
-    call(cmd)
-
-    if not os.path.isfile("tmp_merge.shp"):
-        for fname in glob("tmp_select.*"):
-            os.rename(fname, fname.replace("select", "merge"))
+    center = rio.transform.rowcol(transform, center_coord)
+    return arr, transform, center, mask
 
 
-def rasterize(shpfile, projection, extent):
-    tmpfile = "tmp_rasterize.tiff"
-    if os.path.isfile(tmpfile):
-        os.remove(tmpfile)
+def burn(polygon, polarArray, all_touched=False, N=1000):
+    radii = polarArray.radii()
+    area = polarArray.area()
+    center = polarArray.center_coord
 
-    cmd = [
-        "gdal_rasterize",
-        "-i",  # inverted
-        "-at",  # all touched
-        "-burn",
-        "1",
-        "-ot",
-        "Byte",
-        "-a_srs",
-        projection,
-        "-te",
-        extent["xmin"],
-        extent["ymin"],
-        extent["xmax"],
-        extent["ymax"],
-        "-tr",
-        extent["pixel_size"],
-        extent["pixel_size"],
-        shpfile,
-        tmpfile,
-    ]
-    cmd = list(map(str, cmd))
-    print("EXECUTING :", " ".join(cmd))
-    call(cmd)
+    outs = []
+    i = 0
+    while True:
+        res = area[i] / 10
+        transform = rio.transform.from_origin(
+            center[1] - N * res, center[0] + N * res, res, res
+        )
 
-    return OpenTIFF(tmpfile)
+        arr = rio.features.rasterize(
+            polygon,
+            (2 * N, 2 * N),
+            transform=transform,
+            all_touched=all_touched,
+        )
+        mask = np.ones((2 * N, 2 * N), dtype="bool")
+        outs.append((arr, transform, (N, N), mask))
+
+        try:
+            i = np.where(radii > N * res)[0][0]
+        except IndexError:
+            break
+
+    return outs
 
 
-def save(params, data, dstname, scale_factor=1.0):
-    scaled_data = [d * scale_factor for d in data]
-    ds = MSD.from_domain(params, scaled_data)
-    ds.save(dstname)
+def process_water(filename, shape, transform, crs):
+    mask = gpd.GeoSeries(
+        shapely.geometry.Polygon.from_bounds(
+            *rio.transform.array_bounds(*shape, transform)
+        ),
+        crs=crs,
+    )
+    poly = gpd.read_file(filename, mask=mask).to_crs(crs)
+    if len(poly) == 0:
+        return mask
+    elif len(poly) > 1:
+        poly = gpd.GeoSeries(poly.unary_union, crs=crs)
+    return mask.difference(poly)
+
+
+def polarize(path, polarArray):
+    if os.path.isdir(path):
+        # multiple rasters
+        srcs = [
+            reproject(*src, center=polarArray.center_coord)
+            for src in open_multiple(path)
+        ]
+        return PA.union(*zip(*srcs), sort=True, out=polarArray.copy())
+
+    try:
+        rst = rio.open(path)
+    except rio.RasterioIOError:
+        # vector
+        polygon = process_water(
+            path, polarArray.xyshape, polarArray.transform, polarArray.crs
+        )
+        srcs = burn(polygon, polarArray, all_touched=True)
+        return PA.union(*zip(*srcs), out=polarArray.copy())
+
+    # raster
+    arr, transform, center = reproject(
+        rst.read(1), rst.transform, rst.crs, center=polarArray.center_coord
+    )
+    return PA.from_array(
+        arr,
+        polarArray.shape,
+        center=center,
+        rmax=polarArray.maxRadius,
+        crs=polarArray.crs,
+        transform=transform,
+    )
 
 
 def correction_filenames(srcfiles):
@@ -160,15 +210,10 @@ def warp(output_name=None, infiles=[]):
         )
         raise SystemExit
 
-    with open(glob("*.ini")[0]) as f:
-        params = yaml.safe_load(f)
+    polarArray = PA.load("domain.parr")
 
     if len(infiles):
-        data = [
-            warp_files(infiles, params["srs"], extent)
-            for extent in params["extents"]
-        ]
-        save(params, data, output_name)
+        polarize(infiles, polarArray).save(output_name)
 
     else:
         if os.path.isfile("GHSL.zip"):

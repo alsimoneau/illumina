@@ -2,6 +2,7 @@
 line-length = 79
 skip-magic-trailing-comma = true
 preview = true
+target-version = ["py310"]
 
 [tool.isort]
 known_first_party = ['illum']

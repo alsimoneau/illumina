@@ -15,7 +15,7 @@ class PolarArray:
         self,
         *,
         data,
-        shape,
+        xyshape,
         center,
         maxRadius,
         crs="None",
@@ -24,11 +24,17 @@ class PolarArray:
         rmin=0,
     ):
         self.data = data
-        self.shape = shape
+        self.xyshape = xyshape
         self.center = center
         self.minRadius = minRadius
         self.maxRadius = maxRadius
         self.crs = crs
+
+        try:
+            transform = rio.transform.Affine(*transform)
+        except TypeError:
+            pass
+
         self.transform = transform
 
         self._scale = 1.0 if self.transform == "None" else self.transform.a
@@ -41,6 +47,14 @@ class PolarArray:
             f"PolarArray<scale={self._scale},"
             f"[{self.data.shape[0]},{self._rmin}:{self._rmax}]>"
         )
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def center_coord(self):
+        return rio.transform.xy(self.transform, *self.center)[::-1]
 
     def radius_coordinate(self, radius):
         return _radius_coordinate(
@@ -86,8 +100,6 @@ class PolarArray:
 def load(filename):
     with h5py.File(filename, "r") as f:
         parr = PolarArray(data=f["data"][:], **f.attrs)
-    if parr.transform != "None":
-        parr.transform = rio.transform.Affine(*parr.transform)
     return parr
 
 
@@ -100,6 +112,7 @@ def save(filename, parr):
         f.create_dataset("data", data=attrs.pop("data"))
         if attrs["transform"] != "None":
             attrs["transform"] = tuple(attrs["transform"])[:-3]
+        attrs = {k: v for k, v in attrs.items() if k[0] != "_"}
         f.attrs.update(attrs)
 
 
@@ -114,9 +127,19 @@ def from_array(
     crs="None",
     transform="None",
 ):
-    if rmax is not None and transform is not None:
-        rmax /= transform.a
+    if type(outshape) == PolarArray:
+        rmin = outshape.minRadius
+        rmax = outshape.maxRadius
+        center = outshape.center
+        transform = outshape.transform
+        crs = outshape.crs
+
+    elif transform != "None":
         rmin /= transform.a
+        if rmax is not None:
+            rmax /= transform.a
+    else:
+        transform = rio.transform.from_origin(0, 0, 1, 1)
 
     center, rmax = _polar_defaults(arr.shape, center, rmax)
     blur = _blur_polar(arr, outshape, center=center, rmax=rmax, log=True)
@@ -126,7 +149,7 @@ def from_array(
         data=data,
         maxRadius=rmax,
         center=center,
-        shape=arr.shape,
+        xyshape=arr.shape,
         crs=crs,
         transform=transform,
     ).clip(rmin)
@@ -135,14 +158,14 @@ def from_array(
 def to_array(parr):
     data = np.pad(parr.data, ((0, 0), (parr._rmin, 0)))
     return _warp_polar(
-        data, parr.shape, parr.center, parr.maxRadius, log=True, inverse=True
+        data, parr.xyshape, parr.center, parr.maxRadius, log=True, inverse=True
     )
 
 
 def coords(parr):
     coords = _map_coordinates(
         parr.data.shape,
-        parr.shape,
+        parr.xyshape,
         center=parr.center,
         rmax=parr.maxRadius,
         log=True,
@@ -150,7 +173,78 @@ def coords(parr):
     return coords[:, :, parr._rmin :] * parr._scale
 
 
-# Utility functions
+def union(
+    arrays,
+    /,
+    transforms=None,
+    centers=None,
+    masks=None,
+    *,
+    sort=False,
+    out=None,
+    shape=None,
+    maxRadius=None,
+    crs=None,
+):
+    if not (transforms is None and centers is None) and (
+        len(arrays) != len(transforms) != len(centers)
+    ):
+        raise ValueError(
+            "'arrays', 'transforms' and 'centers' must have the same length."
+        )
+
+    if out is None:
+        if not (shape is None or maxRadius is None or crs is None):
+            raise ValueError(
+                "'shape', 'maxRadius' and 'crs' must be given when 'out' is"
+                " not provided."
+            )
+        else:
+            out = from_array([[0]], shape, rmax=maxRadius, crs=crs)
+    else:
+        if not isinstance(out, PolarArray):
+            raise TypeError("'out' must be a PolarArray.")
+
+    if masks is None:
+        masks = [None] * len(arrays)
+
+    if sort:
+        areas = [np.abs(t.determinant) for t in transforms]
+        idx = np.argsort(areas)
+
+        arrays = arrays[idx]
+        masks = masks[idx]
+        transforms = transforms[idx]
+
+    for arr, mask, center, transform in zip(
+        arrays, masks, centers, transforms
+    ):
+        if mask is None:
+            mask = np.ones(arr.shape)
+
+        domain = from_array(
+            mask,
+            out.shape,
+            center=center,
+            rmax=out.maxRadius,
+            crs=out.crs,
+            transform=out.transform,
+        ).data
+        data = from_array(
+            arr,
+            out.shape,
+            center=center,
+            rmax=out.maxRadius,
+            crs=out.crs,
+            transform=out.transform,
+        ).data
+        pmask = domain > 0.5
+        out.data[pmask] = data[pmask]
+
+    return out
+
+
+# Internal functions
 
 
 def _polar_defaults(shape, center=None, rmax=None):
