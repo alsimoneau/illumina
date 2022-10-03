@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 import rasterio as rio
 
-import illum.compute
+import illum
 
 
 class PolarArray:
@@ -40,7 +40,6 @@ class PolarArray:
         self._scale = 1.0 if self.transform == "None" else self.transform.a
         self._rmin = rmin
         self._rmax = self.data.shape[1]
-        self._cRad = _correct_rmax(self.maxRadius, self._rmax)
 
     def __repr__(self):
         return (

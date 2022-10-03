@@ -1,3 +1,4 @@
+from ._coords import cart2idx, cart2pol, idx2cart, idx2pol, pol2cart, pol2idx
 from ._fctem import LOP_norm, SPD_norm, load_lop, load_spct, spct_norm
 from ._geo import (
     compute_ground_type,
