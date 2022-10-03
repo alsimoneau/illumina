@@ -58,13 +58,13 @@ def reproject(
         resampling=rio.enums.Resampling[resampling],
     )
 
-    match src_nodata:
-        case None:
-            mask = np.ones(source.shape, dtype=bool)
-        case np.nan:
-            mask = ~np.isnan(source)
-        case _:
-            mask = source != src_nodata
+    if src_nodata is None:
+        mask = np.ones(source.shape, dtype=bool)
+    elif np.isnan(src_nodata):
+        mask = ~np.isnan(source)
+    else:
+        mask = source != src_nodata
+
     rio.warp.reproject(
         mask,
         arr,
@@ -81,7 +81,7 @@ def reproject(
     return arr, transform, center, mask
 
 
-def burn(polygon, polarArray, all_touched=False, N=1000):
+def burn(polygon, polarArray, all_touched=False, N=1000, sf=5):
     radii = polarArray.radii()
     area = polarArray.area()
     center = polarArray.center_coord
@@ -89,7 +89,7 @@ def burn(polygon, polarArray, all_touched=False, N=1000):
     outs = []
     i = 0
     while True:
-        res = area[i] / 10
+        res = area[i] / sf
         transform = rio.transform.from_origin(
             center[1] - N * res, center[0] + N * res, res, res
         )

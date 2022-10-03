@@ -75,8 +75,8 @@ class PolarArray:
         )
         return (
             (np.pi / self.data.shape[0])
-            * np.diff(r**2)[self._rmin :]
-            * self._scale**2
+            * np.diff(r ** 2)[self._rmin :]
+            * self._scale ** 2
         )
 
     def clip(self, radius):
@@ -135,15 +135,15 @@ def from_array(
         crs = outshape.crs
 
     elif transform != "None":
-        rmin /= transform.a
+        pmin = rmin / transform.a
         if rmax is not None:
-            rmax /= transform.a
+            pmax = rmax / transform.a
     else:
         transform = rio.transform.from_origin(0, 0, 1, 1)
 
-    center, rmax = _polar_defaults(arr.shape, center, rmax)
-    blur = _blur_polar(arr, outshape, center=center, rmax=rmax, log=True)
-    data = _warp_polar(blur, outshape, center=center, rmax=rmax, log=True)
+    center, pmax = _polar_defaults(arr.shape, center, pmax)
+    blur = _blur_polar(arr, outshape, center=center, rmax=pmax, log=True)
+    data = _warp_polar(blur, outshape, center=center, rmax=pmax, log=True)
 
     return PolarArray(
         data=data,
@@ -158,7 +158,12 @@ def from_array(
 def to_array(parr):
     data = np.pad(parr.data, ((0, 0), (parr._rmin, 0)))
     return _warp_polar(
-        data, parr.xyshape, parr.center, parr.maxRadius, log=True, inverse=True
+        data,
+        parr.xyshape,
+        parr.center,
+        parr.maxRadius / parr._scale,
+        log=True,
+        inverse=True,
     )
 
 
@@ -167,7 +172,7 @@ def coords(parr):
         parr.data.shape,
         parr.xyshape,
         center=parr.center,
-        rmax=parr.maxRadius,
+        rmax=parr.maxRadius / parr._scale,
         log=True,
     )
     return coords[:, :, parr._rmin :] * parr._scale
@@ -217,7 +222,7 @@ def union(
         transforms = transforms[idx]
 
     for arr, mask, center, transform in zip(
-        arrays, masks, centers, transforms
+        arrays[::-1], masks[::-1], centers[::-1], transforms[::-1]
     ):
         if mask is None:
             mask = np.ones(arr.shape)
@@ -226,17 +231,19 @@ def union(
             mask,
             out.shape,
             center=center,
-            rmax=out.maxRadius,
+            rmax=out.maxRadius * out._scale,
             crs=out.crs,
-            transform=out.transform,
-        ).data
+            transform=transform,
+        )
+        print(domain.radii() / domain._scale)
+        domain = domain.data
         data = from_array(
             arr,
             out.shape,
             center=center,
-            rmax=out.maxRadius,
+            rmax=out.maxRadius * out._scale,
             crs=out.crs,
-            transform=out.transform,
+            transform=transform,
         ).data
         pmask = domain > 0.5
         out.data[pmask] = data[pmask]
@@ -259,20 +266,11 @@ def _polar_defaults(shape, center=None, rmax=None):
     return np.array(center), rmax
 
 
-def _correct_rmax(rmax, size):
-    try:
-        size = size[1]
-    except TypeError:
-        pass
-    return np.power(rmax + 1, size / (size - 0.5))
-
-
 def _radius_coordinate(radius, rmax, size):
     try:
         size = size[1]
     except TypeError:
         pass
-    rmax = _correct_rmax(rmax, size)
     return size * np.log(radius + 1) / np.log(rmax)
 
 
@@ -281,7 +279,6 @@ def _map_coordinates(
 ):
     if inverse:
         center, rmax = _polar_defaults(outshape, center, rmax)
-        rmax = _correct_rmax(rmax, inshape)
 
         y = np.arange(outshape[0])[:, None] - center[0]
         x = np.arange(outshape[1]) - center[1]
@@ -297,7 +294,6 @@ def _map_coordinates(
 
     else:
         center, rmax = _polar_defaults(inshape, center, rmax)
-        rmax = _correct_rmax(rmax, outshape)
 
         theta = np.linspace(0, 2 * np.pi, outshape[0], endpoint=False)[:, None]
         if log:
@@ -312,9 +308,9 @@ def _map_coordinates(
 
 
 def _warp_polar(image, outshape, center, rmax, *, log=True, inverse=False):
-    rmax = _correct_rmax(rmax, image.shape if inverse else outshape)
+    center = np.array(center).astype("float32")
     return cv2.warpPolar(
-        src=image,
+        src=image.astype("float32"),
         dsize=outshape[::-1],  # rho, phi or x y
         center=center[::-1],
         maxRadius=rmax,
