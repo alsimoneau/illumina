@@ -1,4 +1,4 @@
-__version__ = "2.2.4.20221003.20275696"
+__version__ = "2.2.4.20221004.16174253"
 
 from . import (
     AngularPowerDistribution,
@@ -16,5 +16,7 @@ except ModuleNotFoundError:
 
 import importlib.resources
 
-path = importlib.resources.files("illum").as_posix()
+with importlib.resources.path("illum", ".") as path:
+    path = path.as_posix()
+
 del importlib
