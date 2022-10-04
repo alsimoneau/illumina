@@ -7,6 +7,7 @@ SRCS := $(wildcard illum/kernel/*.f)
 BINS := $(SRCS:illum/kernel/%.f=bin/%)
 LIBS := $(wildcard illum/kernel/libs/*.f)
 F2PY := $(wildcard illum/compute/*.f90)
+PYSO := illum/compute/compute.so
 
 .PHONY: all f2py clean
 
@@ -24,7 +25,7 @@ bin/%: illum/kernel/%.f
 	${FORT} ${FLAGS} $^ -o $@
 
 
-f2py: illum/compute/compute.so
+f2py: ${PYSO}
 
 %.so: ${F2PY}
 	f2py3 -c -DF2PY_REPORT_ON_ARRAY_COPY=1 ${F2PY} -m compute
@@ -32,4 +33,4 @@ f2py: illum/compute/compute.so
 
 
 clean:
-	rm ${BINS}
+	rm -f ${BINS} ${PYSO}
