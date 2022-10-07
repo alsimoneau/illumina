@@ -24,7 +24,7 @@ def open_multiple(path):
         else:
             files = os.listdir(name)
             arr, transform = rio.merge.merge(
-                [rio.open(os.path.join(name, s)) for s in files]
+                [rio.open(os.path.join(name, s)) for s in files], nodata=0
             )
             crs = rio.open(os.path.join(name, files[0])).crs
             outs.append((arr[0], transform, crs))
@@ -33,21 +33,23 @@ def open_multiple(path):
 
 def reproject(
     source,
-    center_coord,
-    src_transform=None,
-    src_crs=None,
+    src_transform,
+    src_crs,
     src_nodata=None,
     dst_crs=None,
     dst_nodata=None,
     resampling="average",
 ):
+    shape = source.shape[1::-1]
+    bounds = rio.transform.array_bounds(*shape, src_transform)
+
     transform, w, h = rio.warp.calculate_default_transform(
-        src_crs, dst_crs, *source.shape[1::-1], *source.bounds
+        src_crs, dst_crs, *shape, *bounds
     )
 
     arr = np.zeros((h, w))
     rio.warp.reproject(
-        rio.band(source, 1),
+        source,
         arr,
         src_transform=src_transform,
         src_crs=src_crs,
@@ -65,31 +67,29 @@ def reproject(
     else:
         mask = source != src_nodata
 
+    out_mask = np.zeros((h, w), dtype="uint8")
     rio.warp.reproject(
-        mask,
-        arr,
+        mask.astype("uint8"),
+        out_mask,
         src_transform=src_transform,
         src_crs=src_crs,
-        src_nodata=0,
         dst_transform=transform,
         dst_crs=dst_crs,
-        dst_nodata=0,
         resampling=rio.enums.Resampling.nearest,
     )
 
-    center = rio.transform.rowcol(transform, center_coord)
-    return arr, transform, center, mask
+    return arr, transform, out_mask
 
 
-def burn(polygon, polarArray, all_touched=False, N=1000, sf=5):
+def burn(polygon, polarArray, all_touched=False, N=1000, sf=2):
     radii = polarArray.radii()
     area = polarArray.area()
-    center = polarArray.center_coord
+    center = polarArray.center
 
     outs = []
     i = 0
     while True:
-        res = area[i] / sf
+        res = np.sqrt(area[i] / sf)
         transform = rio.transform.from_origin(
             center[1] - N * res, center[0] + N * res, res, res
         )
@@ -101,7 +101,7 @@ def burn(polygon, polarArray, all_touched=False, N=1000, sf=5):
             all_touched=all_touched,
         )
         mask = np.ones((2 * N, 2 * N), dtype="bool")
-        outs.append((arr, transform, (N, N), mask))
+        outs.append((arr, transform, mask))
 
         try:
             i = np.where(radii > N * res)[0][0]
@@ -130,7 +130,7 @@ def polarize(path, polarArray):
     if os.path.isdir(path):
         # multiple rasters
         srcs = [
-            reproject(*src, center=polarArray.center_coord)
+            reproject(*src, dst_crs=rio.CRS.from_epsg(polarArray.crs))
             for src in open_multiple(path)
         ]
         return PA.union(*zip(*srcs), sort=True, out=polarArray.copy())
@@ -146,9 +146,7 @@ def polarize(path, polarArray):
         return PA.union(*zip(*srcs), out=polarArray.copy())
 
     # raster
-    arr, transform, center = reproject(
-        rst.read(1), rst.transform, rst.crs, center=polarArray.center_coord
-    )
+    arr, transform, center = reproject(rst.read(1), rst.transform, rst.crs)
     return PA.from_array(
         arr,
         polarArray.shape,

@@ -96,7 +96,7 @@ def unwrap(arr, shape, center, origin, scale, lims, res=None):
 
 def polar_blur(arr, shape, center, origin, scale, lims, res=None):
     idx = 1 + np.arange(np.prod(shape)).reshape(shape)
-    w_idx = unwrap(idx, shape, center, origin, scale, lims, res)
+    w_idx = unwrap(idx, arr.shape, center, origin, scale, lims, res)
 
     avg = illum.compute.average_index(
         arr.reshape((-1, np.prod(arr.shape[2:], dtype="uint32"))).T,

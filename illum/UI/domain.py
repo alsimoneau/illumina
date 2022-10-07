@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import warnings
+
 import numpy as np
 import rasterio as rio
 import rasterio.transform
@@ -15,6 +17,7 @@ def domain():
 
     lat = domain["latitude"]
     lon = domain["longitude"]
+    rmin = domain["minRadius"]
     rmax = domain["maxRadius"]
     Na = domain["Nangles"]
 
@@ -27,8 +30,16 @@ def domain():
     )
 
     arr = np.zeros((1, 1))
-    parr = PA.from_array(
-        arr, (Na, Nr), rmax=rmax, crs=epsg, transform=transform
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        parr = PA.from_array(
+            arr,
+            (Na, Nr),
+            center=(y, x),
+            rmin=rmin,
+            rmax=rmax,
+            crs=epsg,
+            transform=transform,
+        )
 
     parr.save("domain")

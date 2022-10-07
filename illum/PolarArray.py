@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from copy import copy
+from copy import deepcopy as copy
 from dataclasses import dataclass
 
 import h5py
@@ -30,10 +30,7 @@ class PolarArray:
                 pass
 
     def __repr__(self):
-        return (
-            f"PolarArray<scale={self._scale},"
-            f"[{self.shape[0]},{self.minRadius}:{self.maxRadius}]>"
-        )
+        return f"PolarArray<{self.shape},[{self.minRadius}:{self.maxRadius}]>"
 
     @property
     def shape(self):
@@ -62,11 +59,7 @@ class PolarArray:
 
     def area(self):
         r = np.geomspace(self.minRadius, self.maxRadius, self.shape[1] + 1)
-        return (
-            (np.pi / self.shape[0])
-            * np.diff(r ** 2)
-            * np.abs(np.prod(self._scale))
-        )
+        return (np.pi / self.shape[0]) * np.diff(r**2)
 
     def copy(self):
         return copy(self)
@@ -103,7 +96,7 @@ def from_array(
     outshape,
     *,
     center=None,
-    rmin=0,
+    rmin=None,
     rmax=None,
     crs="None",
     transform=None,
@@ -151,30 +144,38 @@ def union(
     arrays,
     /,
     transforms=None,
-    centers=None,
     masks=None,
     *,
     sort=False,
     out=None,
     shape=None,
+    minRadius=None,
     maxRadius=None,
+    center=None,
     crs=None,
 ):
-    if not (transforms is None and centers is None) and (
-        len(arrays) != len(transforms) != len(centers)
-    ):
+    if transforms is not None and (len(arrays) != len(transforms)):
         raise ValueError(
-            "'arrays', 'transforms' and 'centers' must have the same length."
+            "'arrays' and 'transforms' must have the same length."
         )
 
     if out is None:
-        if not (shape is None or maxRadius is None or crs is None):
+        if not (
+            shape is None or maxRadius is None or crs is None or center is None
+        ):
             raise ValueError(
-                "'shape', 'maxRadius' and 'crs' must be given when 'out' is"
-                " not provided."
+                "'shape', 'minRadius', 'maxRadius', 'crs' and 'center' must be"
+                " given when 'out' is not provided."
             )
         else:
-            out = from_array([[0]], shape, rmax=maxRadius, crs=crs)
+            out = from_array(
+                [[0]],
+                shape,
+                rmin=minRadius,
+                rmax=maxRadius,
+                crs=crs,
+                center=center,
+            )
     else:
         if not isinstance(out, PolarArray):
             raise TypeError("'out' must be a PolarArray.")
@@ -184,33 +185,36 @@ def union(
 
     if sort:
         areas = [np.abs(t.determinant) for t in transforms]
-        idx = np.argsort(areas)
+        idx = np.argsort(areas)[::-1]
+    else:
+        idx = np.arange(len(arrays))[::-1]
 
-        arrays = arrays[idx]
-        masks = masks[idx]
-        transforms = transforms[idx]
+    print(type(arrays))
 
-    for arr, mask, center, transform in zip(
-        arrays[::-1], masks[::-1], centers[::-1], transforms[::-1]
-    ):
+    for i in idx:
+        arr = arrays[i]
+        mask = masks[i]
+        transform = transforms[i]
+
         if mask is None:
             mask = np.ones(arr.shape)
 
         domain = from_array(
             mask,
             out.shape,
-            center=center,
-            rmax=out.maxRadius * out._scale,
+            center=out.center,
+            rmin=out.minRadius,
+            rmax=out.maxRadius,
             crs=out.crs,
             transform=transform,
         )
-        print(domain.radii() / domain._scale)
         domain = domain.data
         data = from_array(
             arr,
             out.shape,
-            center=center,
-            rmax=out.maxRadius * out._scale,
+            center=out.center,
+            rmin=out.minRadius,
+            rmax=out.maxRadius,
             crs=out.crs,
             transform=transform,
         ).data
