@@ -28,7 +28,7 @@ bin/%: illum/kernel/%.f
 f2py: ${PYSO}
 
 %.so: ${F2PY}
-	f2py3 -c -DF2PY_REPORT_ON_ARRAY_COPY=1 ${F2PY} -m compute
+	f2py3 -c ${F2PY} -m compute
 	@mv compute.*.so $@
 
 

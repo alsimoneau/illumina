@@ -1,4 +1,4 @@
-__version__ = "2.2.4.20221007.01285107"
+__version__ = "2.2.4.20221007.21135760"
 
 from . import (
     AngularPowerDistribution,

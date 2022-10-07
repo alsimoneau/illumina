@@ -45,7 +45,7 @@ def pol2idx(coords, shape, lims):
     return i, j
 
 
-def wrap(arr, shape, center, origin, scale, lims, res=None):
+def wrap(arr, shape, center, origin, scale, lims, res=None, order=1):
     """
     Wraps data in a polar array.
 
@@ -64,12 +64,14 @@ def wrap(arr, shape, center, origin, scale, lims, res=None):
         res = shape
     idx = np.indices(shape, sparse=True)
     coords = pol2cart(idx2pol(idx, res, lims), center)
-    idx = np.round(cart2idx(coords, origin, scale))
+    idx = cart2idx(coords, origin, scale)
+    if order == 0:
+        idx = np.round(idx)
 
-    return map_coordinates(arr, idx, order=0)
+    return map_coordinates(arr, idx, order=order)
 
 
-def unwrap(arr, shape, center, origin, scale, lims, res=None):
+def unwrap(arr, shape, center, origin, scale, lims, res=None, order=1):
     """
     Unwraps a polar array.
 
@@ -88,15 +90,17 @@ def unwrap(arr, shape, center, origin, scale, lims, res=None):
         res = arr.shape
     idx = np.indices(shape, sparse=True)
     coords = cart2pol(idx2cart(idx, origin, scale), center)
-    idx = np.round(pol2idx(coords, res, lims))
+    idx = pol2idx(coords, res, lims)
+    if order == 0:
+        idx = np.round(idx)
 
     arr = np.vstack((arr, arr[0:1]))  # Polar cycle
-    return map_coordinates(arr, idx, order=0)
+    return map_coordinates(arr, idx, order=order)
 
 
 def polar_blur(arr, shape, center, origin, scale, lims, res=None):
     idx = 1 + np.arange(np.prod(shape)).reshape(shape)
-    w_idx = unwrap(idx, arr.shape, center, origin, scale, lims, res)
+    w_idx = unwrap(idx, arr.shape, center, origin, scale, lims, res, order=0)
 
     avg = illum.compute.average_index(
         arr.reshape((-1, np.prod(arr.shape[2:], dtype="uint32"))).T,

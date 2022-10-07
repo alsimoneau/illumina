@@ -182,8 +182,8 @@ def inputs():
 
 @main.command(name="warp")
 @click.argument("output_name", required=False)
-@click.argument("infiles", required=False, nargs=-1)
-def warp(output_name=None, infiles=[]):
+@click.argument("infiles", required=False)
+def warp(output_name=None, infiles=None):
     """Warps the satellite imagery.
 
     Warps the satellite imagery based on the domain defined in

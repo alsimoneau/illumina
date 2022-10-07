@@ -21,6 +21,8 @@ class PolarArray:
     transform: object = None
 
     def __post_init__(self):
+        self.crs = int(self.crs)
+
         if self.transform is None:
             self.transform = rio.transform.IDENTITY
         else:
@@ -53,13 +55,13 @@ class PolarArray:
         return illum.utils.cart2idx(self.center, self._origin, self._scale)
 
     def radii(self):
-        return np.geomspace(
-            self.minRadius, self.maxRadius, 2 * self.shape[1] + 1
-        )[1::2]
+        return radii(self)
 
     def area(self):
-        r = np.geomspace(self.minRadius, self.maxRadius, self.shape[1] + 1)
-        return (np.pi / self.shape[0]) * np.diff(r**2)
+        return area(self)
+
+    def bounds(self):
+        return bounds(self)
 
     def copy(self):
         return copy(self)
@@ -88,6 +90,26 @@ def save(filename, parr):
             attrs["transform"] = tuple(attrs["transform"])[:-3]
         attrs = {k: v for k, v in attrs.items() if k[0] != "_" and k != "data"}
         f.attrs.update(attrs)
+
+
+def radii(parr):
+    return np.geomspace(parr.minRadius, parr.maxRadius, 2 * parr.shape[1] + 1)[
+        1::2
+    ]
+
+
+def area(parr):
+    r = np.geomspace(parr.minRadius, parr.maxRadius, parr.shape[1] + 1)
+    return (np.pi / parr.shape[0]) * np.diff(r**2)
+
+
+def bounds(parr):
+    return (
+        parr.center[1] - parr.maxRadius,
+        parr.center[0] - parr.maxRadius,
+        parr.center[1] + parr.maxRadius,
+        parr.center[0] + parr.maxRadius,
+    )
 
 
 def from_array(
@@ -184,17 +206,20 @@ def union(
         masks = [None] * len(arrays)
 
     if sort:
-        areas = [np.abs(t.determinant) for t in transforms]
+        areas = [
+            np.nan if t is None else np.abs(t.determinant) for t in transforms
+        ]
         idx = np.argsort(areas)[::-1]
     else:
         idx = np.arange(len(arrays))[::-1]
-
-    print(type(arrays))
 
     for i in idx:
         arr = arrays[i]
         mask = masks[i]
         transform = transforms[i]
+
+        if arr is None:
+            continue
 
         if mask is None:
             mask = np.ones(arr.shape)

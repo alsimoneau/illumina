@@ -35,23 +35,29 @@ def reproject(
     source,
     src_transform,
     src_crs,
+    bounds,
     src_nodata=None,
     dst_crs=None,
     dst_nodata=None,
     resampling="average",
 ):
-    shape = source.shape[1::-1]
-    bounds = rio.transform.array_bounds(*shape, src_transform)
-
-    transform, w, h = rio.warp.calculate_default_transform(
-        src_crs, dst_crs, *shape, *bounds
+    bounds = rio.warp.transform_bounds(dst_crs, src_crs, *bounds)
+    window = (
+        rio.windows.from_bounds(*bounds, src_transform)
+        .round_offsets()
+        .round_lengths()
     )
+    transform, w, h = rio.warp.calculate_default_transform(
+        src_crs, dst_crs, window.width, window.height, *bounds
+    )
+    if not rio.windows.intersect(window, rio.windows.get_data_window(source)):
+        return None, None, None
 
     arr = np.zeros((h, w))
     rio.warp.reproject(
-        source,
+        source[window.toslices()],
         arr,
-        src_transform=src_transform,
+        src_transform=rio.windows.transform(window, src_transform),
         src_crs=src_crs,
         src_nodata=src_nodata,
         dst_transform=transform,
@@ -126,33 +132,38 @@ def process_water(filename, shape, transform, crs):
     return mask.difference(poly)
 
 
-def polarize(path, polarArray):
+def polarize(path, parr):
     if os.path.isdir(path):
         # multiple rasters
         srcs = [
-            reproject(*src, dst_crs=rio.CRS.from_epsg(polarArray.crs))
+            reproject(*src, bounds=parr.bounds(), dst_crs=parr.crs)
             for src in open_multiple(path)
         ]
-        return PA.union(*zip(*srcs), sort=True, out=polarArray.copy())
+        return PA.union(*zip(*srcs), sort=True, out=parr.copy())
 
     try:
         rst = rio.open(path)
     except rio.RasterioIOError:
         # vector
-        polygon = process_water(
-            path, polarArray.xyshape, polarArray.transform, polarArray.crs
-        )
-        srcs = burn(polygon, polarArray, all_touched=True)
-        return PA.union(*zip(*srcs), out=polarArray.copy())
+        polygon = process_water(path, parr.xyshape, parr.transform, parr.crs)
+        srcs = burn(polygon, parr, all_touched=True)
+        return PA.union(*zip(*srcs), out=parr.copy())
 
     # raster
-    arr, transform, center = reproject(rst.read(1), rst.transform, rst.crs)
+    arr, transform, center = reproject(
+        rst.read(1),
+        rst.transform,
+        rst.crs,
+        bounds=parr.bounds(),
+        dst_crs=parr.crs,
+    )
     return PA.from_array(
         arr,
-        polarArray.shape,
-        center=center,
-        rmax=polarArray.maxRadius,
-        crs=polarArray.crs,
+        parr.shape,
+        center=parr.center,
+        rmin=parr.minRadius,
+        rmax=parr.maxRadius,
+        crs=parr.crs,
         transform=transform,
     )
 
@@ -200,8 +211,8 @@ def convert_correction_data(srcfiles):
         )
 
 
-def warp(output_name=None, infiles=[]):
-    if output_name is not None and len(infiles) == 0:
+def warp(output_name=None, infiles=None):
+    if output_name is not None and infiles is None:
         print(
             "ERROR: If an output name is given, files to process must also be"
             " provided."
@@ -212,7 +223,7 @@ def warp(output_name=None, infiles=[]):
 
     if len(infiles):
         polarize(infiles, polarArray).save(output_name)
-
+        return
     else:
         if os.path.isfile("GHSL.zip"):
             print("Found GHSL.zip file, processing.")
