@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-from glob import glob
 
 import geopandas as gpd
 import numpy as np
@@ -168,49 +167,6 @@ def polarize(path, parr):
     )
 
 
-def correction_filenames(srcfiles):
-    try:
-        return [
-            fname.replace(fname.split("_")[3], "zero_correction").replace(
-                "avg_rade9h.tif", "csv"
-            )
-            for fname in srcfiles
-        ]
-    except IndexError:
-        return [fname.replace("avg_rade9h.tif", "csv") for fname in srcfiles]
-
-
-def convert_correction_data(srcfiles):
-    corr_files = np.unique(correction_filenames(srcfiles))
-
-    data = np.nanmean(
-        [np.loadtxt(fname, delimiter=",") for fname in corr_files], 0
-    )
-    data[np.isnan(data)] = -9999
-
-    with open("VIIRS-DNB/correction.asc", "w") as f:
-        f.write(
-            "NCOLS 72\n"
-            "NROWS 28\n"
-            "XLLCORNER -180\n"
-            "YLLCORNER -65\n"
-            "CELLSIZE 5\n"
-            "NODATA_VALUE -9999\n"
-        )
-        np.savetxt(f, data)
-
-    with open("VIIRS-DNB/correction.prj", "w") as f:
-        f.write(
-            "GEOGCS["
-            '"GCS_WGS_1984",'
-            'DATUM["D_WGS_1984",'
-            'SPHEROID["WGS_1984",6378137,298.257223563]],'
-            'PRIMEM["Greenwich",0],'
-            'UNIT["Degree",0.017453292519943295]'
-            "]"
-        )
-
-
 def warp(output_name=None, infiles=None):
     if output_name is not None and infiles is None:
         print(
@@ -220,100 +176,6 @@ def warp(output_name=None, infiles=None):
         raise SystemExit
 
     polarArray = PA.load("domain.parr")
-
-    if len(infiles):
-        polarize(infiles, polarArray).save(output_name)
-        return
-    else:
-        if os.path.isfile("GHSL.zip"):
-            print("Found GHSL.zip file, processing.")
-            data = [
-                warp_files(
-                    ["/vsizip/GHSL.zip/GHSL.tif"], params["srs"], extent
-                )
-                for extent in params["extents"]
-            ]
-            save(params, data, "obstf")
-        else:
-            print("WARNING: Could not find GHSL.zip file.")
-            print("If you don't intend to use it, you can safely ignore this.")
-
-        files = sorted(glob("SRTM/*.hgt"))
-        if not len(files):
-            print("ERROR: Could not find SRTM file(s), aborting.")
-            raise SystemExit
-        print("    ".join(map(str, files)))
-        data = [
-            warp_files(files, params["srs"], extent)
-            for extent in params["extents"]
-        ]
-        save(params, data, "srtm")
-
-        files = sorted(glob("VIIRS-DNB/*.tif"))
-        if not len(files):
-            print("WARNING: Did not find VIIRS file(s).")
-            print(
-                "If you don't intend to use zones inventory, you can safely"
-                " ignore this."
-            )
-        else:
-            if not os.path.isfile("hydropolys.zip"):
-                print("ERROR: Could not find hydropolys.zip file, aborting.")
-                raise SystemExit
-
-            print("    ".join(map(str, files)))
-
-            correction = np.all(
-                [
-                    os.path.isfile(fname)
-                    for fname in correction_filenames(files)
-                ]
-            )
-            if not correction:
-                print(
-                    "WARNING: Could not find correction files that matched the"
-                    " VIIRS files."
-                )
-                print(
-                    "If you indend to use it, please validate that you have"
-                    " the right ones."
-                )
-                print(
-                    "Note that only the VCMCFG dataset from VIIRS can be"
-                    " corrected."
-                )
-
-            data = [
-                warp_files(files, params["srs"], extent)
-                for extent in params["extents"]
-            ]
-
-            if correction:
-                convert_correction_data(files)
-                corr = [
-                    warp_files(
-                        ["VIIRS-DNB/correction.asc"], params["srs"], extent
-                    )
-                    for extent in params["extents"]
-                ]
-                save(params, corr, "VIIRS_background")
-                for i, c in enumerate(corr):
-                    data[i] -= c
-
-            save(params, data, "stable_lights")
-
-            prep_shp(
-                "hydropolys.zip/hydropolys.shp",
-                params["srs"],
-                params["extents"][-1],
-            )
-            data = [
-                rasterize("tmp_merge.shp", params["srs"], extent)
-                for extent in params["extents"]
-            ]
-            save(params, data, "water_mask")
-
-        for fname in glob("tmp_*"):
-            os.remove(fname)
+    polarize(infiles, polarArray).save(output_name)
 
     print("Done.")
