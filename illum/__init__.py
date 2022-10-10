@@ -1,20 +1,16 @@
-__version__ = "2.2.4.20221010.14562283"
+__version__ = "2.2.4.20221010.16380033"
+
+import importlib.resources
 
 from . import (
     AngularPowerDistribution,
     MultiScaleData,
     PolarArray,
     SpectralPowerDistribution,
+    compute,
     utils,
 )
 from .UI import *
-
-try:
-    from .compute import compute
-except ModuleNotFoundError:
-    print("Couldn't import Fortran functions")
-
-import importlib.resources
 
 with importlib.resources.path("illum", ".") as path:
     path = path.as_posix()

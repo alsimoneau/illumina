@@ -21,8 +21,7 @@ SUBROUTINE average_index(arr, indices, index_max, average, n, m)
     END ASSOCIATE
   END DO
 
-  acc(:, 0) = 0
-  DO i = 1, index_max
+  DO i = 0, index_max
     acc(:, i) = acc(:, i) / weight(i)
   END DO
 
