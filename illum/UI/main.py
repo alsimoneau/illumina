@@ -71,6 +71,7 @@ def alternate(name, zones, lights):
     will be placed in a folder named `Inputs_NAME`.
     """
     illum.alternate(name, zones, lights)
+    click.echo("Done.")
 
 
 @main.command(name="batches")
@@ -102,6 +103,7 @@ def batches(input_path, compact, batch_size, batch_name=None):
     It overwrites the one defined in 'inputs_params.in' is given.
     """
     illum.batches(input_path, compact, batch_size, batch_name)
+    click.echo("Done.")
 
 
 @main.command(name="domain")
@@ -113,6 +115,7 @@ def domain():
     Outputs the definition in 'domain.ini'.
     """
     illum.domain()
+    click.echo("Done.")
 
 
 @main.command(name="extract")
@@ -172,30 +175,32 @@ def failed(executable):
 def init():
     """Initialize an execution folder."""
     illum.init()
+    click.echo("Done.")
 
 
 @main.command(name="inputs")
 def inputs():
     """Prepares the executions inputs."""
     illum.inputs()
+    click.echo("Done.")
 
 
 @main.command(name="warp")
-@click.argument("output_name", required=False)
-@click.argument("infiles", required=False)
-def warp(output_name=None, infiles=None):
-    """Warps the satellite imagery.
+@click.argument("output_name")
+@click.argument("target", type=click.Path(exists=True))
+@click.option(
+    "-d",
+    "--domain",
+    default="domain.parr",
+    help="Reference polar array or parameter file.",
+)
+def warp(output_name, target, domain):
+    """Warps georeferenced data.
 
-    Warps the satellite imagery based on the domain defined in
-    'domain.ini'.
+    Will warp rasters and burn polygons.
 
-    \b
-    Requires the folowing data:
-        Unzipped SRTM data in a folder named 'SRTM'.
-        If used, VIIRS data in a volder named 'VIIRS-DNB'.
-        If VIIRS data is used, the 'hydropolys.zip' file.
-
-    Can also be used on specific files, in wich case an output name and a list
-    of files to process must be given (the use of bash wildcards is encouraged)
+    'target' can be a file or a folder containing multiple files at different
+    scales or folders of tiles.
     """
-    illum.warp(output_name, infiles)
+    illum.warp(target, domain, output_name)
+    click.echo("Done.")

@@ -10,6 +10,7 @@ import rasterio.merge
 import rasterio.warp
 import shapely.geometry
 
+import illum
 import illum.PolarArray as PA
 
 
@@ -167,15 +168,13 @@ def polarize(path, parr):
     )
 
 
-def warp(output_name=None, infiles=None):
-    if output_name is not None and infiles is None:
-        print(
-            "ERROR: If an output name is given, files to process must also be"
-            " provided."
-        )
-        raise SystemExit
-
-    polarArray = PA.load("domain.parr")
-    polarize(infiles, polarArray).save(output_name)
-
-    print("Done.")
+def warp(infiles, domain="domain.parr", output_name=None):
+    polarArray = (
+        PA.load(domain)
+        if domain.rpartition(".")[2] == "parr"
+        else illum.domain(domain)
+    )
+    parr = polarize(infiles, polarArray)
+    if output_name is not None:
+        parr.save(output_name)
+    return parr

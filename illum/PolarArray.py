@@ -91,6 +91,8 @@ def save(filename, parr):
         attrs = {k: v for k, v in attrs.items() if k[0] != "_" and k != "data"}
         f.attrs.update(attrs)
 
+    return parr
+
 
 def radii(parr):
     return np.geomspace(parr.minRadius, parr.maxRadius, 2 * parr.shape[1] + 1)[

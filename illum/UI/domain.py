@@ -11,9 +11,14 @@ import illum.PolarArray as PA
 import illum.utils as u
 
 
-def domain():
-    with open("domain_params.in") as f:
-        domain = yaml.safe_load(f)
+def domain(params="domain_params.in"):
+    if type(params) == str:
+        with open(params) as f:
+            domain = yaml.safe_load(f)
+    elif type(params) == dict:
+        domain = params
+    else:
+        raise TypeError("'params' must be a filename or a dictionnary.")
 
     lat = domain["latitude"]
     lon = domain["longitude"]
@@ -42,4 +47,4 @@ def domain():
             transform=transform,
         )
 
-    parr.save("domain")
+    return parr.save("domain")
