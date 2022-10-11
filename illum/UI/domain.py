@@ -28,7 +28,7 @@ def domain(params="domain_params.in"):
 
     epsg = u.estimate_utm_epsg(lon, lat)
 
-    Nr = round(Na * np.log(rmax) / 2 / np.pi)
+    Nr = round(np.log(rmax / rmin) * np.arcsinh(np.pi / Na) / 2)
     x, y = u.transform(t_crs=epsg)(lon, lat)
     transform = rio.transform.from_origin(
         x - rmax, y + rmax, 2 * rmax, 2 * rmax

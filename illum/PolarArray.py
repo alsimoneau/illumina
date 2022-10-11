@@ -95,13 +95,11 @@ def save(filename, parr):
 
 
 def radii(parr):
-    return np.geomspace(parr.minRadius, parr.maxRadius, 2 * parr.shape[1] + 1)[
-        1::2
-    ]
+    return np.geomspace(*parr._lims, 2 * parr.shape[1] + 1)[1::2]
 
 
 def area(parr):
-    r = np.geomspace(parr.minRadius, parr.maxRadius, parr.shape[1] + 1)
+    r = np.geomspace(*parr._lims, parr.shape[1] + 1)
     return (np.pi / parr.shape[0]) * np.diff(r**2)
 
 
