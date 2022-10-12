@@ -14,20 +14,41 @@ import illum
 import illum.PolarArray as PA
 
 
+def merge(name):
+    files = os.listdir(name)
+    arr, transform = rio.merge.merge(
+        [rio.open(os.path.join(name, s)) for s in files], nodata=0
+    )
+    crs = rio.open(os.path.join(name, files[0])).crs
+    return arr[0], transform, crs
+
+
 def open_multiple(path):
     outs = []
+
+    A = None
+    for name in os.listdir(path):
+        name = os.path.join(path, name)
+        if os.path.isfile(name):
+            rst = rio.open(name)
+            if A is None:
+                A = rst.transform.determinant
+                continue
+            if A != rst.transform.determinant:
+                break
+        else:
+            break
+    else:
+        outs.append(merge(name))
+        return outs
+
     for name in os.listdir(path):
         name = os.path.join(path, name)
         if os.path.isfile(name):
             rst = rio.open(name)
             outs.append((rst.read(1), rst.transform, rst.crs))
         else:
-            files = os.listdir(name)
-            arr, transform = rio.merge.merge(
-                [rio.open(os.path.join(name, s)) for s in files], nodata=0
-            )
-            crs = rio.open(os.path.join(name, files[0])).crs
-            outs.append((arr[0], transform, crs))
+            outs.append(merge(name))
     return outs
 
 
