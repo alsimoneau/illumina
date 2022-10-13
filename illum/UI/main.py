@@ -50,7 +50,20 @@ def main():
     pass  # Entry point
 
 
-@main.command(name="alternate")
+@main.command()
+@click.argument("subcommand")
+@click.pass_context
+def help(ctx, subcommand):
+    "Display detailled usage information of a command."
+    ctx.info_name = subcommand
+    subcommand_obj = main.get_command(ctx, subcommand)
+    if subcommand_obj is None:
+        click.echo("I don't know that command.")
+    else:
+        click.echo(subcommand_obj.get_help(ctx))
+
+
+@main.command()
 @click.argument("name")
 @click.option(
     "-z",
@@ -74,7 +87,7 @@ def alternate(name, zones, lights):
     click.echo("Done.")
 
 
-@main.command(name="batches")
+@main.command()
 @click.argument("input_path", type=click.Path(exists=True), default=".")
 @click.argument("batch_name", required=False)
 @click.option(
@@ -106,7 +119,7 @@ def batches(input_path, compact, batch_size, batch_name=None):
     click.echo("Done.")
 
 
-@main.command(name="domain")
+@main.command()
 def domain():
     """Defines the simulation domain.
 
@@ -118,7 +131,7 @@ def domain():
     click.echo("Done.")
 
 
-@main.command(name="extract")
+@main.command()
 @click.argument("exec_dir", default=".", type=click.Path(exists=True))
 @click.option(
     "-c",
@@ -159,7 +172,7 @@ def extract(exec_dir, contrib, params, full, profile):
     illum.extract(exec_dir, contrib, params, full, profile)
 
 
-@main.command(name="failed")
+@main.command()
 @click.option(
     "-e",
     "--executable",
@@ -171,21 +184,21 @@ def failed(executable):
     illum.failed(executable)
 
 
-@main.command(name="init")
+@main.command()
 def init():
     """Initialize an execution folder."""
     illum.init()
     click.echo("Done.")
 
 
-@main.command(name="inputs")
+@main.command()
 def inputs():
     """Prepares the executions inputs."""
     illum.inputs()
     click.echo("Done.")
 
 
-@main.command(name="warp")
+@main.command()
 @click.argument("output_name")
 @click.argument("target", type=click.Path(exists=True))
 @click.option(
