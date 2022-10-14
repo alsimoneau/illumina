@@ -12,9 +12,12 @@ from ._coords import (
 from ._fctem import LOP_norm, SPD_norm, load_lop, load_spct, spct_norm
 from ._geo import (
     compute_ground_type,
+    dist_ang,
+    download_roads,
     estimate_utm_epsg,
+    fishnet,
     geotransform,
-    roads_analysis,
+    rasterize_roads,
     transform,
 )
 from ._graph import plot_allsky

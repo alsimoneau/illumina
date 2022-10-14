@@ -16,9 +16,6 @@ import rasterio.features
 import scipy.ndimage
 import shapely.geometry
 import shapely.ops
-from progressbar import progressbar
-
-import illum.utils as u
 
 
 def transform(s_crs=4326, t_crs=4326):
@@ -115,49 +112,6 @@ def dist_ang(roads, xres, yres):
     )
     Y, X = np.indices(roads.shape, sparse=True)
     return dist, np.arctan2((i[1] - X) * xres, (i[0] - Y) * yres)
-
-
-def roads_analysis(domain, res=1, xsize=10000, ysize=10000, buffer=200):
-    print("Analyzing domain.")
-    rst = rasterio.open(domain)
-    coords = rasterio.transform.xy(rst.transform, *np.where(rst.read(1)))
-    epsg = estimate_utm_epsg(*coords)
-    print(f"Using epsg:{epsg} projection.")
-    bounds = shapely.geometry.MultiPoint(
-        tuple(zip(*transform(t_crs=epsg)(*coords)))
-    ).minimum_rotated_rectangle
-
-    print("Splitting domain.")
-    res = 1
-    buffer = ceil(200 / res) * res
-    tiles, shape = fishnet(bounds, res=res, xsize=10000, ysize=10000)
-    ny, nx = shape
-    nb = int(buffer // res)
-    mask = slice(nb, -nb), slice(nb, -nb)
-    Ty, Tx = np.max(list(tiles.keys()), 0) + 1
-    print(f"Domain split in {len(tiles)} ({Ty}x{Tx})")
-
-    for idx, tile in progressbar(tiles.items(), redirect_stdout=True):
-        y, x = idx
-        box, geo = tile
-        boxb = box.buffer(buffer, join_style=2)
-        geob = geo.buffer(buffer, join_style=2)
-
-        print(f"Processing tile {idx}.")
-        # print("Downloading road network.")
-        network = download_roads(geob, epsg)
-        # print("Rasterizing road network.")
-        burned = rasterize_roads(network, boxb, epsg, res, res)
-
-        # print("Computing distance and angle to roads.")
-        dist, ang = dist_ang(burned, res, res)
-
-        profile = dict(
-            crs=pyproj.CRS.from_epsg(epsg),
-            transform=rasterio.transform.from_bounds(*box.bounds, nx, ny),
-        )
-        u.save_geotiff(f"road_distance_x{x}_y{y}.tif", dist[mask], **profile)
-        u.save_geotiff(f"angle_to_road_x{x}_y{y}.tif", ang[mask], **profile)
 
 
 def compute_ground_type(dist, bounds):

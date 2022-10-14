@@ -199,6 +199,41 @@ def inputs():
 
 
 @main.command()
+@click.option(
+    "-r",
+    "--resolution",
+    default=1.0,
+    show_default=True,
+    help="Output grid resolution [m]",
+)
+@click.option(
+    "-x", "--xsize", default=10000.0, show_default=True, help="Tile x size [m]"
+)
+@click.option(
+    "-y", "--ysize", default=10000.0, show_default=True, help="Tile y size [m]"
+)
+@click.option(
+    "-b",
+    "--buffer",
+    default=200.0,
+    show_default=True,
+    help="Compute buffer [m]",
+)
+@click.option(
+    "--crs",
+    type=int,
+    help=(
+        "EPSG code of the projection to use. Determined automatically if not"
+        " provided."
+    ),
+)
+def roads(domain, resolution, xsize, ysize, buffer, crs):
+    "Performs road analysis on the specified domain."
+    illum.roads(domain, resolution, xsize, ysize, buffer, crs)
+    click.echo("Done.")
+
+
+@main.command()
 @click.argument("output_name")
 @click.argument("target", type=click.Path(exists=True))
 @click.option(

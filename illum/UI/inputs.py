@@ -32,56 +32,16 @@ def inputs():
     with open("inputs_params.in") as f:
         params = yaml.safe_load(f)
 
-    if (
-        params["zones_inventory"] is not None
-        and params["lamps_inventory"] is not None
-    ):
-        print("Validating the inventories.")
-
-        lamps = np.loadtxt(params["lamps_inventory"], usecols=[0, 1])
-        zones = np.loadtxt(params["zones_inventory"], usecols=[0, 1, 2])
-        zonData = pt.parse_inventory(params["zones_inventory"], 7)
-
-        hasLights = [sum(x[0] for x in z) != 0 for z in zonData]
-
-        circles = MSD.from_domain("domain.ini")
-        for dat, b in zip(zones, hasLights):
-            circles.set_circle((dat[0], dat[1]), dat[2] * 1000, b)
-
-        zones_ind = MSD.from_domain("domain.ini")
-        for i, dat in enumerate(zones, 1):
-            zones_ind.set_circle((dat[0], dat[1]), dat[2] * 1000, i)
-
-        failed = set()
-        for j, coords in enumerate(lamps, 1):
-            for i in range(len(circles)):
-                try:
-                    col, row = circles._get_col_row(coords, i)
-                    if circles[i][row, col] and col >= 0 and row >= 0:
-                        zon_ind = zones_ind[i][row, col]
-                        failed.add((j, coords[0], coords[1], zon_ind))
-                except IndexError:
-                    continue
-
-        if len(failed):
-            for i, lat, lon, zon_ind in sorted(failed):
-                print(
-                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null"
-                    " zone #%d" % (i, lat, lon, zon_ind)
-                )
-            raise SystemExit()
-
     out_name = params["exp_name"]
 
     if params["road_orientation"]:
         print("Computing road orientation (Can be slow for large domains)")
-        from illum.street_orientation import street_orientation
 
         with open("domain.ini") as f:
             domain_params = yaml.safe_load(f)
         srs = domain_params["srs"]
         lats, lons = MSD.from_domain("domain.ini").get_obs_pos()
-        bearings = street_orientation(lats, lons, srs)
+        bearings = illum.utils.street_orientation(lats, lons, srs)
         np.savetxt(dir_name + "/brng.lst", bearings, fmt="%g")
 
     print("Loading photometry files.")
@@ -175,7 +135,7 @@ def inputs():
         dir_name,
     )
 
-    OPAC(x)
+    illum.utils.OPAC(x)
 
     shutil.copy("srtm.hdf5", dir_name)
 
@@ -188,7 +148,7 @@ def inputs():
         n_inv = 7
         shutil.rmtree(dir_name, True)
         os.makedirs(dir_name)
-        from_zones(
+        illum.utils.from_zones(
             dir_name,
             inv_name,
             n_inv,
@@ -209,7 +169,7 @@ def inputs():
         dir_name = ".Inputs_lamps/"
         shutil.rmtree(dir_name, True)
         os.makedirs(dir_name)
-        from_lamps(
+        illum.utils.from_lamps(
             dir_name,
             n_bins,
             params,
