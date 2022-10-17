@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 from math import ceil
 
 import numpy as np
@@ -33,6 +34,8 @@ def roads(domain, res=1, xsize=10000, ysize=10000, buffer=200, epsg=None):
     Ty, Tx = np.max(list(tiles.keys()), 0) + 1
     print(f"Domain split in {len(tiles)} ({Ty}x{Tx})")
 
+    os.makedirs("road_distance", exists_ok=True)
+    os.makedirs("angle_to_road", exists_ok=True)
     for idx, tile in progressbar(tiles.items(), redirect_stdout=True):
         y, x = idx
         box, geo = tile
@@ -52,5 +55,5 @@ def roads(domain, res=1, xsize=10000, ysize=10000, buffer=200, epsg=None):
             crs=pyproj.CRS.from_epsg(epsg),
             transform=rasterio.transform.from_bounds(*box.bounds, nx, ny),
         )
-        u.save_geotiff(f"road_distance_x{x}_y{y}.tif", dist[mask], **profile)
-        u.save_geotiff(f"angle_to_road_x{x}_y{y}.tif", ang[mask], **profile)
+        u.save_geotiff(f"road_distance/x{x}_y{y}.tif", dist[mask], **profile)
+        u.save_geotiff(f"angle_to_road/x{x}_y{y}.tif", ang[mask], **profile)

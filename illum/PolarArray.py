@@ -63,6 +63,12 @@ class PolarArray:
     def bounds(self):
         return bounds(self)
 
+    def coords(self):
+        return coords(self)
+
+    def xy(self):
+        return xy(self)
+
     def copy(self):
         return copy(self)
 
@@ -110,6 +116,16 @@ def bounds(parr):
         parr.center[1] + parr.maxRadius,
         parr.center[0] + parr.maxRadius,
     )
+
+
+def coords(parr):
+    r = radii(parr)
+    t = np.linspace(0, 2 * np.pi, parr.shape[0], endpoint=False)
+    return np.meshgrid(t, r, indexing="ij")
+
+
+def xy(parr):
+    return illum.utils.pol2cart(coords(parr))[::-1]
 
 
 def from_array(
