@@ -72,6 +72,9 @@ class PolarArray:
     def copy(self):
         return copy(self)
 
+    def set_circle(self, *args, **kwargs):
+        return set_circle(self, *args, **kwargs)
+
     def to_array(self):
         return to_array(self)
 
@@ -126,6 +129,28 @@ def coords(parr):
 
 def xy(parr):
     return illum.utils.pol2cart(coords(parr))[::-1]
+
+
+def set_circle(parr, /, coord, radius, value, *, units="deg"):
+    if units not in ["deg", "cart", "xy", "polar"]:
+        raise ValueError(f"Unit type '{units}' unrecognized.")
+
+    coord = coord[::-1]
+    if units == "deg":
+        coord = illum.utils.transform(t_crs=parr.crs)(*coord)
+        units = "cart"
+    if units == "polar":
+        coord = illum.utils.pol2cart(coord, parr.center)
+        units = "cart"
+    if units == "cart":
+        coord = coord[0] - parr.center[0], coord[1] - parr.center[1]
+        units = "xy"
+
+    assert units == "xy"
+
+    x, y = parr.xy()
+
+    parr.data[(x - coord[0]) ** 2 + (y - coord[1]) ** 2 < radius**2] = value
 
 
 def from_array(
