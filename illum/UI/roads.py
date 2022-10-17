@@ -36,13 +36,11 @@ def roads(domain, res=1, xsize=10000, ysize=10000, buffer=200, epsg=None):
 
     os.makedirs("road_distance", exists_ok=True)
     os.makedirs("angle_to_road", exists_ok=True)
-    for idx, tile in progressbar(tiles.items(), redirect_stdout=True):
-        y, x = idx
-        box, geo = tile
+    for (y, x), (box, geo) in progressbar(tiles.items(), redirect_stdout=True):
         boxb = box.buffer(buffer, join_style=2)
         geob = geo.buffer(buffer, join_style=2)
 
-        print(f"Processing tile {idx}.")
+        print(f"Processing tile {(y, x)}.")
         # print("Downloading road network.")
         network = u.download_roads(geob, epsg)
         # print("Rasterizing road network.")

@@ -17,6 +17,7 @@ from ._geo import (
     estimate_utm_epsg,
     fishnet,
     geotransform,
+    nearest_road,
     rasterize_roads,
     transform,
 )

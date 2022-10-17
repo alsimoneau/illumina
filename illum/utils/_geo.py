@@ -118,3 +118,37 @@ def compute_ground_type(dist, bounds):
     ground_type = np.ones(dist.shape) * len(bounds)
     for i, lim in reversed(list(enumerate(sorted(bounds)))):
         ground_type[dist < lim] = i
+
+
+def nearest_road(lat, lon, radius=300):
+    epsg = estimate_utm_epsg(lon, lat)
+    x, y = transform(t_crs=epsg)(lon, lat)
+    try:
+        graph = ox.graph_from_point(
+            (lat, lon),
+            dist=radius,
+            network_type="drive",
+            simplify=False,
+            retain_all=True,
+            truncate_by_edge=True,
+            clean_periphery=True,
+        )
+    except (ValueError, ox._errors.EmptyOverpassResponse):
+        return np.nan, 0
+
+    graph = ox.get_undirected(graph)
+    graph = ox.add_edge_bearings(graph)
+    graph = ox.projection.project_graph(graph, to_crs=epsg)
+    edges = ox.graph_to_gdfs(graph, nodes=False)
+    nearest_idx, distance = ox.distance.nearest_edges(
+        graph, x, y, return_dist=True
+    )
+    nearest = edges.loc[nearest_idx]
+    bearing = nearest.bearing
+    lon_c, lat_c = transform(s_crs=epsg)(*nearest.geometry.coords[0])
+    brng = ox.bearing.calculate_bearing(lat_c, lon_c, lat, lon)
+    if (brng - bearing) % 360 > 180:
+        bearing += 180
+    bearing -= 90
+
+    return distance, bearing
