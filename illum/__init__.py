@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-__version__ = "2.2.4.20221017.19280588"
-=======
-__version__ = "2.2.4.20221012.19375430"
->>>>>>> 2.2.4.20221012.19375430: Better multiple scale detection
+__version__ = "2.2.4.20221019.14545305"
 
 import importlib.resources
 

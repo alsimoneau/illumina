@@ -5,6 +5,7 @@ import click
 import illum
 
 
+# main
 @click.group()
 @click.version_option(illum.__version__, prog_name="Illumina model")
 def main():
@@ -50,6 +51,7 @@ def main():
     pass  # Entry point
 
 
+# help
 @main.command()
 @click.argument("subcommand")
 @click.pass_context
@@ -63,6 +65,7 @@ def help(ctx, subcommand):
         click.echo(subcommand_obj.get_help(ctx))
 
 
+# alternate
 @main.command()
 @click.argument("name")
 @click.option(
@@ -87,6 +90,7 @@ def alternate(name, zones, lights):
     click.echo("Done.")
 
 
+# batches
 @main.command()
 @click.argument("input_path", type=click.Path(exists=True), default=".")
 @click.argument("batch_name", required=False)
@@ -119,6 +123,7 @@ def batches(input_path, compact, batch_size, batch_name=None):
     click.echo("Done.")
 
 
+# domain
 @main.command()
 def domain():
     """Defines the simulation domain.
@@ -131,6 +136,7 @@ def domain():
     click.echo("Done.")
 
 
+# extract
 @main.command()
 @click.argument("exec_dir", default=".", type=click.Path(exists=True))
 @click.option(
@@ -172,6 +178,7 @@ def extract(exec_dir, contrib, params, full, profile):
     illum.extract(exec_dir, contrib, params, full, profile)
 
 
+# failed
 @main.command()
 @click.option(
     "-e",
@@ -184,6 +191,7 @@ def failed(executable):
     illum.failed(executable)
 
 
+# init
 @main.command()
 def init():
     """Initialize an execution folder."""
@@ -191,13 +199,35 @@ def init():
     click.echo("Done.")
 
 
-@main.command()
-def inputs():
+# input
+@main.group()
+def input():
     """Prepares the executions inputs."""
-    illum.inputs()
+    pass
+
+
+# input iss
+@input.command()
+def iss():
+    illum.input_iss()
     click.echo("Done.")
 
 
+# input pts
+@input.command()
+def pts():
+    illum.input_pts()
+    click.echo("Done.")
+
+
+# input viirs
+@input.command()
+def viirs():
+    illum.input_viirs()
+    click.echo("Done.")
+
+
+# roads
 @main.command()
 @click.option(
     "-r",
@@ -233,6 +263,7 @@ def roads(domain, resolution, xsize, ysize, buffer, crs):
     click.echo("Done.")
 
 
+# warp
 @main.command()
 @click.argument("output_name")
 @click.argument("target", type=click.Path(exists=True))

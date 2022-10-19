@@ -32,17 +32,17 @@ def inputs():
     with open("inputs_params.in") as f:
         params = yaml.safe_load(f)
 
-    out_name = params["exp_name"]
-
     if params["road_orientation"]:
-        print("Computing road orientation (Can be slow for large domains)")
+        print("Computing road orientation")
 
-        with open("domain.ini") as f:
+        with open("domain.in") as f:
             domain_params = yaml.safe_load(f)
-        srs = domain_params["srs"]
-        lats, lons = MSD.from_domain("domain.ini").get_obs_pos()
-        bearings = illum.utils.street_orientation(lats, lons, srs)
-        np.savetxt(dir_name + "/brng.lst", bearings, fmt="%g")
+
+        lat = domain_params["latitude"]
+        lon = domain_params["longitude"]
+
+        dst, brg = illum.utils.nearest_road(lat, lon)
+        np.savetxt(dir_name + "/brng.lst", brg, fmt="%g")
 
     print("Loading photometry files.")
 
@@ -61,9 +61,7 @@ def inputs():
             for fname in glob("Lights/*.ies") + glob("Lights/*.IES")
         }
     )
-    lop = {
-        key: apd.normalize().interpolate(step=1) for key, apd in lop.items()
-    }
+    lop = {key: apd.interpolate(step=1) for key, apd in lop.items()}
 
     # Spectral distribution (normalised with scotopric vision to 1)
     norm_spectrum = SPD.from_txt("Lights/photopic.dat").normalize()
@@ -135,26 +133,22 @@ def inputs():
         dir_name,
     )
 
-    illum.utils.OPAC(x)
+    illum.utils.Oillum.PolarArrayC(x)
 
-    shutil.copy("srtm.hdf5", dir_name)
+    shutil.copy("topo.parr", dir_name)
 
     with open(dir_name + "/wav.lst", "w") as zfile:
         zfile.write("".join("%g %g\n" % (w, b) for w, b in zip(x, bw)))
 
     if params["zones_inventory"] is not None:
-        dir_name = ".Inputs_zones/"
         inv_name = params["zones_inventory"]
         n_inv = 7
-        shutil.rmtree(dir_name, True)
-        os.makedirs(dir_name)
         illum.utils.from_zones(
             dir_name,
             inv_name,
             n_inv,
             n_bins,
             params,
-            out_name,
             x,
             lop,
             angles,
@@ -166,14 +160,10 @@ def inputs():
         )
 
     if params["lamps_inventory"] is not None:
-        dir_name = ".Inputs_lamps/"
-        shutil.rmtree(dir_name, True)
-        os.makedirs(dir_name)
         illum.utils.from_lamps(
             dir_name,
             n_bins,
             params,
-            out_name,
             x,
             lop,
             angles,
@@ -183,61 +173,26 @@ def inputs():
             refl,
             bool_array,
         )
-    dir_name = "Inputs/"
-
-    print("Unifying inputs.")
-
-    lfiles = {fname.split(os.sep)[-1] for fname in glob(".Inputs_lamps/*")}
-    zfiles = {fname.split(os.sep)[-1] for fname in glob(".Inputs_zones/*")}
-    for fname in lfiles - zfiles:
-        shutil.move(os.path.join(".Inputs_lamps", fname), "Inputs")
-    for fname in zfiles - lfiles:
-        shutil.move(os.path.join(".Inputs_zones", fname), "Inputs")
-    for fname in zfiles & lfiles:
-        if "fctem" in fname:
-            shutil.move(os.path.join(".Inputs_lamps", fname), "Inputs")
-        elif fname.endswith(".lst"):
-            with open(os.path.join(".Inputs_lamps", fname)) as f:
-                ldat = f.readlines()
-            with open(os.path.join(".Inputs_zones", fname)) as f:
-                zdat = f.readlines()
-            with open(os.path.join("Inputs", fname), "w") as f:
-                f.write("".join(sorted(set(ldat + zdat))))
-        elif fname.endswith(".hdf5"):
-            ldat = MSD.Open(os.path.join(".Inputs_lamps", fname))
-            zdat = MSD.Open(os.path.join(".Inputs_zones", fname))
-            for i, dat in enumerate(ldat):
-                zdat[i][dat != 0] = dat[dat != 0]
-            zdat.save(os.path.join("Inputs", fname))
-        else:
-            print("WARNING: File %s not merged properly." % fname)
-    if "origin.hdf5" not in zfiles:
-        origin = MSD.from_domain("domain.ini")
-        origin.save("Inputs/origin")
-    shutil.rmtree(".Inputs_lamps", True)
-    shutil.rmtree(".Inputs_zones", True)
 
     # Interpolation of the obstacles properties
-    defined = MSD.Open(dir_name + "origin.hdf5")
-    lights_file = dir_name + out_name + "_lights.hdf5"
+    defined = illum.PolarArray.load("domain.parr")
+    lights_file = dir_name + "lights.parr"
     if os.path.isfile(lights_file):
-        lights = MSD.Open(lights_file)
-        for i, layer in enumerate(lights):
-            defined[i] += layer
+        lights = illum.PolarArray.load(lights_file)
+        defined.data += lights.data
 
     for geo in ["obsth", "obstd", "obstf", "altlp"]:
-        geometry = MSD.Open(dir_name + out_name + "_" + geo + ".hdf5")
-        for i, mask in enumerate(defined):
-            geometry[i] = (
-                griddata(
-                    points=np.where(mask),
-                    values=geometry[i][mask.astype(bool)],
-                    xi=tuple(np.ogrid[0 : mask.shape[0], 0 : mask.shape[1]]),
-                    method="nearest",
-                )
-                if mask.any()
-                else np.zeros_like(geometry[i])
+        geometry = illum.PolarArray.load(dir_name + geo + ".parr")
+        geometry = (
+            griddata(
+                points=np.where(defined.data),
+                values=geometry[defined.data.astype(bool)],
+                xi=tuple(np.ogrid[0 : defined.shape[0], 0 : defined.shape[1]]),
+                method="nearest",
             )
-        geometry.save(dir_name + out_name + "_" + geo)
+            if defined.data.any()
+            else np.zeros_like(geometry.data)
+        )
+        geometry.save(dir_name + geo)
 
     print("Done.")
