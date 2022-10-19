@@ -21,7 +21,7 @@ import illum.AngularPowerDistribution as APD
 import illum.SpectralPowerDistribution as SPD
 
 
-def inputs():
+def input():
     print("Preparing the inputs for the experiment.")
 
     dir_name = "Inputs/"

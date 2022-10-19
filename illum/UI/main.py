@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+
 import click
 
 import illum
@@ -200,15 +202,19 @@ def init():
 
 
 # input
-@main.group()
-def input():
+@main.group(invoke_without_command=True)
+@click.pass_context
+def input(ctx):
     """Prepares the executions inputs."""
-    pass
+    if ctx.invoked_subcommand is None:
+        illum.input()
 
 
 # input iss
 @input.command()
 def iss():
+    """Processes ISS images from cities at night."""
+    illum.input()
     illum.input_iss()
     click.echo("Done.")
 
@@ -216,6 +222,8 @@ def iss():
 # input pts
 @input.command()
 def pts():
+    """Processes discrete light sources inventories."""
+    illum.input()
     illum.input_pts()
     click.echo("Done.")
 
@@ -223,6 +231,8 @@ def pts():
 # input viirs
 @input.command()
 def viirs():
+    """Processes VIIRS data."""
+    illum.input()
     illum.input_viirs()
     click.echo("Done.")
 
@@ -265,15 +275,27 @@ def roads(domain, resolution, xsize, ysize, buffer, crs):
 
 # warp
 @main.command()
-@click.argument("output_name")
 @click.argument("target", type=click.Path(exists=True))
+@click.option(
+    "-o",
+    "--output",
+    help="Base name of the output file. Based on TARGET when ommited.",
+)
 @click.option(
     "-d",
     "--domain",
     default="domain.parr",
     help="Reference polar array or parameter file.",
 )
-def warp(output_name, target, domain):
+@click.option(
+    "-f",
+    "--field",
+    help=(
+        "Field name to burn for polygons. Inverse burns all-touched when"
+        " ommited."
+    ),
+)
+def warp(target, output, domain, field):
     """Warps georeferenced data.
 
     Will warp rasters and burn polygons.
@@ -281,5 +303,7 @@ def warp(output_name, target, domain):
     'target' can be a file or a folder containing multiple files at different
     scales or folders of tiles.
     """
-    illum.warp(target, domain, output_name)
-    click.echo("Done.")
+    if output is None:
+        output = os.path.splitext(os.path.basename(target))[0]
+    illum.warp(target, output, domain, field)
+    click.echo(f"Writting to '{output}.parr'.")

@@ -2,6 +2,7 @@
 
 import os
 
+import fiona
 import geopandas as gpd
 import numpy as np
 import rasterio as rio
@@ -12,6 +13,8 @@ import shapely.geometry
 
 import illum
 import illum.PolarArray as PA
+
+fiona.drvsupport.supported_drivers["KML"] = "rw"
 
 
 def merge(name):
@@ -138,7 +141,7 @@ def burn(polygon, polarArray, all_touched=False, N=1000, sf=2):
     return outs
 
 
-def process_water(filename, shape, transform, crs):
+def open_polygon(filename, shape, transform, crs):
     mask = gpd.GeoSeries(
         shapely.geometry.Polygon.from_bounds(
             *rio.transform.array_bounds(*shape, transform)
@@ -146,6 +149,10 @@ def process_water(filename, shape, transform, crs):
         crs=crs,
     )
     poly = gpd.read_file(filename, mask=mask).to_crs(crs)
+    return poly, mask
+
+
+def process_water(poly, mask, crs):
     if len(poly) == 0:
         return mask
     elif len(poly) > 1:
@@ -153,7 +160,7 @@ def process_water(filename, shape, transform, crs):
     return mask.difference(poly)
 
 
-def polarize(path, parr):
+def polarize(path, parr, field=None):
     if os.path.isdir(path):
         # multiple rasters
         srcs = [
@@ -166,8 +173,15 @@ def polarize(path, parr):
         rst = rio.open(path)
     except rio.RasterioIOError:
         # vector
-        polygon = process_water(path, parr.xyshape, parr.transform, parr.crs)
-        srcs = burn(polygon, parr, all_touched=True)
+        polygon, mask = open_polygon(
+            path, parr.xyshape, parr.transform, parr.crs
+        )
+        if field is None:
+            polygon = process_water(polygon, mask, parr.crs)
+        else:
+            polygon = list(zip(polygon.geometry, polygon[field]))
+
+        srcs = burn(polygon, parr, all_touched=field is None)
         return PA.union(*zip(*srcs), out=parr.copy())
 
     # raster
@@ -189,13 +203,13 @@ def polarize(path, parr):
     )
 
 
-def warp(infiles, domain="domain.parr", output_name=None):
+def warp(infiles, output=None, domain="domain.parr", field=None):
     polarArray = (
         PA.load(domain)
         if domain.rpartition(".")[2] == "parr"
         else illum.domain(domain)
     )
-    parr = polarize(infiles, polarArray)
-    if output_name is not None:
-        parr.save(output_name)
+    parr = polarize(infiles, polarArray, field)
+    if output is not None:
+        parr.save(output)
     return parr
