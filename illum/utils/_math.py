@@ -29,11 +29,3 @@ def safe_divide(a, b):
 
 def round_odd(n):
     return int(n - n % 2 + 1)
-
-
-def add_arrays(a, b):
-    if len(a) < len(b):
-        a, b = b, a
-    c = a.copy()
-    c[: len(b)] += b
-    return c

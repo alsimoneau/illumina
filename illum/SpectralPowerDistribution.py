@@ -134,6 +134,15 @@ def to_txt(filename, spd, /, *, sep="  ", header=True):
             f.write(sep.join([str(wl), str(val)]) + "\n")
 
 
+def from_file(filename, /):
+    name, ext = os.path.splitext(filename)
+    funcs = dict(spdx=from_spdx, spct=from_txt, aster=from_aster)
+    try:
+        return funcs[ext.lower()](filename)
+    except KeyError:
+        raise ValueError(f"Unknown file type '{ext}'.")
+
+
 def interpolate(spd, wavelengths):
     # Based on work taken from http://indico.hep.manchester.ac.uk/getFile.py/access?resId=0&materialId=slides&confId=4586
     if type(wavelengths) == SpectralPowerDistribution:

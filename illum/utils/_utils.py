@@ -2,6 +2,8 @@
 # Author: Alexandre Simoneau
 
 import math
+import os
+from glob import glob
 
 
 def strip_comments(item, token="#"):
@@ -50,3 +52,15 @@ def eng_format(x, unit=""):
 
 def chunker(seq, size):
     return (seq[pos : pos + size] for pos in range(0, len(seq), size))
+
+
+def add_arrays(a, b):
+    if len(a) < len(b):
+        a, b = b, a
+    c = a.copy()
+    c[: len(b)] += b
+    return c
+
+
+def glob_types(pattern, types):
+    return [s for s in glob(pattern) if os.path.splitext(s).lower() in types]

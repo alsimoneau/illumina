@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 from dataclasses import dataclass
 
 import matplotlib as mpl
@@ -113,6 +114,15 @@ def to_txt(filename, apd, /, **kwargs):
         ang, apd.vertical_angles, apd.vertical_profile(), left=0, right=0
     )
     np.savetxt(filename, np.stack((data, 180 - ang), axis=1), **kwargs)
+
+
+def from_file(filename, /):
+    name, ext = os.path.splitext(filename)
+    funcs = dict(ies=from_ies, lop=from_txt)
+    try:
+        return funcs[ext.lower()](filename)
+    except KeyError:
+        raise ValueError(f"Unknown file type '{ext}'.")
 
 
 def vertical_profile(apd, /, *, integrated=False):
