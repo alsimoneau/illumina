@@ -14,7 +14,7 @@ def LOP_norm(angles, x):
     a = np.deg2rad(angles)
     mids = np.concatenate([[a[0]], np.mean([a[1:], a[:-1]], 0), [a[-1]]])
     sinx = 2 * np.pi * (np.cos(mids[:-1]) - np.cos(mids[1:]))
-    return illum.pytools.safe_divide(x, np.sum(x * sinx))
+    return illum.utils.safe_divide(x, np.sum(x * sinx))
 
 
 def SPD_norm(wav, norm_spct, x, factor=683.002):
@@ -22,16 +22,14 @@ def SPD_norm(wav, norm_spct, x, factor=683.002):
     Both arrays must be of the same lenght.
     Uses the two first elements of 'wav' as the integration step."""
     dlambda = wav[1] - wav[0]
-    return illum.pytools.safe_divide(
-        x, factor * np.sum(norm_spct * x) * dlambda
-    )
+    return illum.utils.safe_divide(x, factor * np.sum(norm_spct * x) * dlambda)
 
 
 def spct_norm(wav, x):
     """Normalises 'x' using the two first elements of 'wav'as the integration
     step."""
     dlambda = wav[1] - wav[0]
-    return illum.pytools.safe_divide(x, np.sum(x) * dlambda)
+    return illum.utils.safe_divide(x, np.sum(x) * dlambda)
 
 
 def load_lop(angles, filename, interp="cubic"):

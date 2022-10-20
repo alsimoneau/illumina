@@ -1,6 +1,8 @@
 # General convenience functions
 # Author: Alexandre Simoneau
 
+import math
+
 
 def strip_comments(item, token="#"):
     """Generator. Strips comments and whitespace from input lines.
