@@ -80,6 +80,9 @@ def from_ies(filename, /):
 
 
 def to_ies(filename, apd, /):
+    if os.path.splitext(filename)[1].lower() != "ies":
+        filename += ".ies"
+
     out = [
         "IES:LM-63-2019",
         "TILT=NONE",
@@ -109,9 +112,12 @@ def from_txt(filename, /):
 
 
 def to_txt(filename, apd, /, **kwargs):
+    if not os.path.splitext(filename)[1]:
+        filename += ".lop"
+
     ang = np.arange(181)
     data = np.interp(
-        ang, apd.vertical_angles, apd.vertical_profile(), left=0, right=0
+        ang, apd.vertical_angles, apd.vertical_profile()[::-1], left=0, right=0
     )
     np.savetxt(filename, np.stack((data, 180 - ang), axis=1), **kwargs)
 

@@ -78,6 +78,9 @@ def from_spdx(filename):
 
 
 def to_spdx(filename, spd):
+    if os.path.splitext(filename)[1].lower() != "spdx":
+        filename += ".spdx"
+
     content = dict()
 
     root = content["IESTM2714"] = dict()
@@ -112,6 +115,20 @@ def from_txt(filename, skiprows=1, **kwargs):
     )
 
 
+def to_txt(filename, spd, /, *, sep="  ", header=True):
+    if not os.path.splitext(filename)[1]:
+        filename += ".spct"
+
+    if header is True:
+        header = ["wavelength", "relativeIntensity"]
+
+    with open(filename, "w") as f:
+        if len(header) == 2:
+            f.write(sep.join(header) + "\n")
+        for wl, val in zip(spd.wavelengths, spd.data):
+            f.write(sep.join([str(wl), str(val)]) + "\n")
+
+
 def from_aster(filename):
     data = np.loadtxt(filename)
 
@@ -121,17 +138,6 @@ def from_aster(filename):
         description=os.path.basename(filename),
         quantity="reflectance",
     )
-
-
-def to_txt(filename, spd, /, *, sep="  ", header=True):
-    if header is True:
-        header = ["wavelength", "relativeIntensity"]
-
-    with open(filename, "w") as f:
-        if len(header) == 2:
-            f.write(sep.join(header) + "\n")
-        for wl, val in zip(spd.wavelengths, spd.data):
-            f.write(sep.join([str(wl), str(val)]) + "\n")
 
 
 def from_file(filename, /):
