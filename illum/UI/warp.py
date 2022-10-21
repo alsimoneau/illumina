@@ -12,7 +12,6 @@ import rasterio.warp
 import shapely.geometry
 
 import illum
-import illum.PolarArray as PA
 
 fiona.drvsupport.supported_drivers["KML"] = "rw"
 
@@ -167,7 +166,7 @@ def polarize(path, parr, field=None):
             reproject(*src, bounds=parr.bounds(), dst_crs=parr.crs)
             for src in open_multiple(path)
         ]
-        return PA.union(*zip(*srcs), sort=True, out=parr.copy())
+        return illum.PA.union(*zip(*srcs), sort=True, out=parr.copy())
 
     try:
         rst = rio.open(path)
@@ -182,7 +181,7 @@ def polarize(path, parr, field=None):
             polygon = list(zip(polygon.geometry, polygon[field]))
 
         srcs = burn(polygon, parr, all_touched=field is None)
-        return PA.union(*zip(*srcs), out=parr.copy())
+        return illum.PA.union(*zip(*srcs), out=parr.copy())
 
     # raster
     arr, transform, center = reproject(
@@ -192,7 +191,7 @@ def polarize(path, parr, field=None):
         bounds=parr.bounds(),
         dst_crs=parr.crs,
     )
-    return PA.from_array(
+    return illum.PA.from_array(
         arr,
         parr.shape,
         center=parr.center,
@@ -205,7 +204,7 @@ def polarize(path, parr, field=None):
 
 def warp(infiles, output=None, domain="domain.parr", field=None):
     polarArray = (
-        PA.load(domain)
+        illum.PA.load(domain)
         if domain.rpartition(".")[2] == "parr"
         else illum.domain(domain)
     )

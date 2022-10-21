@@ -7,8 +7,7 @@ import rasterio as rio
 import rasterio.transform
 import yaml
 
-import illum.PolarArray as PA
-import illum.utils as u
+import illum
 
 
 def domain(params="domain_params.in"):
@@ -26,10 +25,10 @@ def domain(params="domain_params.in"):
     rmax = domain["maxRadius"]
     Na = domain["Nangles"]
 
-    epsg = u.estimate_utm_epsg(lon, lat)
+    epsg = illum.utils.estimate_utm_epsg(lon, lat)
 
     Nr = round(np.log(rmax / rmin) / np.arcsinh(np.pi / Na) / 2)
-    x, y = u.transform(t_crs=epsg)(lon, lat)
+    x, y = illum.utils.transform(t_crs=epsg)(lon, lat)
     transform = rio.transform.from_origin(
         x - rmax, y + rmax, 2 * rmax, 2 * rmax
     )
@@ -37,7 +36,7 @@ def domain(params="domain_params.in"):
     arr = np.zeros((1, 1))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        parr = PA.from_array(
+        parr = illum.PA.from_array(
             arr,
             (Na, Nr),
             center=(y, x),

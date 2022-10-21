@@ -4,7 +4,7 @@
 import numpy as np
 import scipy.interpolate
 
-import illum.utils
+import illum
 
 
 def LOP_norm(angles, x):

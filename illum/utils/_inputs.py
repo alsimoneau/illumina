@@ -4,9 +4,7 @@ import os
 
 import numpy as np
 
-import illum.AngularPowerDistribution as APD
-import illum.SpectralPowerDistribution as SPD
-import illum.utils as u
+import illum
 
 
 def spectral_bins(lmin, lmax, N):
@@ -21,23 +19,29 @@ def parse_key(fname):
 
 
 def open_lops(path):
-    lop = {
-        parse_key(fname): APD.from_file(fname).normalize()
-        for fname in u.glob_types(os.path.join(path, "*"), ["lop", "ies"])
-    }
-    return {key: apd.interpolate(step=1) for key, apd in lop.items()}
-
-
-def open_spcts(path):
-    norm_spectrum = SPD.from_txt(
-        os.path.join(path, "photopic.dat")
-    ).normalize()
-
-    spct = {
-        parse_key(fname): SPD.from_file(fname)
-        for fname in u.glob_types(os.path.join(path, "*"), ["spct", "spdx"])
-    }
     return {
-        key: spd.interpolate(norm_spectrum).normalize(norm_spectrum)
-        for key, spd in spct.items()
+        parse_key(fname): illum.APD.from_file(fname)
+        .normalize()
+        .interpolate(step=1)
+        for fname in illum.utils.glob_types(
+            os.path.join(path, "*"), ["lop", "ies"]
+        )
+    }
+
+
+def open_spcts(path, norm_spct):
+    return {
+        parse_key(fname): illum.SPD.from_file(fname)
+        .interpolate(norm_spct)
+        .normalize(norm_spct)
+        for fname in illum.utils.glob_types(
+            os.path.join(path, "*"), ["spct", "spdx"]
+        )
+    }
+
+
+def open_refl(path, norm_spct):
+    return {
+        parse_key(fname): illum.SPD.from_aster(fname).interpolate(norm_spct)
+        for fname in illum.utils.glob_types(os.path.join(path, "*"), ["aster"])
     }
