@@ -22,7 +22,13 @@ from ._geo import (
     transform,
 )
 from ._graph import plot_allsky
-from ._inputs import open_lops, open_refl, open_spcts, spectral_bins
+from ._inputs import (
+    open_lops,
+    open_refl,
+    open_spcts,
+    parse_inventory,
+    spectral_bins,
+)
 from ._IO import load_bin, load_fits, load_geotiff, save_bin, save_geotiff
 from ._math import deg2mx, deg2my, round_odd, safe_divide
 from ._utils import add_arrays, chunker, eng_format, glob_types, strip_comments

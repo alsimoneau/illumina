@@ -43,3 +43,24 @@ def open_refl(path, norm_spct):
         parse_key(fname): illum.SPD.from_aster(fname).interpolate(norm_spct)
         for fname in illum.utils.glob_types(os.path.join(path, "*"), ["aster"])
     }
+
+
+def parse_inventory(filename, n=0):
+    """Parse an inventory type file.
+    Skips the first 'n' columns."""
+
+    def lamp_norm(lampsData):
+        trans = list(map(list, list(zip(*lampsData))))
+        norm = sum(trans[0])
+        if norm != 0.0:
+            trans[0] = [n / norm for n in trans[0]]
+        return list(map(list, list(zip(*trans))))
+
+    with open(filename) as inv_file:
+        zonData = illum.utils.strip_comments(inv_file.readlines())
+    zonData = [s.split()[n:] for s in zonData]
+    zonData = [[s.split("_") for s in i] for i in zonData]
+    zonData = [[[float(s[0]), s[1], s[2]] for s in i] for i in zonData]
+    zonData = list(map(lamp_norm, zonData))
+
+    return zonData
