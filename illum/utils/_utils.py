@@ -62,7 +62,5 @@ def add_arrays(a, b):
     return c
 
 
-def glob_types(pattern, types):
-    return [
-        s for s in glob(pattern) if os.path.splitext(s)[1][1:].lower() in types
-    ]
+def glob_types(p, types):
+    return [s for s in glob(p) if os.path.splitext(s)[1][1:].lower() in types]
