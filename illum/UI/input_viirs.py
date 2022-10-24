@@ -4,52 +4,64 @@
 #
 # Author : Alexandre Simoneau
 #
-# December 2021
+# October 2022
+
+import os
+import shutil
 
 import numpy as np
+import yaml
 
-import illum.compute
-import illum.MultiScaleData as MSD
-import illum.utils as pt
+import illum
 
 
-def input_viirs(
-    dir_name,
-    inv_name,
-    n_inv,
-    n_bins,
-    params,
-    out_name,
-    x,
-    lop,
-    angles,
-    wav,
-    spct,
-    viirs,
-    refl,
-    bool_array,
-):
+def input_viirs(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     print("Building inputs from zones inventory.")
 
+    shutil.rmtree(dir_name, True)
+    os.makedirs(dir_name)
+    shutil.copy(params_file, os.path.join(dir_name, "inputs_params.in"))
+
+    # Loading data
+
+    with open(params_file) as f:
+        params = yaml.safe_load(f)
+
+    norm_spct = illum.SPD.from_txt(os.path.join("Lights", "photopic.dat"))
+    norm_spct = norm_spct.normalize()
+    wav = norm_spct.wavelengths
+    viirs = illum.SPD.from_txt(os.path.join("Lights", "viirs.dat"))
+    viirs = viirs.normalize().interpolate(wav)
+
+    lops = illum.utils.open_lops("Lights")
+    spcts = illum.utils.open_spcts("Lights", norm_spct)
+    refl = illum.utils.open_refl("Lights", norm_spct)
+
+    bins = (
+        np.loadtxt("spectral_bands.dat", delimiter=",")
+        if os.path.isfile("spectral_bands.dat")
+        else illum.utils.spectral_bins(
+            params["lambda_min"], params["lambda_max"], params["nb_bins"]
+        )
+    )
+
+    bool_array = (wav >= bins[:, 0:1]) & (wav < bins[:, 1:2])
+    wl = bins.mean(1)
+
     # lamps distribution
-    zonData = pt.parse_inventory(inv_name, n_inv)
+    zonData = illum.utils.parse_inventory(inv_name, 7)
 
-    sources = np.unique([lamp[2] for zd in zonData for lamp in zd])
+    sources = {lamp[2] for zd in zonData for lamp in zd}
 
-    for n in range(n_bins):
-        for s in sources:
-            profile = lop[s].vertical_profile()[::-1]
-            np.savetxt(
-                dir_name + "fctem_wl_%g_lamp_%s.dat" % (x[n], s),
-                np.concatenate([profile, angles]).reshape((2, -1)).T,
-            )
+    for s in sources:
+        lops[s].to_txt(os.path.join(dir_name, f"fctem_{s}"))
 
-    with open(dir_name + "lamps.lst", "w") as zfile:
-        zfile.write("\n".join(sources) + "\n")
+    with open(os.path.join(dir_name, "lamps.lst"), "w") as f:
+        f.write("\n".join(sources) + "\n")
 
     print("Making zone property files.")
 
-    circles = MSD.from_domain("domain.ini")  # Same geolocalisation
+    circles = illum.PA.load("domain.parr")
     zonfile = np.loadtxt(
         params["zones_inventory"], usecols=list(range(7)), ndmin=2
     )
@@ -57,38 +69,31 @@ def input_viirs(
     # zone number
     for i, dat in enumerate(zonfile, 1):
         circles.set_circle((dat[0], dat[1]), dat[2] * 1000, i)
-    circles.save(dir_name + out_name + "_zone")
+    circles.save(os.path.join(dir_name, "zone"))
 
     weights = [sum(z[0] for z in zone) for zone in zonData]
     for w, dat in zip(weights, zonfile):
         circles.set_circle((dat[0], dat[1]), dat[2] * 1000, bool(w))
-    circles.save(dir_name + "origin")
+    circles.save(os.path.join(dir_name, "origin"))
 
     for n, name in zip(range(3, 7), ["obsth", "obstd", "obstf", "altlp"]):
         for i, dat in enumerate(zonfile, 1):
             circles.set_circle((dat[0], dat[1]), dat[2] * 1000, dat[n])
-        circles.save(dir_name + out_name + "_" + name)
+        circles.save(os.path.join(dir_name, name))
 
     print("Inverting lamp intensity.")
 
-    viirs_dat = MSD.Open("stable_lights.hdf5")
-    for i in range(len(viirs_dat)):
-        viirs_dat[i] *= 1e-5  # nW/cm^2/sr -> W/m^2/sr
-        viirs_dat[i][viirs_dat[i] < 0] = 0.0
+    viirs_dat = illum.PA.load("lights.parr")
+    viirs_dat.data *= 1e-5  # nW/cm^2/sr -> W/m^2/sr
+    viirs_dat.data[viirs_dat.data < 0] = 0.0
 
-    water_mask = MSD.Open("water_mask.hdf5")
-    for i, wm in enumerate(water_mask):
-        viirs_dat[i][wm == 0] = 0.0
+    water_mask = illum.PA.load("water.parr")
+    viirs_dat.data[water_mask.data == 0] = 0.0
 
-    circles = MSD.Open(dir_name + out_name + "_zone.hdf5")
-    zon_mask = np.empty(len(circles), dtype=object)
-    for i in range(len(zon_mask)):
-        zon_mask[i] = (
-            np.arange(1, len(zonfile) + 1)[:, None, None] == circles[i]
-        )
+    circles = illum.PA.load(os.path.join(dir_name, "zone.parr"))
 
-    spct_keys = list(spct.keys())
-    lop_keys = list(lop.keys())
+    spct_keys = list(spcts.keys())
+    lop_keys = list(lops.keys())
 
     zones_inventory = np.array(
         [
@@ -99,36 +104,32 @@ def input_viirs(
     )
     zones_inventory[:, [0, 2, 3]] += 1  # Fortran indexing
 
-    spcts = np.array(list(spct.values()))
-    lops = np.array(list(lop.values()))
+    spcts = np.array(list(spcts.values()))
+    lops = np.array(list(lops.values()))
     sources_idx = [
         list(sources).index(k) if k in sources else -1 for k in lop_keys
     ]
     sources_idx = np.array(sources_idx) + 1
 
-    lumlps = [
-        illum.compute.viirs2lum(
-            nzones=len(zonData),
-            nsources=len(sources),
-            viirs=viirs_dat[i],
-            zones=circles[i],
-            angles=angles,
-            wav=wav,
-            bands=bool_array,
-            sens=viirs,
-            lops=np.array([lops[k].vertical_profile() for k in lop_keys]),
-            spcts=np.array([spcts[k].data for k in spct_keys]),
-            sources=sources_idx,
-            ivtr=zones_inventory,
-            pixsize=circles.pixel_size(i),
-            reflect=refl,
-        )
-        for i in range(len(circles))
-    ]
+    lumlps = illum.compute.viirs2lum(
+        nzones=len(zonData),
+        nsources=len(sources),
+        viirs=viirs_dat.data,
+        zones=circles.data,
+        angles=lops[lop_keys[0]].vertical_angles,
+        wav=wav,
+        bands=bool_array,
+        sens=viirs,
+        lops=np.array([lops[k].vertical_profile() for k in lop_keys]),
+        spcts=np.array([spcts[k].data for k in spct_keys]),
+        sources=sources_idx,
+        ivtr=zones_inventory,
+        pixsize=circles.area(),
+        reflect=refl,
+    )
 
-    for n, wl in enumerate(x):
+    for n, x in enumerate(wl):
         for s, source in enumerate(sources):
-            new = MSD.from_domain("domain.ini")
-            for layer in range(len(circles)):
-                new[layer] = lumlps[layer][n, s]
-            new.save(dir_name + "%s_%g_lumlp_%s" % (out_name, wl, source))
+            new = illum.PA.load("domain.parr")
+            new.data = lumlps[n, s]
+            new.save(os.path.join(dir_name, "%g_lumlp_%s" % (x, source)))
