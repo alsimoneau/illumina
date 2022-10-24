@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy as copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import h5py
 import numpy as np
@@ -19,6 +19,7 @@ class PolarArray:
     maxRadius: float
     crs: object = "None"
     transform: object = None
+    _cache: dict = field(default_factory=dict)
 
     def __post_init__(self):
         self.crs = int(self.crs)
@@ -128,7 +129,9 @@ def coords(parr):
 
 
 def xy(parr):
-    return illum.utils.pol2cart(coords(parr))[::-1]
+    if "xy" not in parr._cache:
+        parr._cache["xy"] = illum.utils.pol2cart(coords(parr))[::-1]
+    return parr._cache["xy"]
 
 
 def set_circle(parr, /, coord, radius, value, *, units="deg"):
