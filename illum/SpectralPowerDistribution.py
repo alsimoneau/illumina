@@ -78,7 +78,7 @@ def from_spdx(filename):
 
 
 def to_spdx(filename, spd):
-    if os.path.splitext(filename)[1].lower() != "spdx":
+    if os.path.splitext(filename)[1].lower() != ".spdx":
         filename += ".spdx"
 
     content = dict()
@@ -144,7 +144,7 @@ def from_file(filename, /):
     name, ext = os.path.splitext(filename)
     funcs = dict(spdx=from_spdx, spct=from_txt, aster=from_aster)
     try:
-        return funcs[ext.lower()](filename)
+        return funcs[ext[1:].lower()](filename)
     except KeyError:
         raise ValueError(f"Unknown file type '{ext}'.")
 

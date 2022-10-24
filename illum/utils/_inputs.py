@@ -9,20 +9,18 @@ import illum
 
 def spectral_bins(lmin, lmax, N):
     limits = np.linspace(lmin, lmax, N + 1)
-    bins = np.stack([limits[:-1], limits[1:]], axis=1)
-
-    return bins
+    return np.stack([limits[:-1], limits[1:]], axis=1)
 
 
 def parse_key(fname):
     return os.path.basename(fname).rsplit(".", 1)[0].split("_", 1)[0]
 
 
-def open_lops(path):
+def open_lops(path, resolution=1):
     return {
         parse_key(fname): illum.APD.from_file(fname)
         .normalize()
-        .interpolate(step=1)
+        .interpolate(step=resolution)
         for fname in illum.utils.glob_types(
             os.path.join(path, "*"), ["lop", "ies"]
         )

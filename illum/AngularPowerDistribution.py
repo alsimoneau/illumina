@@ -80,7 +80,7 @@ def from_ies(filename, /):
 
 
 def to_ies(filename, apd, /):
-    if os.path.splitext(filename)[1].lower() != "ies":
+    if os.path.splitext(filename)[1].lower() != ".ies":
         filename += ".ies"
 
     out = [
@@ -126,7 +126,7 @@ def from_file(filename, /):
     name, ext = os.path.splitext(filename)
     funcs = dict(ies=from_ies, lop=from_txt)
     try:
-        return funcs[ext.lower()](filename)
+        return funcs[ext[1:].lower()](filename)
     except KeyError:
         raise ValueError(f"Unknown file type '{ext}'.")
 
