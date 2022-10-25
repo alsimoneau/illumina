@@ -6,103 +6,79 @@
 #
 # December 2021
 
+import os
+
 import numpy as np
+import pandas as pd
 
-import illum.MultiScaleData as MSD
+import illum
 
 
-def input_pts(
-    dir_name,
-    n_bins,
-    params,
-    out_name,
-    x,
-    lop,
-    angles,
-    wav,
-    spct,
-    viirs,
-    refl,
-    bool_array,
-):
+def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     print("Building inputs from discrete inventory.")
 
-    # lamps distribution
-    inv_name = params["lamps_inventory"]
-    lampsData = np.loadtxt(inv_name, usecols=list(range(7)), ndmin=2)
-    photometry = np.loadtxt(inv_name, usecols=[-2, -1], dtype=str, ndmin=2)
-    domain = MSD.from_domain("domain.ini")
+    inputs = illum.utils.prep_inputs(params_file, dir_name)
+    lops, spcts, viirs, wl, bool_array, refls = inputs
 
-    sources = np.unique(photometry[:, 1])
+    inv = pd.read_csv(inv_name, delimiter=" ", dtype={"spct": str, "lop": str})
+    domain = illum.PA.load("domain.parr")
 
     print("Classifying points.")
 
-    points = dict()
-    for layer in range(len(domain)):
-        ysize, xsize = domain[layer].shape
-        col, row = domain._get_col_row(lampsData[:, :2].T, layer)
-        valid = (0 <= col) * (col < xsize) * (0 <= row) * (row < ysize) > 0
-        ind = np.where(valid)[0]
-        points[layer] = (col[ind], row[ind], ind)
+    coords = illum.utils.transform(t_crs=domain.crs)(inv.lon, inv.lat)
+    coords = illum.utils.cart2pol(coords[::-1], domain.center)
+    coords = illum.utils.pol2idx(coords, domain.shape, domain._lims)
+    inv["y"], inv["x"] = np.array(coords, dtype=int)
+
+    valid = (inv.x >= 0) & (inv.x < domain.shape[1])
+    inv = inv[valid].reset_index()
+
+    idx = inv.groupby(["y", "x"]).indices
 
     print("Calculating the generalized lamps.")
 
-    for n in range(n_bins):
-        for s in sources:
-            profile = lop[s].vertical_profile()[::-1]
-            np.savetxt(
-                dir_name + "fctem_wl_%g_lamp_%s.dat" % (x[n], s),
-                np.concatenate([profile, angles]).reshape((2, -1)).T,
-            )
+    sources = pd.unique(inv["lop"])
 
-    with open(dir_name + "lamps.lst", "w") as zfile:
+    for s in sources:
+        lops[s].to_txt(os.path.join(dir_name, f"fctem_{s}"))
+
+    with open(os.path.join(dir_name, "lamps.lst"), "w") as zfile:
         zfile.write("\n".join(sources) + "\n")
 
     geometry = dict()
-    for geo in ["obsth", "obstd", "obstf", "altlp", "lights"]:
-        geometry[geo] = MSD.from_domain("domain.ini")
+    for geo in ["hobs", "dobs", "fobs", "hlmp", "lights"]:
+        geometry[geo] = illum.PA.load("domain.parr")
 
     lumlp = dict()
     for s in sources:
-        for wl in x:
-            lumlp[s, wl] = MSD.from_domain("domain.ini")
+        for wav in wl:
+            lumlp[s, wav] = illum.PA.load("domain.parr")
 
-    for layer, pts in points.items():
-        cols, rows, inds = pts
-        if len(inds):
-            for col, row in np.unique([cols, rows], axis=1).T:
-                ind = inds[np.logical_and(cols == col, rows == row)]
-                lumens = lampsData[:, 2][ind]
+    for (y, x), ind in idx.items():
+        lumens = inv["pow"][ind]
 
-                for n, geo in zip(
-                    range(3, 7), ["obsth", "obstd", "obstf", "altlp"]
-                ):
-                    geometry[geo][layer][row, col] = np.average(
-                        lampsData[:, n][ind], weights=lumens
-                    )
-                geometry["lights"][layer][row, col] = 1
+        for geo in ["hobs", "dobs", "fobs", "hlmp"]:
+            geometry[geo].data[y, x] = np.average(
+                inv[geo][ind], weights=lumens
+            )
+        geometry["lights"].data[y, x] = 1
 
-                local_sources = np.unique(photometry[ind][:, 1])
-                for s in local_sources:
-                    mask = photometry[:, 1][ind] == s
-                    fctem = np.array(
-                        [
-                            spct[type].data
-                            for type in photometry[:, 0][ind][mask]
-                        ]
-                    )
-                    fctem = np.sum(fctem * lumens[mask, None], 0)
+        for s in pd.unique(inv["lop"][ind]):
+            mask = inv["lop"][ind] == s
+            fctem = np.array(
+                [spcts[type].data for type in inv["spct"][ind][mask]]
+            )
+            fctem = np.sum(fctem * lumens[mask].to_numpy()[:, None], 0)
 
-                    y = [np.mean(fctem[mask]) for mask in bool_array]
+            mean = [np.mean(fctem[mask]) for mask in bool_array]
 
-                    for i, wl in enumerate(x):
-                        lumlp[s, wl][layer][row, col] = y[i]
+            for i, wav in enumerate(wl):
+                lumlp[s, wav].data[y, x] = mean[i]
 
     print("Saving data.")
 
     for geo, ds in geometry.items():
-        ds.save(dir_name + out_name + "_" + geo)
+        ds.save(os.path.join(dir_name, geo))
 
-    for key, ds in lumlp.items():
-        s, wl = key
-        ds.save(dir_name + "%s_%03d_lumlp_%s" % (out_name, wl, s))
+    for (s, wav), ds in lumlp.items():
+        ds.save(os.path.join(dir_name, "%03d_lumlp_%s" % (wav, s)))

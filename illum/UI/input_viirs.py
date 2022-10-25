@@ -45,7 +45,7 @@ def input_viirs(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
         circles.set_circle((dat[0], dat[1]), dat[2] * 1000, bool(w))
     circles.save(os.path.join(dir_name, "origin"))
 
-    for n, name in zip(range(3, 7), ["obsth", "obstd", "obstf", "altlp"]):
+    for n, name in zip(range(3, 7), ["hobs", "dobs", "fobs", "hlmp"]):
         for i, dat in enumerate(zonfile, 1):
             circles.set_circle((dat[0], dat[1]), dat[2] * 1000, dat[n])
         circles.save(os.path.join(dir_name, name))
