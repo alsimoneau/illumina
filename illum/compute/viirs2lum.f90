@@ -1,4 +1,4 @@
-SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
+SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
                      nlamps, nlops, nspcts, viirs, zones, angles, wav, bands, &
                      sens, lops, spcts, sources, ivtr, pixsize, reflect, lumlp)
   ! =====================================================
@@ -8,7 +8,7 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
   IMPLICIT NONE
 
   ! Array lenghts
-  INTEGER, INTENT(in) :: N
+  INTEGER, INTENT(in) :: Nt, Nr
   INTEGER, INTENT(in) :: nzones
   INTEGER, INTENT(in) :: nangles
   INTEGER, INTENT(in) :: nwav
@@ -19,8 +19,8 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
   INTEGER, INTENT(in) :: nspcts
 
   ! Inputs
-  REAL, INTENT(in) :: viirs(N, N)
-  INTEGER, INTENT(in) :: zones(N, N)
+  REAL, INTENT(in) :: viirs(Nt, Nr)
+  INTEGER, INTENT(in) :: zones(Nt, Nr)
   REAL, INTENT(in) :: angles(nangles)
   REAL, INTENT(in) :: wav(nwav)
   LOGICAL, INTENT(in) :: bands(nbands, nwav)
@@ -29,10 +29,10 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
   REAL, INTENT(in) :: spcts(nspcts, nwav)
   INTEGER, INTENT(in) :: sources(nlops)
   REAL, INTENT(in) :: ivtr(nlamps, 4)
-  REAL, INTENT(in) :: pixsize, reflect
+  REAL, INTENT(in) :: pixsize(Nr), reflect(nbands)
 
   ! Output
-  REAL, INTENT(out) :: lumlp(nbands, nsources, N, N)
+  REAL, INTENT(out) :: lumlp(nbands, nsources, Nt, Nr)
 
   ! Internal variables
   INTEGER :: i, j, z, a, b, wl, s
@@ -42,7 +42,7 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
   REAL :: sinx(nangles)
   REAL :: Gdown(nzones, nsources, nwav), Gup(nzones, nsources, nwav)
   REAL :: integral(nzones)
-  REAL :: phie(N, N)
+  REAL :: phie(Nt, Nr)
   REAL :: ratio(nbands, nzones, nsources)
 
   ! Defining usefull values
@@ -109,13 +109,13 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
     DO s = 1, nsources
       DO z = 1, nzones
         integral(z) = integral(z) + sens(wl) * (wav(2) - wav(1)) &
-                      * (Gdown(z, s, wl) * reflect / PI + Gup(z, s, wl))
+                      * (Gdown(z, s, wl) * reflect(wl) / PI + Gup(z, s, wl))
       END DO
     END DO
   END DO
 
-  DO j = 1, N
-    DO i = 1, N
+  DO j = 1, Nr
+    DO i = 1, Nt
       norm = 0
       DO z = 1, nzones
         IF (zones(i, j) == (z - 1)) THEN
@@ -127,7 +127,7 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
         IF (norm == 0) THEN
           phie(i, j) = 0
         ELSE
-          phie(i, j) = phie(i, j) + viirs(i, j) * pixsize**2 / norm
+          phie(i, j) = phie(i, j) + viirs(i, j) * pixsize(j) / norm
         END IF
       END DO
     END DO
@@ -150,8 +150,8 @@ SUBROUTINE viirs2lum(N, nzones, nangles, nwav, nbands, nsources, &
     ratio(b, :, :) = ratio(b, :, :) / norm
   END DO
 
-  DO j = 1, N
-    DO i = 1, N
+  DO j = 1, Nr
+    DO i = 1, Nt
       DO z = 1, nzones
         IF (zones(i, j) == (z - 1)) THEN
           lumlp(:, :, i, j) = lumlp(:, :, i, j) + ratio(:, z, :)

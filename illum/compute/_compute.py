@@ -15,5 +15,7 @@ def average_index(arr, indices):
     )
 
 
-def viirs2lum(*args, **kwargs):
-    return compute.viirs2lum(*args, **kwargs)
+viirs2lum = compute.viirs2lum
+
+# def viirs2lum(*args, **kwargs):
+#     return compute.viirs2lum(*args, **kwargs)

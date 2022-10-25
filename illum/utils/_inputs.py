@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
 
 import numpy as np
+import yaml
 
 import illum
 
@@ -64,3 +66,48 @@ def parse_inventory(filename, n=0):
     zonData = list(map(lamp_norm, zonData))
 
     return zonData
+
+
+def prep_inputs(params_file, dir_name):
+    shutil.rmtree(dir_name, True)
+    os.makedirs(dir_name)
+    shutil.copy(params_file, os.path.join(dir_name, "inputs_params.in"))
+
+    with open(params_file) as f:
+        params = yaml.safe_load(f)
+
+    norm_spct = illum.SPD.from_txt(os.path.join("Lights", "photopic.dat"))
+    norm_spct = norm_spct.normalize()
+    wav = norm_spct.wavelengths
+    viirs = illum.SPD.from_txt(os.path.join("Lights", "viirs.dat"))
+    viirs = viirs.normalize().interpolate(wav)
+
+    lops = illum.utils.open_lops("Lights")
+    spcts = illum.utils.open_spcts("Lights", norm_spct)
+    aster = illum.utils.open_refl("Lights", norm_spct)
+
+    bins = (
+        np.loadtxt("spectral_bands.dat", delimiter=",")
+        if os.path.isfile("spectral_bands.dat")
+        else illum.utils.spectral_bins(
+            params["lambda_min"], params["lambda_max"], params["nb_bins"]
+        )
+    )
+
+    bool_array = (wav >= bins[:, 0:1]) & (wav < bins[:, 1:2])
+    wl = bins.mean(1)
+
+    sum_coeffs = sum(
+        params["reflectance"][type] for type in params["reflectance"]
+    )
+    if sum_coeffs == 0:
+        sum_coeffs = 1.0
+
+    refl = sum(
+        aster[type].data * coeff / sum_coeffs
+        for type, coeff in params["reflectance"].items()
+    )
+
+    refls = [np.mean(refl[mask]) for mask in bool_array]
+
+    return lops, spcts, viirs, wl, bool_array, refls

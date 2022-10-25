@@ -27,6 +27,7 @@ from ._inputs import (
     open_refl,
     open_spcts,
     parse_inventory,
+    prep_inputs,
     spectral_bins,
 )
 from ._IO import load_bin, load_fits, load_geotiff, save_bin, save_geotiff
