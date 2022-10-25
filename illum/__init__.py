@@ -1,4 +1,4 @@
-__version__ = "2.2.4.20221025.16490727"
+__version__ = "2.2.4.20221025.16521834"
 
 import importlib.resources
 
