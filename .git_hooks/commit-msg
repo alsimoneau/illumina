@@ -2,13 +2,18 @@
 
 import sys
 
-with open("illum/__init__.py") as f:
-    content = f.read()
-line = content.split("\n")[0]
-version = line.split("=")[1].strip().strip("\"'")
+from git import Repo
 
-with open(sys.argv[1]) as f:
-    content = f.read()
+repo = Repo(".")
 
-with open(sys.argv[1], "w") as f:
-    f.write(version + ": " + content)
+if repo.active_branch.name == "master":
+    with open("illum/__init__.py") as f:
+        content = f.read()
+    line = content.split("\n")[0]
+    version = line.split("=")[1].strip().strip("\"'")
+
+    with open(sys.argv[1]) as f:
+        content = f.read()
+
+    with open(sys.argv[1], "w") as f:
+        f.write(version + ": " + content)
