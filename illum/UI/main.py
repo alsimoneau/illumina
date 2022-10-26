@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import importlib
 import os
 
 import click
@@ -334,3 +335,7 @@ def warp(target, output, domain, field):
         output = os.path.splitext(os.path.basename(target))[0]
     illum.warp(target, output, domain, field)
     click.echo(f"Writting to '{output}.parr'.")
+
+
+pipes = importlib.import_module(".UI.pipeline", package="illum")
+main.add_command(pipes.pipe)
