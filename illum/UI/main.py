@@ -222,7 +222,7 @@ def iss():
 @click.option(
     "-p",
     "--params",
-    default="input_params.in",
+    default="inputs_params.in",
     type=click.Path(exists=True),
     show_default=True,
     help="Path to the input parameters file.",
@@ -232,7 +232,7 @@ def iss():
     "--output",
     default="Inputs",
     show_default=True,
-    help="Path to the created input files.",
+    help="Folder name for the created input files.",
 )
 def pts(inventory, params, output):
     """Processes discrete light sources inventories."""
@@ -246,7 +246,7 @@ def pts(inventory, params, output):
 @click.option(
     "-p",
     "--params",
-    default="input_params.in",
+    default="inputs_params.in",
     type=click.Path(exists=True),
     show_default=True,
     help="Path to the input parameters file.",
@@ -256,7 +256,7 @@ def pts(inventory, params, output):
     "--output",
     default="Inputs",
     show_default=True,
-    help="Path to the created input files.",
+    help="Folder name for the created input files.",
 )
 def viirs(inventory, params, output):
     """Processes VIIRS data."""
