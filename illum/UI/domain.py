@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import inspect
 import warnings
 
 import numpy as np
@@ -45,5 +46,20 @@ def domain(params="domain_params.in"):
             crs=epsg,
             transform=transform,
         )
+
+    plat = f"{abs(lat):.6f}°{'N' if lat>=0 else 'S'}"
+    plon = f"{abs(lon):.6f}°{'E' if lon>=0 else 'W'}"
+    prmax = f"{rmax:,}m".replace(",", "'")
+    prmin = f"{rmin:,}m".replace(",", "'")
+    ra = f"{360/Na:.3g}°"
+    rr = f"{rmin*((rmax/rmin)**(1/Nr)-1):.3g}m"
+
+    printout = inspect.cleandoc(
+        f"""center coordinate: {plat}, {plon}
+        radius limits: {prmin}, {prmax}
+        polar resolution: {Na} angles ({ra}), {Nr} radii ({rr})
+        crs: EPSG {epsg}"""
+    )
+    print(printout)
 
     return parr.save("domain")
