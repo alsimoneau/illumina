@@ -202,38 +202,65 @@ def init():
 
 
 # input
-@main.group(invoke_without_command=True)
-@click.pass_context
-def input(ctx):
+@main.group()
+def input():
     """Prepares the executions inputs."""
-    if ctx.invoked_subcommand is None:
-        illum.input()
+    pass
 
 
 # input iss
 @input.command()
 def iss():
     """Processes ISS images from cities at night."""
-    illum.input()
     illum.input_iss()
     click.echo("Done.")
 
 
 # input pts
 @input.command()
-def pts():
+@click.argument("inventory", type=click.Path(exists=True))
+@click.option(
+    "-p",
+    "--params",
+    default="input_params.in",
+    type=click.Path(exists=True),
+    show_default=True,
+    help="Path to the input parameters file.",
+)
+@click.option(
+    "-o",
+    "--output",
+    default="Inputs",
+    show_default=True,
+    help="Path to the created input files.",
+)
+def pts(inventory, params, output):
     """Processes discrete light sources inventories."""
-    illum.input()
-    illum.input_pts()
+    illum.input_pts(inventory, params, output)
     click.echo("Done.")
 
 
 # input viirs
 @input.command()
-def viirs():
+@click.argument("inventory", type=click.Path(exists=True))
+@click.option(
+    "-p",
+    "--params",
+    default="input_params.in",
+    type=click.Path(exists=True),
+    show_default=True,
+    help="Path to the input parameters file.",
+)
+@click.option(
+    "-o",
+    "--output",
+    default="Inputs",
+    show_default=True,
+    help="Path to the created input files.",
+)
+def viirs(inventory, params, output):
     """Processes VIIRS data."""
-    illum.input()
-    illum.input_viirs()
+    illum.input_viirs(inventory, params, output)
     click.echo("Done.")
 
 
