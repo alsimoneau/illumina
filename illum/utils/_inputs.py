@@ -72,6 +72,7 @@ def prep_inputs(params_file, dir_name):
     shutil.rmtree(dir_name, True)
     os.makedirs(dir_name)
     shutil.copy(params_file, os.path.join(dir_name, "inputs_params.in"))
+    shutil.copy("topo.parr", os.path.join(dir_name, "topo.parr"))
 
     with open(params_file) as f:
         params = yaml.safe_load(f)
