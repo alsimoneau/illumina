@@ -41,7 +41,7 @@ def open_multiple(path):
         else:
             break
     else:
-        outs.append(merge(name))
+        outs.append(merge(path))
         return outs
 
     for name in os.listdir(path):
