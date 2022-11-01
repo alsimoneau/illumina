@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import importlib.resources
 import os
 import shutil
 from glob import glob
 
+import illum
+
 
 def init():
-    illumpath = importlib.resources.files("illum").as_posix()
-    if illumpath.rsplit(os.sep, 1)[0] in os.path.abspath(os.curdir):
+    if illum.path.rsplit(os.sep, 1)[0] in os.path.abspath(os.curdir):
         print("In ILLUMINA code folder. Aborting.")
         return
 
@@ -19,12 +19,10 @@ def init():
     print("Initializing ILLUMINA execution folder.")
 
     shutil.copytree(
-        illumpath + os.sep.join(["", "data", "Example", "Lights"]), "Lights"
+        os.path.join(illum.path, "data", "Example", "Lights"), "Lights"
     )
 
-    example_files = glob(
-        illumpath + os.sep.join(["", "data", "Example", "*.*"])
-    )
+    example_files = glob(os.path.join(illum.path, "data", "Example", "*.*"))
     files = [
         s
         for s in example_files
