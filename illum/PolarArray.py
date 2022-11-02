@@ -82,6 +82,9 @@ class PolarArray:
     def save(self, filename, *args, **kwargs):
         return save(filename, self, *args, **kwargs)
 
+    def plot(self, **kwargs):
+        return plot(self, **kwargs)
+
 
 def load(filename):
     with h5py.File(filename, "r") as f:
@@ -290,6 +293,52 @@ def union(
         pmask = domain > 0.5
         out.data[pmask] = data[pmask]
 
+    return out
+
+
+def plot(parr, /, *, rmax=None, slider=False, grid=True, **kwargs):
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Slider
+
+    fig = plt.figure()
+    ax = plt.subplot(111, polar=True)
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+    ax.xaxis.set_ticklabels(["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
+
+    R = np.geomspace(*parr._lims, parr.shape[1] + 1)
+    T = 2 * np.pi * (np.arange(parr.shape[0] + 1) - 0.5) / parr.shape[0]
+
+    plt.pcolormesh(T, R, parr.data.T, **kwargs)
+    if grid:
+        plt.grid()
+
+    if rmax is not None:
+        plt.ylim(0, rmax)
+
+    out = (fig, ax)
+
+    if slider:
+        ax_slider = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
+        slider = Slider(
+            ax=ax_slider,
+            label="Max distance",
+            valmin=np.log10(parr.minRadius),
+            valmax=np.log10(parr.maxRadius),
+            valinit=np.log10(parr.maxRadius if rmax is None else rmax),
+            orientation="vertical",
+        )
+
+        def update(val):
+            slider.valtext.set_text("%.3g" % 10 ** slider.val)
+            ax.set_ylim(0, 10 ** slider.val)
+            fig.canvas.draw_idle()
+
+        update(0)
+        slider.on_changed(update)
+        plt.show()
+
+        out = out + (slider,)
     return out
 
 
