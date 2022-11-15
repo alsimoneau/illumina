@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
+import site
+from glob import glob
 
-from setuptools import Extension, setup
+from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 
 
-class f2py_Extension(Extension):
-    def __init__(self, name):
-        Extension.__init__(self, name, sources=[])
-
-
 class f2py_Build(build_ext):
-    def run(self):
-        for ext in self.extensions:
-            self.build_extension(ext)
-
     def build_extension(self, ext):
-        name = os.path.basename(ext.name)
-        os.system(f"cd {ext.name}; f2py -c  `ls *.f90 | xargs` -m {name}")
+        os.system(f"f2py -c {' '.join(ext.sources)} -m {ext.name}")
+        fold = list(filter(os.path.exists, site.getsitepackages()))[0]
+        so = glob("illum/compute/*.so")
+        for s in so:
+            shutil.copy(s, os.path.join(fold, s))
 
 
 with open("illum/__init__.py") as f:
@@ -31,7 +28,7 @@ with open("illum/__init__.py") as f:
 setup(
     name="illum",
     version=info["__version__"],
-    packages=["illum"],
+    packages=find_packages(),
     install_requires=[
         "astropy",
         "Click",
@@ -57,6 +54,10 @@ setup(
         [console_scripts]
         illum=illum.UI.main:main
     """,
-    ext_modules=[f2py_Extension("illum/compute")],
+    ext_modules=[
+        Extension("illum.compute.compute", glob("illum/compute/*.f90"))
+    ],
     cmdclass=dict(build_ext=f2py_Build),
+    include_package_data=True,
+    package_data={"illum": ["compute/*", "data/*"]},
 )

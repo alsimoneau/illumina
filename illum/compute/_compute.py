@@ -2,20 +2,16 @@
 
 import numpy as np
 
-from . import compute
+from .compute import viirs2lum
 
 
 def average_index(arr, indices):
+    from .compute import average_index
+
     idx = np.asarray(indices, int)
     n = int(np.prod(arr.shape[idx.ndim :]))
     return (
-        compute.average_index(arr.reshape((-1, n)).T, idx.flatten(), idx.max())
+        average_index(arr.reshape((-1, n)).T, idx.flatten(), idx.max())
         .T.reshape(arr.shape)
         .astype(arr.dtype)
     )
-
-
-viirs2lum = compute.viirs2lum
-
-# def viirs2lum(*args, **kwargs):
-#     return compute.viirs2lum(*args, **kwargs)
