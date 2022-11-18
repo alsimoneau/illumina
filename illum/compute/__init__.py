@@ -15,13 +15,19 @@ def average_index(arr, indices):
     )
 
 
-def viirs2lum(
-    viirs_dat, zones, zonData, sources, lops, spcts, bool_array, sens, refls
-):
+def viirs2lum(viirs_dat, zones, zonData, inputs):
+    """Converts VIIRS data to luminance.
+
+    Parameters:
+        viirs_dat: VIIRS data [PolarArray]
+        zones: inventory zones [PolarArray]
+        zonData: inventory, as returned by 'illum.utils.parse_inventory'
+        inputs: obtained from 'illum.utils.prep_inputs'
+    """
     from .compute import viirs2lum
 
-    spct_keys = list(spcts.keys())
-    lop_keys = list(lops.keys())
+    spct_keys = list(inputs["spcts"].keys())
+    lop_keys = list(inputs["lops"].keys())
 
     zones_inventory = _np.array(
         [
@@ -32,6 +38,7 @@ def viirs2lum(
     )
     zones_inventory[:, [0, 2, 3]] += 1  # Fortran indexing
 
+    sources = {lamp[2] for zd in zonData for lamp in zd}
     sources_idx = [
         list(sources).index(k) if k in sources else -1 for k in lop_keys
     ]
@@ -42,14 +49,16 @@ def viirs2lum(
         nsources=len(sources),
         viirs=viirs_dat.data,
         zones=zones.data.astype("uint32"),
-        angles=lops[lop_keys[0]].vertical_angles,
-        wav=spcts[spct_keys[0]].wavelengths,
-        bands=bool_array,
-        sens=sens.data,
-        lops=_np.array([lops[k].vertical_profile() for k in lop_keys]),
-        spcts=_np.array([spcts[k].data for k in spct_keys]),
+        angles=inputs["lops"][lop_keys[0]].vertical_angles,
+        wav=inputs["spcts"][spct_keys[0]].wavelengths,
+        bands=inputs["bins"],
+        sens=inputs["sens"].data,
+        lops=_np.array(
+            [inputs["lops"][k].vertical_profile() for k in lop_keys]
+        ),
+        spcts=_np.array([inputs["spcts"][k].data for k in spct_keys]),
         sources=sources_idx,
         ivtr=zones_inventory,
         pixsize=zones.area(),
-        reflect=refls,
+        reflect=inputs["refls"],
     )

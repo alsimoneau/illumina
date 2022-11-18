@@ -18,7 +18,6 @@ def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     print("Building inputs from discrete inventory.")
 
     inputs = illum.utils.prep_inputs(params_file, dir_name)
-    lops, spcts, viirs, wl, bool_array, refls = inputs
 
     inv = pd.read_csv(inv_name, delimiter=" ", dtype={"spct": str, "lop": str})
     domain = illum.PA.load("domain.parr")
@@ -40,7 +39,7 @@ def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     sources = pd.unique(inv["lop"])
 
     for s in sources:
-        lops[s].to_txt(os.path.join(dir_name, f"fctem_{s}"))
+        inputs["lops"][s].to_txt(os.path.join(dir_name, f"fctem_{s}"))
 
     with open(os.path.join(dir_name, "lamps.lst"), "w") as zfile:
         zfile.write("\n".join(sources) + "\n")
@@ -51,7 +50,7 @@ def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
 
     lumlp = dict()
     for s in sources:
-        for wav in wl:
+        for wav in inputs["wl"]:
             lumlp[s, wav] = illum.PA.load("domain.parr")
 
     for (y, x), ind in idx.items():
@@ -66,13 +65,13 @@ def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
         for s in pd.unique(inv["lop"][ind]):
             mask = inv["lop"][ind] == s
             fctem = np.array(
-                [spcts[type].data for type in inv["spct"][ind][mask]]
+                [inputs["spcts"][type].data for type in inv["spct"][ind][mask]]
             )
             fctem = np.sum(fctem * lumens[mask].to_numpy()[:, None], 0)
 
-            mean = [np.mean(fctem[mask]) for mask in bool_array]
+            mean = [np.mean(fctem[mask]) for mask in inputs["bins"]]
 
-            for i, wav in enumerate(wl):
+            for i, wav in enumerate(inputs["wl"]):
                 lumlp[s, wav].data[y, x] = mean[i]
 
     print("Saving data.")

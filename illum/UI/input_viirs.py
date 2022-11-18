@@ -17,7 +17,6 @@ def input_viirs(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     print("Building inputs from zones inventory.")
 
     inputs = illum.utils.prep_inputs(params_file, dir_name)
-    lops, spcts, viirs, wl, bool_array, refls = inputs
 
     # lamps distribution
     zonData = illum.utils.parse_inventory(inv_name, 7)
@@ -25,7 +24,7 @@ def input_viirs(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     sources = {lamp[2] for zd in zonData for lamp in zd}
 
     for s in sources:
-        lops[s].to_txt(os.path.join(dir_name, f"fctem_{s}"))
+        inputs["lops"][s].to_txt(os.path.join(dir_name, f"fctem_{s}"))
 
     with open(os.path.join(dir_name, "lamps.lst"), "w") as f:
         f.write("\n".join(sources) + "\n")
@@ -61,19 +60,9 @@ def input_viirs(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
 
     circles = illum.PA.load(os.path.join(dir_name, "zone.parr"))
 
-    lumlps = illum.compute.viirs2lum(
-        viirs_dat,
-        circles,
-        zonData,
-        sources,
-        lops,
-        spcts,
-        bool_array,
-        viirs,
-        refls,
-    )
+    lumlps = illum.compute.viirs2lum(viirs_dat, circles, zonData, inputs)
 
-    for n, x in enumerate(wl):
+    for n, x in enumerate(inputs["wl"]):
         for s, source in enumerate(sources):
             new = illum.PA.load("domain.parr")
             new.data = lumlps[n, s]

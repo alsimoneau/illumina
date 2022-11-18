@@ -111,4 +111,6 @@ def prep_inputs(params_file, dir_name):
 
     refls = [np.mean(refl[mask]) for mask in bool_array]
 
-    return lops, spcts, viirs, wl, bool_array, refls
+    return dict(
+        lops=lops, spcts=spcts, sens=viirs, wl=wl, bins=bool_array, refls=refls
+    )
