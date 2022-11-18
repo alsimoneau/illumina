@@ -47,7 +47,7 @@ def open_refl(path, norm_spct):
     }
 
 
-def parse_inventory(filename, n=0):
+def parse_inventory(filename, n=7):
     """Parse an inventory type file.
     Skips the first 'n' columns."""
 
