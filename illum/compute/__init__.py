@@ -4,6 +4,14 @@ import numpy as _np
 
 
 def average_index(arr, indices):
+    """Averages an array over like indices.
+
+    Parameters:
+        arr: (n+m)D array to average
+        indices: nD indices map
+
+    The first n dimensions must be the same.
+    """
     from .compute import average_index
 
     idx = _np.asarray(indices, int)
