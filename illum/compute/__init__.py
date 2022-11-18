@@ -2,8 +2,6 @@
 
 import numpy as _np
 
-from .compute import viirs2lum
-
 
 def average_index(arr, indices):
     from .compute import average_index
@@ -14,4 +12,44 @@ def average_index(arr, indices):
         average_index(arr.reshape((-1, n)).T, idx.flatten(), idx.max())
         .T.reshape(arr.shape)
         .astype(arr.dtype)
+    )
+
+
+def viirs2lum(
+    viirs_dat, zones, zonData, sources, lops, spcts, bool_array, sens, refls
+):
+    from .compute import viirs2lum
+
+    spct_keys = list(spcts.keys())
+    lop_keys = list(lops.keys())
+
+    zones_inventory = _np.array(
+        [
+            [i, lamp[0], spct_keys.index(lamp[1]), lop_keys.index(lamp[2])]
+            for i, zon in enumerate(zonData)
+            for lamp in zon
+        ]
+    )
+    zones_inventory[:, [0, 2, 3]] += 1  # Fortran indexing
+
+    sources_idx = [
+        list(sources).index(k) if k in sources else -1 for k in lop_keys
+    ]
+    sources_idx = _np.array(sources_idx) + 1
+
+    return viirs2lum(
+        nzones=len(zonData),
+        nsources=len(sources),
+        viirs=viirs_dat.data,
+        zones=zones.data.astype("uint32"),
+        angles=lops[lop_keys[0]].vertical_angles,
+        wav=spcts[spct_keys[0]].wavelengths,
+        bands=bool_array,
+        sens=sens.data,
+        lops=_np.array([lops[k].vertical_profile() for k in lop_keys]),
+        spcts=_np.array([spcts[k].data for k in spct_keys]),
+        sources=sources_idx,
+        ivtr=zones_inventory,
+        pixsize=zones.area(),
+        reflect=refls,
     )
