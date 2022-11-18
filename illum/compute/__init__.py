@@ -1,3 +1,17 @@
 #!/usr/bin/env python3
 
-from ._compute import average_index, viirs2lum
+import numpy as _np
+
+from .compute import viirs2lum
+
+
+def average_index(arr, indices):
+    from .compute import average_index
+
+    idx = _np.asarray(indices, int)
+    n = int(_np.prod(arr.shape[idx.ndim :]))
+    return (
+        average_index(arr.reshape((-1, n)).T, idx.flatten(), idx.max())
+        .T.reshape(arr.shape)
+        .astype(arr.dtype)
+    )
