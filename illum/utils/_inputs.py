@@ -47,7 +47,7 @@ def open_refl(path, norm_spct):
     }
 
 
-def parse_inventory(filename, n=0):
+def parse_inventory(filename, n=7):
     """Parse an inventory type file.
     Skips the first 'n' columns."""
 
@@ -111,4 +111,6 @@ def prep_inputs(params_file, dir_name):
 
     refls = [np.mean(refl[mask]) for mask in bool_array]
 
-    return lops, spcts, viirs, wl, bool_array, refls
+    return dict(
+        lops=lops, spcts=spcts, sens=viirs, wl=wl, bins=bool_array, refls=refls
+    )

@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import site
 from glob import glob
 
 from setuptools import Extension, find_packages, setup
@@ -10,12 +9,20 @@ from setuptools.command.build_ext import build_ext
 
 
 class f2py_Build(build_ext):
+    def run(self):
+        self.inplace = False
+        build_ext.run(self)
+
     def build_extension(self, ext):
         os.system(f"f2py -c {' '.join(ext.sources)} -m {ext.name}")
-        fold = list(filter(os.path.exists, site.getsitepackages()))[0]
-        so = glob("illum/compute/*.so")
-        for s in so:
-            shutil.copy(s, os.path.join(fold, s))
+
+        build_py = self.get_finalized_command("build_py")
+        src_file, dst_file = self._get_inplace_equivalent(build_py, ext)
+
+        try:
+            shutil.copy(src_file, dst_file)
+        except (FileNotFoundError, shutil.SameFileError):
+            pass
 
 
 with open("illum/__init__.py") as f:
