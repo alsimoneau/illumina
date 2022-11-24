@@ -11,17 +11,12 @@
 ! **********************************************************************************************************************
 ! ** Illumina VERSION 2 - in Fortran 77                                                                               **
 ! ** Programmers in decreasing order of contribution  :                                                               **
-! **                            Martin Aube                                                                     **
+! **                            Martin Aube                                                                           **
 ! **              Still having very few traces of their contributions :                                               **
 ! **                            Loic Franchomme-Fosse,  Mathieu Provencher, Andre Morin                               **
 ! **                            Alex Neron, Etienne Rousseau                                                          **
 ! **                            William Desroches, Maxime Girardin, Tom Neron                                         **
 ! **                                                                                                                  **
-! ** Illumina can be downloaded via:   git clone https://github.com/aubema/illumina.git                               **
-! ** To compile:                                                                                                      **
-! **    cd hg/illumina                                                                                                **
-! **    mkdir bin                                                                                                     **
-! **    bash makeILLUMINA                                                                                             **
 ! **                                                                                                                  **
 ! **  Current version features/limitations :                                                                          **
 ! **                                                                                                                  **
@@ -60,7 +55,7 @@
 
 !  Contact: martin.aube@cegepsherbrooke.qc.ca
 
-PROGRAM illumina                                                         ! Beginning
+PROGRAM illumina
   IMPLICIT NONE
 
 !=======================================================================
@@ -257,7 +252,7 @@ PROGRAM illumina                                                         ! Begin
   IF (verbose >= 1) THEN
     PRINT *, 'Starting ILLUMINA computations...'
   END IF
-! reading of the fichier d'entree (illumina.in)
+  ! reading of the fichier d'entree (illumina.in)
   PRINT *, 'Reading illumina.in input file'
   OPEN (unit=1, file='illumina.in', status='old')
   READ (1, *)
@@ -293,12 +288,11 @@ PROGRAM illumina                                                         ! Begin
     PRINT *, 'Error: elevation angle smaller than -90 deg'
     STOP
   END IF
-! conversion of the geographical viewing angles toward the cartesian
-! angle we assume that the angle in the file illumina.in
-! is consistent with the geographical definition
-! geographical, azim=0 toward north, 90 toward east, 180 toward south
-! etc
-! cartesian, azim=0 toward east, 90 toward north, 180 toward west etc
+  ! conversion of the geographical viewing angles toward the cartesian
+  ! angle we assume that the angle in the file illumina.in
+  ! is consistent with the geographical definition
+  ! geographical, azim=0 toward north, 90 toward east, 180 toward south, etc
+  ! cartesian, azim=0 toward east, 90 toward north, 180 toward west, etc
   azim = 90.0 - azim
   IF (azim < 0.0) azim = azim + 360.0
   IF (azim >= 360.0) azim = azim - 360.0
@@ -320,13 +314,14 @@ PROGRAM illumina                                                         ! Begin
   scalo = scal
   boxx = NINT(reflsiz / dx)  ! Number of column to consider left/right of the source for the reflection.
   boxy = NINT(reflsiz / dy)  ! Number of column to consider up/down of the source for the reflection.
-! omemax: exclude calculations too close (<10m) this is a sustended angle of 1 deg.
-! the calculated flux is highly sensitive to that number for a very high
-! pixel resolution (a few 10th of meters). We assume anyway that somebody
-! observing the sky will never lies closer than that distance to a
-! light fixture. This number is however somehow subjective and that means
-! that the value of sky brightness near sources will be affected by this
-! choice
+
+  ! omemax: exclude calculations too close (<10m) this is a sustended angle of 1 deg.
+  ! the calculated flux is highly sensitive to that number for a very high
+  ! pixel resolution (a few 10th of meters). We assume anyway that somebody
+  ! observing the sky will never lies closer than that distance to a
+  ! light fixture. This number is however somehow subjective and that means
+  ! that the value of sky brightness near sources will be affected by this
+  ! choice
   omemax = 1.0 / ((10.0)**2.0)
   IF (verbose > 0) THEN
     PRINT *, '2nd order scattering grid = ', siz, 'm'
@@ -334,11 +329,12 @@ PROGRAM illumina                                                         ! Begin
     PRINT *, 'Pixel size = ', dx, ' x ', dy
     PRINT *, 'Maximum radius for reflection = ', reflsiz
   END IF
-! computing the actual AOD at the wavelength lambda
+
+  ! computing the actual AOD at the wavelength lambda
   IF (verbose >= 1) PRINT *, '500nm aod = ', taua, '500nm angstrom coeff.= ', alpha
   taua = taua * (lambda / 500.0)**(-1.0 * alpha)
   layaod = layaod * (lambda / 500.0)**(-1.0 * layalp)
-!  determine the Length of basenm
+  !  determine the Length of basenm
   lenbase = INDEX(basenm, ' ') - 1
   mnaf = basenm(1:lenbase)//'_topogra.bin'   ! determine the names of input and output files
   outfile = basenm(1:lenbase)//'.out'
@@ -346,7 +342,8 @@ PROGRAM illumina                                                         ! Begin
   pclimg = basenm(1:lenbase)//'_pcl.bin'
   pcwimg = basenm(1:lenbase)//'_pcw.bin'
   pclgp = basenm(1:lenbase)//'_pcl.gplot'
-! opening output file
+
+  ! opening output file
   OPEN (unit=2, file=outfile, status='unknown')
   WRITE (2, *) "ILLUMINA version __version__"
   WRITE (2, *) 'FILE USED:'
@@ -361,7 +358,8 @@ PROGRAM illumina                                                         ! Begin
   PRINT *, 'Observer position (x,y,z)', x_obs, y_obs, z_o
   WRITE (2, *) 'Elevation angle:', angvis, ' azim angle (counterclockwise from east)', azim
   PRINT *, 'Elevation angle:', angvis, ' azim angle (counterclockwise from east)', azim
-! Initialisation of the arrays and variables
+
+  ! Initialisation of the arrays and variables
   IF (verbose >= 1) PRINT *, 'initializing variables...'
   IF (cloudt == 0) THEN
     cloudbase = 1000000000.0
