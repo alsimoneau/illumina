@@ -9,7 +9,7 @@ LIBS := $(wildcard illum/kernel/libs/*.f90)
 F2PY := $(wildcard illum/compute/*.f90)
 PYSO := illum/compute/compute.so
 
-.PHONY: all f2py clean
+.PHONY: all kernel f2py clean
 
 all: kernel f2py
 
