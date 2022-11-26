@@ -25,8 +25,7 @@
 
 !    Contact: martin.aube@cegepsherbrooke.qc.ca
 
-SUBROUTINE zone_diffusion( &
-  effet, zondif, ncell, stepdi, siz)
+SUBROUTINE zone_diffusion(effet, zondif, ncell, stepdi, siz)
   IMPLICIT NONE
   INTEGER :: i, j, k
   INTEGER :: ncell, neffet, imin, imax, jmin, jmax, kmin, kmax

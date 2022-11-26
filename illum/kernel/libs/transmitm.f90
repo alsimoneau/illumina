@@ -55,8 +55,7 @@ SUBROUTINE transmitm(angz, z_i, z_f, distd, transm, tranam, tabs)
   END IF
   IF (distd == 0.0) transm = 1.0
   IF ((transm < 0.0) .OR. (transm > 1.0)) THEN
-    PRINT *, 'ERREUR avec transm', transm, tranam, &
-      z_f, z_i, distd, angz
+    PRINT *, 'ERREUR avec transm', transm, tranam, z_f, z_i, distd, angz
     STOP
   END IF
   RETURN
