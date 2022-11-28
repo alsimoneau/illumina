@@ -1,7 +1,0 @@
-MODULE constants
-
-  IMPLICIT NONE
-
-  REAL(8), PARAMETER :: pi = 4 * ATAN(1.D0)
-
-END MODULE

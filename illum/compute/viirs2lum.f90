@@ -5,8 +5,6 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   ! Computes light sources power from the viirs image
   ! =====================================================
 
-  USE constants
-
   IMPLICIT NONE
 
   ! Array lenghts
@@ -46,6 +44,9 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   REAL(8) :: integral(nzones)
   REAL(8) :: phie(Nt, Nr)
   REAL(8) :: ratio(nbands, nzones, nsources)
+
+  ! Constants
+  REAL(8), PARAMETER :: pi = 4 * ATAN(1.D0)
 
   mids = 0
   DO a = 2, nangles
