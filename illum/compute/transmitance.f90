@@ -2,12 +2,12 @@ FUNCTION trans(zenith_angle, z_i, z_f, distd, scale_height, trana)
 
   IMPLICIT NONE
 
-  REAL, INTENT(in) :: trana
-  REAL, INTENT(in) :: angz, haer
-  REAL, INTENT(in) :: z_i, z_f, z1, z2
-  REAL, INTENT(in) :: distd
+  REAL(8), INTENT(IN) :: trana
+  REAL(8), INTENT(IN) :: zenith_angle, scale_height
+  REAL(8), INTENT(IN) :: z_i, z_f
+  REAL(8), INTENT(IN) :: distd
 
-  REAL :: trans
+  REAL(8) :: trans, z1, z2
 
   IF (distd == 0.0) THEN
     trans = 1.0
@@ -31,11 +31,11 @@ FUNCTION trans(zenith_angle, z_i, z_f, distd, scale_height, trana)
               * (EXP(-1.0 * z1 / scale_height) - EXP(-1.0 * z2 / scale_height)))
 
   IF (trans == 0.0) THEN
-    PRINT *, 'ERREUR transa - no transmission', z_i, z_f, zenith_angle, trana, distd, scale_height
+    PRINT *, 'ERREUR trans - no transmission', z_i, z_f, zenith_angle, trana, distd, scale_height
   END IF
 
   IF (trans > 1.0) THEN
-    PRINT *, 'ERREUR avec transa', transa, z_i, z_f, zenith_angle
+    PRINT *, 'ERREUR avec trans', trans, z_i, z_f, zenith_angle
     STOP
   END IF
 
@@ -45,13 +45,14 @@ FUNCTION trans_toa(pression, wavelength) RESULT(trans)
 
   IMPLICIT NONE
 
-  REAL :: m, lambm, taua, pressi, tranam, tranaa, tranal, layaod, tabs, bandw
+  REAL(8), INTENT(IN) :: pression, wavelength
+  REAL(8) :: trans
 
   !  From Bodhaine et al. (1999)
   trans = EXP(-1.0 * pression / 101.325 * 0.0021520 &
-              * (1.0455996 - 341.29061 * (lambm / 1000.0)**-2.0 &
-                 - 0.90230850 * (lambm / 1000.0)**2.0) &
-              / (1.0 + 0.0027059889 * (lambm / 1000.0)**-2.0 &
-                 - 85.968563 * (lambm / 1000.0)**2.0))
+              * (1.0455996 - 341.29061 * (wavelength / 1000.0)**-2.0 &
+                 - 0.90230850 * (wavelength / 1000.0)**2.0) &
+              / (1.0 + 0.0027059889 * (wavelength / 1000.0)**-2.0 &
+                 - 85.968563 * (wavelength / 1000.0)**2.0))
 
 END FUNCTION

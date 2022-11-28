@@ -28,7 +28,7 @@ bin/%: illum/kernel/%.f90
 f2py: ${PYSO}
 
 %.so: ${F2PY}
-	f2py3 -c ${F2PY} -m compute
+	f2py3 --fcompiler=gfortran --f90flags='-fopenmp' -lgomp -c ${F2PY} -m compute
 	@mv compute.*.so $@
 
 

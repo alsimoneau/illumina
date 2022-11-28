@@ -2,13 +2,13 @@ SUBROUTINE average_index(arr, indices, index_max, average, n, m)
 
   IMPLICIT NONE
 
-  INTEGER, INTENT(IN) :: n, m, index_max
+  INTEGER(4), INTENT(IN) :: n, m, index_max
   INTEGER(4), INTENT(IN) :: indices(n)
   REAL(8), INTENT(IN) :: arr(m, n)
   REAL(8), INTENT(OUT) :: average(m, n)
 
-  INTEGER :: i
-  INTEGER :: weight(0:index_max)
+  INTEGER(4) :: i
+  INTEGER(4) :: weight(0:index_max)
   REAL(8) :: acc(m, 0:index_max)
 
   acc = 0

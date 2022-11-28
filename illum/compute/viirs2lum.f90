@@ -5,48 +5,47 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   ! Computes light sources power from the viirs image
   ! =====================================================
 
+  USE constants
+
   IMPLICIT NONE
 
   ! Array lenghts
-  INTEGER, INTENT(in) :: Nt, Nr
-  INTEGER, INTENT(in) :: nzones
-  INTEGER, INTENT(in) :: nangles
-  INTEGER, INTENT(in) :: nwav
-  INTEGER, INTENT(in) :: nbands
-  INTEGER, INTENT(in) :: nsources
-  INTEGER, INTENT(in) :: nlamps
-  INTEGER, INTENT(in) :: nlops
-  INTEGER, INTENT(in) :: nspcts
+  INTEGER(4), INTENT(IN) :: Nt, Nr
+  INTEGER(4), INTENT(IN) :: nzones
+  INTEGER(4), INTENT(IN) :: nangles
+  INTEGER(4), INTENT(IN) :: nwav
+  INTEGER(4), INTENT(IN) :: nbands
+  INTEGER(4), INTENT(IN) :: nsources
+  INTEGER(4), INTENT(IN) :: nlamps
+  INTEGER(4), INTENT(IN) :: nlops
+  INTEGER(4), INTENT(IN) :: nspcts
 
   ! Inputs
-  REAL, INTENT(in) :: viirs(Nt, Nr)
-  INTEGER, INTENT(in) :: zones(Nt, Nr)
-  REAL, INTENT(in) :: angles(nangles)
-  REAL, INTENT(in) :: wav(nwav)
-  LOGICAL, INTENT(in) :: bands(nbands, nwav)
-  REAL, INTENT(in) :: sens(nwav)
-  REAL, INTENT(in) :: lops(nlops, nangles)
-  REAL, INTENT(in) :: spcts(nspcts, nwav)
-  INTEGER, INTENT(in) :: sources(nlops)
-  REAL, INTENT(in) :: ivtr(nlamps, 4)
-  REAL, INTENT(in) :: pixsize(Nr), reflect(nbands)
+  REAL(8), INTENT(IN) :: viirs(Nt, Nr)
+  INTEGER(4), INTENT(IN) :: zones(Nt, Nr)
+  REAL(8), INTENT(IN) :: angles(nangles)
+  REAL(8), INTENT(IN) :: wav(nwav)
+  LOGICAL, INTENT(IN) :: bands(nbands, nwav)
+  REAL(8), INTENT(IN) :: sens(nwav)
+  REAL(8), INTENT(IN) :: lops(nlops, nangles)
+  REAL(8), INTENT(IN) :: spcts(nspcts, nwav)
+  INTEGER(4), INTENT(IN) :: sources(nlops)
+  REAL(8), INTENT(IN) :: ivtr(nlamps, 4)
+  REAL(8), INTENT(IN) :: pixsize(Nr), reflect(nbands)
 
   ! Output
-  REAL, INTENT(out) :: lumlp(nbands, nsources, Nt, Nr)
+  REAL(8), INTENT(OUT) :: lumlp(nbands, nsources, Nt, Nr)
 
   ! Internal variables
-  INTEGER :: i, j, z, a, b, wl, s
-  REAL :: norm, acc
-  REAL :: lamps(nzones, nsources, nangles, nwav)
-  REAL :: mids(nangles + 1)
-  REAL :: sinx(nangles)
-  REAL :: Gdown(nzones, nsources, nwav), Gup(nzones, nsources, nwav)
-  REAL :: integral(nzones)
-  REAL :: phie(Nt, Nr)
-  REAL :: ratio(nbands, nzones, nsources)
-
-  ! Defining usefull values
-  REAL, PARAMETER :: PI = 4.0 * ATAN(1.0)
+  INTEGER(4) :: i, j, z, a, b, wl, s
+  REAL(8) :: norm, acc
+  REAL(8) :: lamps(nzones, nsources, nangles, nwav)
+  REAL(8) :: mids(nangles + 1)
+  REAL(8) :: sinx(nangles)
+  REAL(8) :: Gdown(nzones, nsources, nwav), Gup(nzones, nsources, nwav)
+  REAL(8) :: integral(nzones)
+  REAL(8) :: phie(Nt, Nr)
+  REAL(8) :: ratio(nbands, nzones, nsources)
 
   mids = 0
   DO a = 2, nangles
