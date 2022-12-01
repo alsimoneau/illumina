@@ -5,6 +5,8 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   ! Computes light sources power from the viirs image
   ! =====================================================
 
+!$ USE OMP_LIB
+
   IMPLICIT NONE
 
   ! Array lenghts
@@ -57,6 +59,7 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   END DO
 
   ! Building lamp inventory
+  !$OMP PARALLEL DO REDUCTION(+:lamps) PRIVATE(j) COLLAPSE(3)
   DO wl = 1, nwav
     DO a = 1, nangles
       DO i = 1, nlamps
@@ -67,20 +70,25 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
       END DO
     END DO
   END DO
+  !$OMP END PARALLEL DO
 
   ! Ensuring normalization
+  !$OMP PARALLEL DO PRIVATE(norm) COLLAPSE(2)
   DO s = 1, nsources
     DO z = 1, nzones
       norm = 0
+      !$OMP PARALLEL DO REDUCTION(+:norm) COLLAPSE(2)
       DO wl = 1, nwav
         DO a = 1, nangles
           norm = norm + lamps(z, s, a, wl) * sinx(a)
         END DO
       END DO
+      !$OMP END PARALLEL DO
       norm = norm * (wav(2) - wav(1))
       lamps(z, s, :, :) = lamps(z, s, :, :) / norm
     END DO
   END DO
+  !$OMP END PARALLEL DO
 
   ! Inversion
   ! phie = DNB * S / int( R ( rho/pi Gdown + Gup ) ) dlambda
@@ -90,6 +98,7 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
       norm = norm + sinx(a)
     END IF
   END DO
+  !$OMP PARALLEL DO REDUCTION(+:Gdown,Gup) COLLAPSE(4)
   DO wl = 1, nwav
     DO a = 1, nangles
       DO s = 1, nsources
@@ -104,7 +113,9 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
       END DO
     END DO
   END DO
+  !$OMP END PARALLEL DO
 
+  !$OMP PARALLEL DO REDUCTION(+:integral) COLLAPSE(3)
   DO wl = 1, nwav
     DO s = 1, nsources
       DO z = 1, nzones
@@ -113,10 +124,13 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
       END DO
     END DO
   END DO
+  !$OMP END PARALLEL DO
 
+  !$OMP PARALLEL DO REDUCTION(+:phie) PRIVATE(norm) COLLAPSE(2)
   DO j = 1, Nr
     DO i = 1, Nt
       norm = 0
+      !$OMP PARALLEL DO REDUCTION(+:norm)
       DO z = 1, nzones
         IF (zones(i, j) == (z - 1)) THEN
           acc = integral(z)
@@ -124,19 +138,24 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
             norm = norm + acc
           END IF
         END IF
-        IF (norm == 0) THEN
-          phie(i, j) = 0
-        ELSE
-          phie(i, j) = phie(i, j) + viirs(i, j) * pixsize(j) / norm
-        END IF
       END DO
+      !$OMP END PARALLEL DO
+      IF (norm == 0) THEN
+        phie(i, j) = 0
+      ELSE
+        phie(i, j) = phie(i, j) + viirs(i, j) * pixsize(j) / norm
+      END IF
     END DO
   END DO
+  !$OMP END PARALLEL DO
 
+  !$OMP PARALLEL DO PRIVATE(norm)
   DO b = 1, nbands
     norm = 0
+    !$OMP PARALLEL DO REDUCTION(+:norm)
     DO wl = 1, nwav
       IF (bands(b, wl)) THEN
+        !$OMP PARALLEL DO REDUCTION(+:ratio) COLLAPSE(3)
         DO a = 1, nangles
           DO s = 1, nsources
             DO z = 1, nzones
@@ -144,21 +163,45 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
             END DO
           END DO
         END DO
+        !$OMP END PARALLEL DO
         norm = norm + 1
       END IF
     END DO
-    ratio(b, :, :) = ratio(b, :, :) / norm
+    !$OMP END PARALLEL DO
+    !$OMP PARALLEL DO COLLAPSE(2)
+    DO s = 1, nsources
+      DO z = 1, nzones
+        ratio(b, z, s) = ratio(b, z, s) / norm
+      END DO
+    END DO
+    !$OMP END PARALLEL DO
   END DO
+  !$OMP END PARALLEL DO
 
+  !$OMP PARALLEL DO
   DO j = 1, Nr
     DO i = 1, Nt
+      !$OMP PARALLEL DO REDUCTION(+:lumlp)
       DO z = 1, nzones
         IF (zones(i, j) == (z - 1)) THEN
-          lumlp(:, :, i, j) = lumlp(:, :, i, j) + ratio(:, z, :)
+          !$OMP PARALLEL DO COLLAPSE(2)
+          DO s = 1, nsources
+            DO b = 1, nbands
+              lumlp(b, s, i, j) = lumlp(b, s, i, j) + ratio(b, z, s)
+            END DO
+          END DO
         END IF
       END DO
-      lumlp(:, :, i, j) = lumlp(:, :, i, j) * phie(i, j)
+      !$END PARALLEL DO
+      !$OMP PARALLEL DO COLLAPSE(2)
+      DO s = 1, nsources
+        DO b = 1, nbands
+          lumlp(b, s, i, j) = lumlp(b, s, i, j) * phie(i, j)
+        END DO
+      END DO
+      !$END PARALLEL DO
     END DO
   END DO
+  !$END PARALLEL DO
 
 END SUBROUTINE
