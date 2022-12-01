@@ -17,7 +17,7 @@ def average_index(arr, indices):
     idx = _np.asarray(indices, int)
     n = int(_np.prod(arr.shape[idx.ndim :]))
     return (
-        average_index(arr.reshape((-1, n)).T, idx.flatten(), idx.max())
+        average_index(arr.reshape((-1, n)).T, idx.flatten())
         .T.reshape(arr.shape)
         .astype(arr.dtype)
     )

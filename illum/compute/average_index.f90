@@ -1,15 +1,20 @@
-SUBROUTINE average_index(arr, indices, index_max, average, n, m)
+SUBROUTINE average_index(arr, indices, average, n, m)
 
   IMPLICIT NONE
 
-  INTEGER(4), INTENT(IN) :: n, m, index_max
+!f2py intent(hide) n, m
+  INTEGER(4), INTENT(IN) :: n, m
   INTEGER(4), INTENT(IN) :: indices(n)
   REAL(8), INTENT(IN) :: arr(m, n)
   REAL(8), INTENT(OUT) :: average(m, n)
 
-  INTEGER(4) :: i
-  INTEGER(4) :: weight(0:index_max)
-  REAL(8) :: acc(m, 0:index_max)
+  INTEGER(4) :: i, j, index_max
+  INTEGER(4), ALLOCATABLE :: weight(:)
+  REAL(8), ALLOCATABLE :: acc(:, :)
+
+  index_max = MAXVAL(indices)
+  ALLOCATE (weight(0:index_max))
+  ALLOCATE (acc(m, 0:index_max))
 
   acc = 0
   weight = 0
