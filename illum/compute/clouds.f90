@@ -6,27 +6,26 @@ FUNCTION cloud_reflectance(zenith_angle, cloud_type) RESULT(refl)
 
   INTEGER(4), INTENT(IN) :: cloud_type
   REAL(8), INTENT(IN) :: zenith_angle
-  REAL(8) :: refl
+  REAL(8) :: refl, polynomial
 
   REAL(8) :: c(4), z
 
   SELECT CASE (cloud_type)
   CASE (1)  ! thin cirrus & cirrostratus
-    c = [0.25674, -0.18077, -0.21961, 0.25272]
+    c = [0.25674D0, -0.18077D0, -0.21961D0, 0.25272D0]
   CASE (2)  ! thick cirrus & cirrostratus
-    c = [0.60540, -0.55142, -0.23389, 0.43648]
+    c = [0.60540D0, -0.55142D0, -0.23389D0, 0.43648D0]
   CASE (3)  ! altostratus & altocumulus
-    c = [0.66152, -0.14863, -0.08193, 0.13442]
+    c = [0.66152D0, -0.14863D0, -0.08193D0, 0.13442D0]
   CASE (4)  ! stratocumulus & stratus
-    c = [0.71214, -0.15033, 0.00696, 0.03904]
+    c = [0.71214D0, -0.15033D0, 0.00696D0, 0.03904D0]
   CASE (5)  ! cumulus & cumulonimbus
-    c = [0.67072, -0.13805, -0.10895, 0.09460]
+    c = [0.67072D0, -0.13805D0, -0.10895D0, 0.09460D0]
   CASE default
-    c = [1.0, 0.0, 0.0, 0.0]
+    c = [1.0D0, 0.0D0, 0.0D0, 0.0D0]
   END SELECT
 
-  z = COS(zenith_angle)
-  refl = c(1) + c(2) * z + c(3) * z**2 + c(4) * z**3
+  refl = polynomial(COS(zenith_angle), c, SIZE(c))
 
 END FUNCTION
 
@@ -36,26 +35,25 @@ FUNCTION cloud_transmitance(zenith_angle, cloud_type) RESULT(trans)
 
   INTEGER(4), INTENT(IN) :: cloud_type
   REAL(8), INTENT(IN) :: zenith_angle
-  REAL(8) :: trans
+  REAL(8) :: trans, polynomial
 
   REAL(8) :: c(4), z
 
   SELECT CASE (cloud_type)
   CASE (1)        ! thin cirrus & cirrostratus
-    c = [0.63547, 0.35229, 0.08709, -0.22902]
+    c = [0.63547D0, 0.35229D0, 0.08709D0, -0.22902D0]
   CASE (2)   ! thick cirrus & cirrostratus
-    c = [0.26458, 0.66829, 0.24228, -0.49357]
+    c = [0.26458D0, 0.66829D0, 0.24228D0, -0.49357D0]
   CASE (3)   ! altostratus & altocumulus
-    c = [0.19085, 0.32817, -0.08613, -0.08197]
+    c = [0.19085D0, 0.32817D0, -0.08613D0, -0.08197D0]
   CASE (4)   ! stratocumulus & stratus
-    c = [0.13610, 0.29964, -0.14041, 0.00952]
+    c = [0.13610D0, 0.29964D0, -0.14041D0, 0.00952D0]
   CASE (5)   ! cumulus & cumulonimbus
-    c = [0.17960, 0.34855, -0.14875, 0.01962]
+    c = [0.17960D0, 0.34855D0, -0.14875D0, 0.01962D0]
   CASE default
-    c = [1.0, 0.0, 0.0, 0.0]
+    c = [1.0D0, 0.0D0, 0.0D0, 0.0D0]
   END SELECT
 
-  z = COS(zenith_angle)
-  trans = c(1) + c(2) * z + c(3) * z**2 + c(4) * z**3
+  trans = polynomial(COS(zenith_angle), c, SIZE(c))
 
 END FUNCTION
