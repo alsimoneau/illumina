@@ -14,6 +14,8 @@ SUBROUTINE average_index(arr, indices, average, n, m)
   INTEGER(4), ALLOCATABLE :: weight(:)
   REAL(8), ALLOCATABLE :: acc(:, :)
 
+!$ OMP_SET_NESTED(.TRUE.)
+
   index_max = MAXVAL(indices)
   ALLOCATE (weight(0:index_max))
   ALLOCATE (acc(m, 0:index_max))

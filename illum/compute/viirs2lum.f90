@@ -50,6 +50,8 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   ! Constants
   REAL(8), PARAMETER :: pi = 4 * ATAN(1.D0)
 
+!$ OMP_SET_NESTED(.TRUE.)
+
   mids = 0
   DO a = 2, nangles
     mids(a) = (angles(a - 1) + angles(a)) / 2
