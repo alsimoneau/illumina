@@ -6,7 +6,7 @@ FUNCTION cloud_reflectance(zenith_angle, cloud_type) RESULT(refl)
 
   INTEGER(4), INTENT(IN) :: cloud_type
   REAL(8), INTENT(IN) :: zenith_angle
-  REAL(8) :: refl, polynomial
+  REAL(8) :: refl, POLYNOMIAL
 
   REAL(8) :: c(4), z
 
@@ -25,7 +25,7 @@ FUNCTION cloud_reflectance(zenith_angle, cloud_type) RESULT(refl)
     c = [1.0D0, 0.0D0, 0.0D0, 0.0D0]
   END SELECT
 
-  refl = polynomial(COS(zenith_angle), c, SIZE(c))
+  refl = POLYNOMIAL(COS(zenith_angle), c, SIZE(c))
 
 END FUNCTION
 
@@ -35,7 +35,7 @@ FUNCTION cloud_transmitance(zenith_angle, cloud_type) RESULT(trans)
 
   INTEGER(4), INTENT(IN) :: cloud_type
   REAL(8), INTENT(IN) :: zenith_angle
-  REAL(8) :: trans, polynomial
+  REAL(8) :: trans, POLYNOMIAL
 
   REAL(8) :: c(4), z
 
@@ -54,6 +54,6 @@ FUNCTION cloud_transmitance(zenith_angle, cloud_type) RESULT(trans)
     c = [1.0D0, 0.0D0, 0.0D0, 0.0D0]
   END SELECT
 
-  trans = polynomial(COS(zenith_angle), c, SIZE(c))
+  trans = POLYNOMIAL(COS(zenith_angle), c, SIZE(c))
 
 END FUNCTION
