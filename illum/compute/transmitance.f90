@@ -1,4 +1,4 @@
-FUNCTION trans(zenith_angle, z_i, z_f, distd, scale_height, trana)
+FUNCTION TRANS(zenith_angle, z_i, z_f, distd, scale_height, trana)
 
   IMPLICIT NONE
 
@@ -41,7 +41,7 @@ FUNCTION trans(zenith_angle, z_i, z_f, distd, scale_height, trana)
 
 END FUNCTION
 
-FUNCTION trans_toa(pression, wavelength) RESULT(trans)
+FUNCTION TRANS_TOA(pression, wavelength) RESULT(trans)
 
   IMPLICIT NONE
 

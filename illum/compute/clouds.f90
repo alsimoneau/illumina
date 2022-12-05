@@ -1,6 +1,6 @@
 ! Based on Shapiro 1982 Table 11
 
-FUNCTION cloud_reflectance(zenith_angle, cloud_type) RESULT(refl)
+FUNCTION CLOUD_REFLECTANCE(zenith_angle, cloud_type) RESULT(refl)
 
   IMPLICIT NONE
 
@@ -29,7 +29,7 @@ FUNCTION cloud_reflectance(zenith_angle, cloud_type) RESULT(refl)
 
 END FUNCTION
 
-FUNCTION cloud_transmitance(zenith_angle, cloud_type) RESULT(trans)
+FUNCTION CLOUD_TRANSMITTANCE(zenith_angle, cloud_type) RESULT(trans)
 
   IMPLICIT NONE
 
