@@ -5,6 +5,8 @@ import math
 import os
 from glob import glob
 
+import joblib
+
 
 def strip_comments(item, token="#"):
     """Generator. Strips comments and whitespace from input lines.
@@ -64,3 +66,12 @@ def add_arrays(a, b):
 
 def glob_types(p, types):
     return [s for s in glob(p) if os.path.splitext(s)[1][1:].lower() in types]
+
+
+def parallelize(func):
+    def wrapper(iterable, *args):
+        return joblib.Parallel(n_jobs=-1, prefer="threads")(
+            joblib.delayed(func)(i, *args) for i in iterable
+        )
+
+    return wrapper

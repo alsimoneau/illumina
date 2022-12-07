@@ -46,6 +46,7 @@ setup(
         "geopandas",
         "GitPython",
         "h5py",
+        "joblib",
         "matplotlib",
         "numpy",
         "opencv-python",

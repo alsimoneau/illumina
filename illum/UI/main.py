@@ -301,6 +301,20 @@ def roads(domain, resolution, xsize, ysize, buffer, crs):
     click.echo("Done.")
 
 
+# run
+@main.command()
+@click.argument(
+    "inputs",
+    nargs=-1,
+    default=["Inputs"],
+    type=click.Path(exists=True, file_okay=False),
+)
+def run(inputs):
+    """Executes the illumina model for the specified inputs folder."""
+    illum.run(inputs)
+    click.echo("Done.")
+
+
 # warp
 @main.command()
 @click.argument("target", type=click.Path(exists=True))

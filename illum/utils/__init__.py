@@ -32,4 +32,11 @@ from ._inputs import (
 )
 from ._IO import load_bin, load_fits, load_geotiff, save_bin, save_geotiff
 from ._math import deg2mx, deg2my, round_odd, safe_divide
-from ._utils import add_arrays, chunker, eng_format, glob_types, strip_comments
+from ._utils import (
+    add_arrays,
+    chunker,
+    eng_format,
+    glob_types,
+    parallelize,
+    strip_comments,
+)
