@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import argparse
+
+import illum
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-m",
+    "--major",
+    action="store_true",
+    help="If present, bumps major version instead.",
+)
+p = parser.parse_args()
+
+with open(illum.path + "/illum/__init__.py") as f:
+    content = f.read()
+line = content.split("\n")[0]
+version = line.split("=")[1].strip().strip("\"'")
+
+parts = version.split(".")
+parts[1 - p.major] = str(int(parts[1 - p.major]) + 1)
+parts[2] = "0"
+
+print(f"New version number will be '{'.'.join(parts[:3])}'")
+while (res := input("Do you want to continue? (Enter y/n) ").lower()) not in {
+    "y",
+    "n",
+}:
+    pass
+
+if res == "y":
+    with open(illum.path + "/illum/__init__.py", "w") as f:
+        f.write(content.replace(version, ".".join(parts)))
+else:
+    print("Aborting.")

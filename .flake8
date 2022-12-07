@@ -1,0 +1,8 @@
+[flake8]
+# Formatting issues are taken care of by black
+select = F
+
+per-file-ignores =
+  # F401: Module imported but unused
+  # F403: 'from module import *' used; unable to detect undefined names
+  __init__.py: F401,F403,

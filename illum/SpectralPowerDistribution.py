@@ -78,6 +78,9 @@ def from_spdx(filename):
 
 
 def to_spdx(filename, spd):
+    if os.path.splitext(filename)[1].lower() != ".spdx":
+        filename += ".spdx"
+
     content = dict()
 
     root = content["IESTM2714"] = dict()
@@ -112,6 +115,20 @@ def from_txt(filename, skiprows=1, **kwargs):
     )
 
 
+def to_txt(filename, spd, /, *, sep="  ", header=True):
+    if not os.path.splitext(filename)[1]:
+        filename += ".spct"
+
+    if header is True:
+        header = ["wavelength", "relativeIntensity"]
+
+    with open(filename, "w") as f:
+        if len(header) == 2:
+            f.write(sep.join(header) + "\n")
+        for wl, val in zip(spd.wavelengths, spd.data):
+            f.write(sep.join([str(wl), str(val)]) + "\n")
+
+
 def from_aster(filename):
     data = np.loadtxt(filename)
 
@@ -123,15 +140,13 @@ def from_aster(filename):
     )
 
 
-def to_txt(filename, spd, /, *, sep="  ", header=True):
-    if header is True:
-        header = ["wavelength", "relativeIntensity"]
-
-    with open(filename, "w") as f:
-        if len(header) == 2:
-            f.write(sep.join(header) + "\n")
-        for wl, val in zip(spd.wavelengths, spd.data):
-            f.write(sep.join([str(wl), str(val)]) + "\n")
+def from_file(filename, /):
+    name, ext = os.path.splitext(filename)
+    funcs = dict(spdx=from_spdx, spct=from_txt, aster=from_aster)
+    try:
+        return funcs[ext[1:].lower()](filename)
+    except KeyError:
+        raise ValueError(f"Unknown file type '{ext}'.")
 
 
 def interpolate(spd, wavelengths):
