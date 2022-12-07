@@ -16,10 +16,10 @@ import illum
 def input_viirs(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     print("Building inputs from zones inventory.")
 
-    inputs = illum.utils.prep_inputs(params_file, dir_name)
+    inputs = illum.utils.inputs.prep_inputs(params_file, dir_name)
 
     # lamps distribution
-    zonData = illum.utils.parse_inventory(inv_name, 7)
+    zonData = illum.utils.inputs.parse_inventory(inv_name, 7)
 
     sources = {lamp[2] for zd in zonData for lamp in zd}
 

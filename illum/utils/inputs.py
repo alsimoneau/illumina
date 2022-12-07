@@ -1,49 +1,51 @@
 #!/usr/bin/env python3
 
-import os
-import shutil
+import os as _os
+import shutil as _shutil
 
-import numpy as np
-import yaml
+import numpy as _np
+import yaml as _yaml
 
-import illum
+import illum as _illum
 
 
 def spectral_bins(lmin, lmax, N):
-    limits = np.linspace(lmin, lmax, N + 1)
-    return np.stack([limits[:-1], limits[1:]], axis=1)
+    limits = _np.linspace(lmin, lmax, N + 1)
+    return _np.stack([limits[:-1], limits[1:]], axis=1)
 
 
 def parse_key(fname):
-    return os.path.basename(fname).rsplit(".", 1)[0].split("_", 1)[0]
+    return _os.path.basename(fname).rsplit(".", 1)[0].split("_", 1)[0]
 
 
 def open_lops(path, resolution=1):
     return {
-        parse_key(fname): illum.APD.from_file(fname)
+        parse_key(fname): _illum.APD.from_file(fname)
         .normalize()
         .interpolate(step=resolution)
-        for fname in illum.utils.glob_types(
-            os.path.join(path, "*"), ["lop", "ies"]
+        for fname in _illum.utils.utils.glob_types(
+            _os.path.join(path, "*"), ["lop", "ies"]
         )
     }
 
 
 def open_spcts(path, norm_spct):
     return {
-        parse_key(fname): illum.SPD.from_file(fname)
+        parse_key(fname): _illum.SPD.from_file(fname)
         .interpolate(norm_spct)
         .normalize(norm_spct)
-        for fname in illum.utils.glob_types(
-            os.path.join(path, "*"), ["spct", "spdx"]
+        for fname in _illum.utils.utils.glob_types(
+            _os.path.join(path, "*"), ["spct", "spdx"]
         )
     }
 
 
 def open_refl(path, norm_spct):
     return {
-        parse_key(fname): illum.SPD.from_aster(fname).interpolate(norm_spct)
-        for fname in illum.utils.glob_types(os.path.join(path, "*"), ["aster"])
+        parse_key(fname): _illum.SPD.from_aster(fname).interpolate(norm_spct)
+        for fname in _illum.utils.utils.glob_types(
+            _os.path.join(path, "*"), ["aster"]
+        )
     }
 
 
@@ -59,7 +61,7 @@ def parse_inventory(filename, n=7):
         return list(map(list, list(zip(*trans))))
 
     with open(filename) as inv_file:
-        zonData = illum.utils.strip_comments(inv_file.readlines())
+        zonData = _illum.utils.utils.strip_comments(inv_file.readlines())
     zonData = [s.split()[n:] for s in zonData]
     zonData = [[s.split("_") for s in i] for i in zonData]
     zonData = [[[float(s[0]), s[1], s[2]] for s in i] for i in zonData]
@@ -69,28 +71,28 @@ def parse_inventory(filename, n=7):
 
 
 def prep_inputs(params_file, dir_name):
-    shutil.rmtree(dir_name, True)
-    os.makedirs(dir_name)
-    shutil.copy(params_file, os.path.join(dir_name, "inputs_params.in"))
-    shutil.copy("topography.parr", os.path.join(dir_name, "topography.parr"))
+    _shutil.rmtree(dir_name, True)
+    _os.makedirs(dir_name)
+    _shutil.copy(params_file, _os.path.join(dir_name, "inputs_params.in"))
+    _shutil.copy("topography.parr", _os.path.join(dir_name, "topography.parr"))
 
     with open(params_file) as f:
-        params = yaml.safe_load(f)
+        params = _yaml.safe_load(f)
 
-    norm_spct = illum.SPD.from_txt(os.path.join("Lights", "photopic.dat"))
+    norm_spct = _illum.SPD.from_txt(_os.path.join("Lights", "photopic.dat"))
     norm_spct = norm_spct.normalize()
     wav = norm_spct.wavelengths
-    viirs = illum.SPD.from_txt(os.path.join("Lights", "viirs.dat"))
+    viirs = _illum.SPD.from_txt(_os.path.join("Lights", "viirs.dat"))
     viirs = viirs.normalize().interpolate(wav)
 
-    lops = illum.utils.open_lops("Lights")
-    spcts = illum.utils.open_spcts("Lights", norm_spct)
-    aster = illum.utils.open_refl("Lights", norm_spct)
+    lops = _illum.utils.inputs.open_lops("Lights")
+    spcts = _illum.utils.inputs.open_spcts("Lights", norm_spct)
+    aster = _illum.utils.inputs.open_refl("Lights", norm_spct)
 
     bins = (
-        np.loadtxt("spectral_bands.dat", delimiter=",")
-        if os.path.isfile("spectral_bands.dat")
-        else illum.utils.spectral_bins(
+        _np.loadtxt("spectral_bands.dat", delimiter=",")
+        if _os.path.isfile("spectral_bands.dat")
+        else _illum.utils.inputs.spectral_bins(
             params["lambda_min"], params["lambda_max"], params["nb_bins"]
         )
     )
@@ -109,7 +111,7 @@ def prep_inputs(params_file, dir_name):
         for type, coeff in params["reflectance"].items()
     )
 
-    refls = [np.mean(refl[mask]) for mask in bool_array]
+    refls = [_np.mean(refl[mask]) for mask in bool_array]
 
     return dict(
         lops=lops, spcts=spcts, sens=viirs, wl=wl, bins=bool_array, refls=refls

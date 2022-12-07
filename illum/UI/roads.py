@@ -18,16 +18,16 @@ def roads(domain, res=1, xsize=10000, ysize=10000, buffer=200, epsg=None):
     rst = rasterio.open(domain)
     coords = rasterio.transform.xy(rst.transform, *np.where(rst.read(1)))
     if epsg is None:
-        epsg = u.estimate_utm_epsg(*coords)
+        epsg = u.geo.estimate_utm_epsg(*coords)
     print(f"Using epsg:{epsg} projection.")
     bounds = shapely.geometry.MultiPoint(
-        tuple(zip(*u.transform(t_crs=epsg)(*coords)))
+        tuple(zip(*u.geo.transform(t_crs=epsg)(*coords)))
     ).minimum_rotated_rectangle
 
     print("Splitting domain.")
     res = 1
     buffer = ceil(buffer / res) * res
-    tiles, shape = u.fishnet(bounds, res=res, xsize=xsize, ysize=ysize)
+    tiles, shape = u.geo.fishnet(bounds, res=res, xsize=xsize, ysize=ysize)
     ny, nx = shape
     nb = int(buffer // res)
     mask = slice(nb, -nb), slice(nb, -nb)
@@ -42,16 +42,18 @@ def roads(domain, res=1, xsize=10000, ysize=10000, buffer=200, epsg=None):
 
         print(f"Processing tile {(y, x)}.")
         # print("Downloading road network.")
-        network = u.download_roads(geob, epsg)
+        network = u.geo.download_roads(geob, epsg)
         # print("Rasterizing road network.")
-        burned = u.rasterize_roads(network, boxb, epsg, res, res)
+        burned = u.geo.rasterize_roads(network, boxb, epsg, res, res)
 
         # print("Computing distance and angle to roads.")
-        dist, ang = u.dist_ang(burned, res, res)
+        dist, ang = u.geo.dist_ang(burned, res, res)
 
         profile = dict(
             crs=pyproj.CRS.from_epsg(epsg),
             transform=rasterio.transform.from_bounds(*box.bounds, nx, ny),
         )
-        u.save_geotiff(f"road_distance/x{x}_y{y}.tif", dist[mask], **profile)
-        u.save_geotiff(f"angle_to_road/x{x}_y{y}.tif", ang[mask], **profile)
+        u.IO.save_geotiff(
+            f"road_distance/x{x}_y{y}.tif", dist[mask], **profile
+        )
+        u.IO.save_geotiff(f"angle_to_road/x{x}_y{y}.tif", ang[mask], **profile)

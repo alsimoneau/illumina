@@ -29,8 +29,8 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
     Parameters:
         viirs_dat: VIIRS data [PolarArray]
         zones: inventory zones [PolarArray]
-        zonData: inventory, as returned by 'illum.utils.parse_inventory'
-        inputs: obtained from 'illum.utils.prep_inputs'
+        zonData: inventory, as returned by 'illum.utils.inputs.parse_inventory'
+        inputs: obtained from 'illum.utils.inputs.prep_inputs'
     """
     from .compute import viirs2lum
 

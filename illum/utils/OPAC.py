@@ -8,7 +8,7 @@ import numpy as np
 import yaml
 from scipy import interpolate
 
-from illum.utils import LOP_norm
+from illum.utils.fctem import LOP_norm
 
 
 def OPAC(wavelengths):

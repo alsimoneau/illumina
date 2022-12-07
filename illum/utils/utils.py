@@ -1,11 +1,11 @@
 # General convenience functions
 # Author: Alexandre Simoneau
 
-import math
-import os
-from glob import glob
+import math as _math
+import os as _os
+from glob import glob as _glob
 
-import joblib
+import joblib as _joblib
 
 
 def strip_comments(item, token="#"):
@@ -42,7 +42,7 @@ def eng_format(x, unit=""):
         + [" f", " p", " n", " \u03bc", " m"]
     )
 
-    power_of_1000 = int(math.floor(math.log10(x) // 3))
+    power_of_1000 = int(_math.floor(_math.log10(x) // 3))
     exponent = 3 * power_of_1000
     prefix = UNITS[power_of_1000]
     if prefix is None:
@@ -65,13 +65,15 @@ def add_arrays(a, b):
 
 
 def glob_types(p, types):
-    return [s for s in glob(p) if os.path.splitext(s)[1][1:].lower() in types]
+    return [
+        s for s in _glob(p) if _os.path.splitext(s)[1][1:].lower() in types
+    ]
 
 
 def parallelize(func):
     def wrapper(iterable, *args):
-        return joblib.Parallel(n_jobs=-1, prefer="threads")(
-            joblib.delayed(func)(i, *args) for i in iterable
+        return _joblib.Parallel(n_jobs=-1, prefer="threads")(
+            _joblib.delayed(func)(i, *args) for i in iterable
         )
 
     return wrapper

@@ -17,16 +17,16 @@ import illum
 def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
     print("Building inputs from discrete inventory.")
 
-    inputs = illum.utils.prep_inputs(params_file, dir_name)
+    inputs = illum.utils.inputs.prep_inputs(params_file, dir_name)
 
     inv = pd.read_csv(inv_name, delimiter=" ", dtype={"spct": str, "lop": str})
     domain = illum.PA.load("domain.parr")
 
     print("Classifying points.")
 
-    coords = illum.utils.transform(t_crs=domain.crs)(inv.lon, inv.lat)
-    coords = illum.utils.cart2pol(coords[::-1], domain.center)
-    coords = illum.utils.pol2idx(coords, domain.shape, domain._lims)
+    coords = illum.utils.geo.transform(t_crs=domain.crs)(inv.lon, inv.lat)
+    coords = illum.utils.coords.cart2pol(coords[::-1], domain.center)
+    coords = illum.utils.coords.pol2idx(coords, domain.shape, domain._lims)
     inv["y"], inv["x"] = np.array(coords, dtype=int)
 
     valid = (inv.x >= 0) & (inv.x < domain.shape[1])

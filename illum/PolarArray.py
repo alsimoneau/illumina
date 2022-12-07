@@ -53,7 +53,9 @@ class PolarArray:
 
     @property
     def center_coord(self):
-        return illum.utils.cart2idx(self.center, self._origin, self._scale)
+        return illum.utils.coords.cart2idx(
+            self.center, self._origin, self._scale
+        )
 
     def radii(self):
         return radii(self)
@@ -133,7 +135,7 @@ def coords(parr):
 
 def xy(parr):
     if "xy" not in parr._cache:
-        parr._cache["xy"] = illum.utils.pol2cart(coords(parr))[::-1]
+        parr._cache["xy"] = illum.utils.coords.pol2cart(coords(parr))[::-1]
     return parr._cache["xy"]
 
 
@@ -143,10 +145,10 @@ def set_circle(parr, /, coord, radius, value, *, units="deg"):
 
     coord = coord[::-1]
     if units == "deg":
-        coord = illum.utils.transform(t_crs=parr.crs)(*coord)
+        coord = illum.utils.geo.transform(t_crs=parr.crs)(*coord)
         units = "cart"
     if units == "polar":
-        coord = illum.utils.pol2cart(coord, parr.center)
+        coord = illum.utils.coords.pol2cart(coord, parr.center)
         units = "cart"
     if units == "cart":
         coord = coord[0] - parr.center[0], coord[1] - parr.center[1]
@@ -184,8 +186,10 @@ def from_array(
     scale = (transform.e, transform.a)
     lims = (rmin, rmax)
 
-    blur = illum.utils.polar_blur(arr, outshape, center, origin, scale, lims)
-    data = illum.utils.wrap(blur, outshape, center, origin, scale, lims)
+    blur = illum.utils.coords.polar_blur(
+        arr, outshape, center, origin, scale, lims
+    )
+    data = illum.utils.coords.wrap(blur, outshape, center, origin, scale, lims)
 
     return PolarArray(
         data=data,
@@ -199,7 +203,7 @@ def from_array(
 
 
 def to_array(parr):
-    return illum.utils.unwrap(
+    return illum.utils.coords.unwrap(
         parr.data,
         parr.xyshape,
         parr.center,
@@ -330,8 +334,8 @@ def plot(parr, /, *, rmax=None, slider=False, grid=True, **kwargs):
         )
 
         def update(val):
-            slider.valtext.set_text("%.3g" % 10 ** slider.val)
-            ax.set_ylim(0, 10 ** slider.val)
+            slider.valtext.set_text("%.3g" % 10**slider.val)
+            ax.set_ylim(0, 10**slider.val)
             fig.canvas.draw_idle()
 
         update(0)

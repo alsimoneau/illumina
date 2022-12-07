@@ -26,10 +26,10 @@ def domain(params="domain_params.in"):
     rmax = domain["maxRadius"]
     Na = domain["Nangles"]
 
-    epsg = illum.utils.estimate_utm_epsg(lon, lat)
+    epsg = illum.utils.geo.estimate_utm_epsg(lon, lat)
 
     Nr = round(np.log(rmax / rmin) / np.arcsinh(np.pi / Na) / 2)
-    x, y = illum.utils.transform(t_crs=epsg)(lon, lat)
+    x, y = illum.utils.geo.transform(t_crs=epsg)(lon, lat)
     transform = rio.transform.from_origin(
         x - rmax, y + rmax, 2 * rmax, 2 * rmax
     )
