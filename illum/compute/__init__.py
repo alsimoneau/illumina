@@ -70,3 +70,7 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
         pixsize=zones.area(),
         reflect=inputs["refls"],
     )
+
+
+def kernel():
+    from .compute import kernel
