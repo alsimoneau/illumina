@@ -9,9 +9,7 @@ import scipy.interpolate
 
 
 def mids(arr, /):
-    return np.concatenate(
-        [[arr[0]], np.mean([arr[1:], arr[:-1]], 0), [arr[-1]]]
-    )
+    return np.concatenate([[arr[0]], np.mean([arr[1:], arr[:-1]], 0), [arr[-1]]])
 
 
 @dataclass
@@ -136,16 +134,12 @@ def vertical_profile(apd, /, *, integrated=False):
         raise NotImplementedError(f"Type {apd._type_letter} not supported.")
 
     profile = (
-        np.average(
-            apd.data, axis=1, weights=np.diff(mids(apd.horizontal_angles))
-        )
+        np.average(apd.data, axis=1, weights=np.diff(mids(apd.horizontal_angles)))
         if len(apd.horizontal_angles) > 1
         else apd.data[:, 0]
     )
     if integrated:
-        profile *= (
-            2 * np.pi * np.diff(-np.cos(np.deg2rad(mids(apd.vertical_angles))))
-        )
+        profile *= 2 * np.pi * np.diff(-np.cos(np.deg2rad(mids(apd.vertical_angles))))
     return profile
 
 

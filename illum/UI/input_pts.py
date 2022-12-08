@@ -57,9 +57,7 @@ def input_pts(inv_name, params_file="inputs_params.in", dir_name="Inputs"):
         lumens = inv["pow"][ind]
 
         for geo in ["hobs", "dobs", "fobs", "hlmp"]:
-            geometry[geo].data[y, x] = np.average(
-                inv[geo][ind], weights=lumens
-            )
+            geometry[geo].data[y, x] = np.average(inv[geo][ind], weights=lumens)
         geometry["lights"].data[y, x] = 1
 
         for s in pd.unique(inv["lop"][ind]):

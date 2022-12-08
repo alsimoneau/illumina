@@ -53,9 +53,7 @@ class PolarArray:
 
     @property
     def center_coord(self):
-        return illum.utils.coords.cart2idx(
-            self.center, self._origin, self._scale
-        )
+        return illum.utils.coords.cart2idx(self.center, self._origin, self._scale)
 
     def radii(self):
         return radii(self)
@@ -162,15 +160,7 @@ def set_circle(parr, /, coord, radius, value, *, units="deg"):
 
 
 def from_array(
-    arr,
-    /,
-    outshape,
-    *,
-    center=None,
-    rmin=None,
-    rmax=None,
-    crs="None",
-    transform=None,
+    arr, /, outshape, *, center=None, rmin=None, rmax=None, crs="None", transform=None
 ):
     if type(outshape) == PolarArray:
         rmin = outshape.minRadius
@@ -186,9 +176,7 @@ def from_array(
     scale = (transform.e, transform.a)
     lims = (rmin, rmax)
 
-    blur = illum.utils.coords.polar_blur(
-        arr, outshape, center, origin, scale, lims
-    )
+    blur = illum.utils.coords.polar_blur(arr, outshape, center, origin, scale, lims)
     data = illum.utils.coords.wrap(blur, outshape, center, origin, scale, lims)
 
     return PolarArray(
@@ -204,12 +192,7 @@ def from_array(
 
 def to_array(parr):
     return illum.utils.coords.unwrap(
-        parr.data,
-        parr.xyshape,
-        parr.center,
-        parr._origin,
-        parr._scale,
-        parr._lims,
+        parr.data, parr.xyshape, parr.center, parr._origin, parr._scale, parr._lims
     )
 
 
@@ -228,26 +211,17 @@ def union(
     crs=None,
 ):
     if transforms is not None and (len(arrays) != len(transforms)):
-        raise ValueError(
-            "'arrays' and 'transforms' must have the same length."
-        )
+        raise ValueError("'arrays' and 'transforms' must have the same length.")
 
     if out is None:
-        if not (
-            shape is None or maxRadius is None or crs is None or center is None
-        ):
+        if not (shape is None or maxRadius is None or crs is None or center is None):
             raise ValueError(
                 "'shape', 'minRadius', 'maxRadius', 'crs' and 'center' must be"
                 " given when 'out' is not provided."
             )
         else:
             out = from_array(
-                [[0]],
-                shape,
-                rmin=minRadius,
-                rmax=maxRadius,
-                crs=crs,
-                center=center,
+                [[0]], shape, rmin=minRadius, rmax=maxRadius, crs=crs, center=center
             )
     else:
         if not isinstance(out, PolarArray):
@@ -257,9 +231,7 @@ def union(
         masks = [None] * len(arrays)
 
     if sort:
-        areas = [
-            np.nan if t is None else np.abs(t.determinant) for t in transforms
-        ]
+        areas = [np.nan if t is None else np.abs(t.determinant) for t in transforms]
         idx = np.argsort(areas)[::-1]
     else:
         idx = np.arange(len(arrays))[::-1]
@@ -348,11 +320,7 @@ def plot(parr, /, *, rmax=None, slider=False, grid=True, **kwargs):
 
 def _test_polar():
     new = from_array(
-        np.random.random((100, 100)),
-        (100, 100),
-        center=(50, 50),
-        rmin=1,
-        rmax=50,
+        np.random.random((100, 100)), (100, 100), center=(50, 50), rmin=1, rmax=50
     )
     new.save("toto")
     old = load("toto.parr")

@@ -35,8 +35,7 @@ def sort_dependancies(files):
                     next_emitted.append(name)
             if not next_emitted:
                 raise ValueError(
-                    "cyclic dependancy detected: %s %r"
-                    % (name, (next_pending,))
+                    "cyclic dependancy detected: %s %r" % (name, (next_pending,))
                 )
             pending = next_pending
             emitted = next_emitted
@@ -60,9 +59,7 @@ def sort_dependancies(files):
             for match in re.findall(pattern, content):
                 use_names[match].add(fname)
 
-    use_names = {
-        key: val for key, val in use_names.items() if key in def_names
-    }
+    use_names = {key: val for key, val in use_names.items() if key in def_names}
 
     depends = {fname: set() for fname in files}
     for name, fnames in use_names.items():
@@ -137,9 +134,7 @@ setup(
         [console_scripts]
         illum=illum.UI.main:main
     """,
-    ext_modules=[
-        Extension("illum.compute.compute", glob("illum/compute/*.f90"))
-    ],
+    ext_modules=[Extension("illum.compute.compute", glob("illum/compute/*.f90"))],
     cmdclass=dict(build_ext=f2py_Build),
     include_package_data=True,
     package_data={"illum": ["compute/*", "data/*"]},

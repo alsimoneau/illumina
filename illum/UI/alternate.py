@@ -59,8 +59,8 @@ def alternate(name, zones, lights):
         if len(failed):
             for i, lat, lon, zon_ind in sorted(failed):
                 print(
-                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null"
-                    " zone #%d" % (i, lat, lon, zon_ind)
+                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null zone #%d"
+                    % (i, lat, lon, zon_ind)
                 )
             raise SystemExit()
 
@@ -83,16 +83,12 @@ def alternate(name, zones, lights):
             for fname in glob("Lights/*.ies") + glob("Lights/*.IES")
         }
     )
-    lop = {
-        key: apd.normalize().interpolate(step=1) for key, apd in lop.items()
-    }
+    lop = {key: apd.normalize().interpolate(step=1) for key, apd in lop.items()}
 
     # Spectral distribution (normalised with scotopric vision to 1)
     norm_spectrum = SPD.from_txt("Lights/photopic.dat").normalize()
     wav = norm_spectrum.wavelengths
-    viirs = (
-        SPD.from_txt("Lights/viirs.dat").interpolate(norm_spectrum).normalize()
-    )
+    viirs = SPD.from_txt("Lights/viirs.dat").interpolate(norm_spectrum).normalize()
 
     spct = {
         parse_key(fname): SPD.from_txt(fname)
@@ -132,9 +128,7 @@ def alternate(name, zones, lights):
         for fname in glob("Lights/*.aster") + glob("Lights/*.ASTER")
     }
 
-    sum_coeffs = sum(
-        params["reflectance"][type] for type in params["reflectance"]
-    )
+    sum_coeffs = sum(params["reflectance"][type] for type in params["reflectance"])
     if sum_coeffs == 0:
         sum_coeffs = 1.0
 

@@ -54,10 +54,7 @@ def plot_allsky(phi, r, data, n=100, **kwargs):
                 data[:, :, i] = interp(nphi, nr)
         else:
             interp = _interp2d(
-                _np.concatenate([phi, [phi[0] + 360]]),
-                r,
-                ndata,
-                kind=kwargs["interp"],
+                _np.concatenate([phi, [phi[0] + 360]]), r, ndata, kind=kwargs["interp"]
             )
             data = interp(nphi, nr)
         phi = nphi
@@ -102,9 +99,7 @@ def plot_allsky(phi, r, data, n=100, **kwargs):
         if "vmax" in kwargs:
             args["vmax"] = kwargs["vmax"]
         if "log" in kwargs and kwargs["log"]:
-            args["norm"] = _mpl.colors.LogNorm(
-                vmin=kwargs["vmin"], vmax=kwargs["vmax"]
-            )
+            args["norm"] = _mpl.colors.LogNorm(vmin=kwargs["vmin"], vmax=kwargs["vmax"])
         m = _plt.pcolormesh(Theta, R, data, linewidth=0, **args)
 
     if "showpts" in kwargs and kwargs["showpts"]:

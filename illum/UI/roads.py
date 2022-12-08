@@ -53,7 +53,5 @@ def roads(domain, res=1, xsize=10000, ysize=10000, buffer=200, epsg=None):
             crs=pyproj.CRS.from_epsg(epsg),
             transform=rasterio.transform.from_bounds(*box.bounds, nx, ny),
         )
-        u.IO.save_geotiff(
-            f"road_distance/x{x}_y{y}.tif", dist[mask], **profile
-        )
+        u.IO.save_geotiff(f"road_distance/x{x}_y{y}.tif", dist[mask], **profile)
         u.IO.save_geotiff(f"angle_to_road/x{x}_y{y}.tif", ang[mask], **profile)

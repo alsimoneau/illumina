@@ -30,9 +30,7 @@ def domain(params="domain_params.in"):
 
     Nr = round(np.log(rmax / rmin) / np.arcsinh(np.pi / Na) / 2)
     x, y = illum.utils.geo.transform(t_crs=epsg)(lon, lat)
-    transform = rio.transform.from_origin(
-        x - rmax, y + rmax, 2 * rmax, 2 * rmax
-    )
+    transform = rio.transform.from_origin(x - rmax, y + rmax, 2 * rmax, 2 * rmax)
 
     arr = np.zeros((1, 1))
     with warnings.catch_warnings():

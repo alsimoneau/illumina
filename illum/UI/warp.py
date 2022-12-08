@@ -66,9 +66,7 @@ def reproject(
 ):
     bounds = rio.warp.transform_bounds(dst_crs, src_crs, *bounds)
     window = (
-        rio.windows.from_bounds(*bounds, src_transform)
-        .round_offsets()
-        .round_lengths()
+        rio.windows.from_bounds(*bounds, src_transform).round_offsets().round_lengths()
     )
     transform, w, h = rio.warp.calculate_default_transform(
         src_crs, dst_crs, window.width, window.height, *bounds
@@ -124,10 +122,7 @@ def burn(polygon, polarArray, all_touched=False, N=1000, sf=2):
         )
 
         arr = rio.features.rasterize(
-            polygon,
-            (2 * N, 2 * N),
-            transform=transform,
-            all_touched=all_touched,
+            polygon, (2 * N, 2 * N), transform=transform, all_touched=all_touched
         )
         mask = np.ones((2 * N, 2 * N), dtype="bool")
         outs.append((arr, transform, mask))
@@ -172,9 +167,7 @@ def polarize(path, parr, field=None):
         rst = rio.open(path)
     except rio.RasterioIOError:
         # vector
-        polygon, mask = open_polygon(
-            path, parr.xyshape, parr.transform, parr.crs
-        )
+        polygon, mask = open_polygon(path, parr.xyshape, parr.transform, parr.crs)
         if field is None:
             polygon = process_water(polygon, mask, parr.crs)
         else:
@@ -185,11 +178,7 @@ def polarize(path, parr, field=None):
 
     # raster
     arr, transform, center = reproject(
-        rst.read(1),
-        rst.transform,
-        rst.crs,
-        bounds=parr.bounds(),
-        dst_crs=parr.crs,
+        rst.read(1), rst.transform, rst.crs, bounds=parr.bounds(), dst_crs=parr.crs
     )
     return illum.PA.from_array(
         arr,

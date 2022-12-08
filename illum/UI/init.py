@@ -18,16 +18,10 @@ def init():
 
     print("Initializing ILLUMINA execution folder.")
 
-    shutil.copytree(
-        os.path.join(illum.path, "data", "Example", "Lights"), "Lights"
-    )
+    shutil.copytree(os.path.join(illum.path, "data", "Example", "Lights"), "Lights")
 
     example_files = glob(os.path.join(illum.path, "data", "Example", "*.*"))
-    files = [
-        s
-        for s in example_files
-        if not (s.endswith("hdf5") or s.endswith("csv"))
-    ]
+    files = [s for s in example_files if not (s.endswith("hdf5") or s.endswith("csv"))]
 
     for filename in files:
         shutil.copy2(filename, ".")

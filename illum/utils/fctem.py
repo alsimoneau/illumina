@@ -22,9 +22,7 @@ def SPD_norm(wav, norm_spct, x, factor=683.002):
     Both arrays must be of the same lenght.
     Uses the two first elements of 'wav' as the integration step."""
     dlambda = wav[1] - wav[0]
-    return illum.utils.utils.safe_divide(
-        x, factor * _np.sum(norm_spct * x) * dlambda
-    )
+    return illum.utils.utils.safe_divide(x, factor * _np.sum(norm_spct * x) * dlambda)
 
 
 def spct_norm(wav, x):

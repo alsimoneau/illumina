@@ -92,9 +92,7 @@ def rasterize_roads(roads, bounds, epsg, xres, yres):
     xmin, ymin, xmax, ymax = bounds.bounds
     width = int((xmax - xmin) / xres)
     height = int((ymax - ymin) / yres)
-    transform = _rio.transform.from_bounds(
-        xmin, ymin, xmax, ymax, width, height
-    )
+    transform = _rio.transform.from_bounds(xmin, ymin, xmax, ymax, width, height)
     burned = _rio.features.rasterize(
         roads.geometry,
         out_shape=(height, width),
@@ -140,9 +138,7 @@ def nearest_road(lat, lon, radius=300):
     graph = _ox.add_edge_bearings(graph)
     graph = _ox.projection.project_graph(graph, to_crs=epsg)
     edges = _ox.graph_to_gdfs(graph, nodes=False)
-    nearest_idx, distance = _ox.distance.nearest_edges(
-        graph, x, y, return_dist=True
-    )
+    nearest_idx, distance = _ox.distance.nearest_edges(graph, x, y, return_dist=True)
     nearest = edges.loc[nearest_idx]
     bearing = nearest.bearing
     lon_c, lat_c = transform(s_crs=epsg)(*nearest.geometry.coords[0])

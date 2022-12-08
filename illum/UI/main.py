@@ -72,10 +72,7 @@ def help(ctx, subcommand):
 @main.command()
 @click.argument("name")
 @click.option(
-    "-z",
-    "--zones",
-    type=click.Path(exists=True),
-    help="New zones inventory filename.",
+    "-z", "--zones", type=click.Path(exists=True), help="New zones inventory filename."
 )
 @click.option(
     "-l",
@@ -143,25 +140,17 @@ def domain():
 @main.command()
 @click.argument("exec_dir", default=".", type=click.Path(exists=True))
 @click.option(
-    "-c",
-    "--contrib",
-    is_flag=True,
-    help="If present, extract contribution maps.",
+    "-c", "--contrib", is_flag=True, help="If present, extract contribution maps."
 )
 @click.option(
     "-p",
     "--params",
     multiple=True,
     nargs=2,
-    help=(
-        "Parameter name,value pair to extract. Can be provided more than once."
-    ),
+    help="Parameter name,value pair to extract. Can be provided more than once.",
 )
 @click.option(
-    "-f",
-    "--full",
-    is_flag=True,
-    help="If present, will extract all available outputs.",
+    "-f", "--full", is_flag=True, help="If present, will extract all available outputs."
 )
 @click.option(
     "-x",
@@ -281,18 +270,13 @@ def viirs(inventory, params, output):
     "-y", "--ysize", default=10000.0, show_default=True, help="Tile y size [m]"
 )
 @click.option(
-    "-b",
-    "--buffer",
-    default=200.0,
-    show_default=True,
-    help="Compute buffer [m]",
+    "-b", "--buffer", default=200.0, show_default=True, help="Compute buffer [m]"
 )
 @click.option(
     "--crs",
     type=int,
     help=(
-        "EPSG code of the projection to use. Determined automatically if not"
-        " provided."
+        "EPSG code of the projection to use. Determined automatically if not provided."
     ),
 )
 def roads(domain, resolution, xsize, ysize, buffer, crs):
@@ -303,9 +287,7 @@ def roads(domain, resolution, xsize, ysize, buffer, crs):
 
 # run
 @main.command()
-@click.argument(
-    "inputs", nargs=-1, type=click.Path(exists=True, file_okay=False)
-)
+@click.argument("inputs", nargs=-1, type=click.Path(exists=True, file_okay=False))
 def run(inputs):
     """Executes the illumina model for the specified inputs folder.
 
@@ -321,9 +303,7 @@ def run(inputs):
 @main.command()
 @click.argument("target", type=click.Path(exists=True))
 @click.option(
-    "-o",
-    "--output",
-    help="Base name of the output file. Based on TARGET when ommited.",
+    "-o", "--output", help="Base name of the output file. Based on TARGET when ommited."
 )
 @click.option(
     "-d",
@@ -334,10 +314,7 @@ def run(inputs):
 @click.option(
     "-f",
     "--field",
-    help=(
-        "Field name to burn for polygons. Inverse burns all-touched when"
-        " ommited."
-    ),
+    help="Field name to burn for polygons. Inverse burns all-touched when ommited.",
 )
 def warp(target, output, domain, field):
     """Warps georeferenced data.

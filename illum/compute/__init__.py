@@ -47,9 +47,7 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
     zones_inventory[:, [0, 2, 3]] += 1  # Fortran indexing
 
     sources = {lamp[2] for zd in zonData for lamp in zd}
-    sources_idx = [
-        list(sources).index(k) if k in sources else -1 for k in lop_keys
-    ]
+    sources_idx = [list(sources).index(k) if k in sources else -1 for k in lop_keys]
     sources_idx = _np.array(sources_idx) + 1
 
     return viirs2lum(
@@ -61,9 +59,7 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
         wav=inputs["spcts"][spct_keys[0]].wavelengths,
         bands=inputs["bins"],
         sens=inputs["sens"].data,
-        lops=_np.array(
-            [inputs["lops"][k].vertical_profile() for k in lop_keys]
-        ),
+        lops=_np.array([inputs["lops"][k].vertical_profile() for k in lop_keys]),
         spcts=_np.array([inputs["spcts"][k].data for k in spct_keys]),
         sources=sources_idx,
         ivtr=zones_inventory,

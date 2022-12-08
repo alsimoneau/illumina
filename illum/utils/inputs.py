@@ -43,9 +43,7 @@ def open_spcts(path, norm_spct):
 def open_refl(path, norm_spct):
     return {
         parse_key(fname): _illum.SPD.from_aster(fname).interpolate(norm_spct)
-        for fname in _illum.utils.utils.glob_types(
-            _os.path.join(path, "*"), ["aster"]
-        )
+        for fname in _illum.utils.utils.glob_types(_os.path.join(path, "*"), ["aster"])
     }
 
 
@@ -100,9 +98,7 @@ def prep_inputs(params_file, dir_name):
     bool_array = (wav >= bins[:, 0:1]) & (wav < bins[:, 1:2])
     wl = bins.mean(1)
 
-    sum_coeffs = sum(
-        params["reflectance"][type] for type in params["reflectance"]
-    )
+    sum_coeffs = sum(params["reflectance"][type] for type in params["reflectance"])
     if sum_coeffs == 0:
         sum_coeffs = 1.0
 
@@ -113,6 +109,4 @@ def prep_inputs(params_file, dir_name):
 
     refls = [_np.mean(refl[mask]) for mask in bool_array]
 
-    return dict(
-        lops=lops, spcts=spcts, sens=viirs, wl=wl, bins=bool_array, refls=refls
-    )
+    return dict(lops=lops, spcts=spcts, sens=viirs, wl=wl, bins=bool_array, refls=refls)

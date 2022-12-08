@@ -37,9 +37,7 @@ def eng_format(x, unit=""):
     #
     # U+03BC is Greek lowercase mu
     UNITS = (
-        [" ", " k", " M", " G"]
-        + ([None] * 10)
-        + [" f", " p", " n", " \u03bc", " m"]
+        [" ", " k", " M", " G"] + ([None] * 10) + [" f", " p", " n", " \u03bc", " m"]
     )
 
     power_of_1000 = int(_math.floor(_math.log10(x) // 3))
@@ -65,9 +63,7 @@ def add_arrays(a, b):
 
 
 def glob_types(p, types):
-    return [
-        s for s in _glob(p) if _os.path.splitext(s)[1][1:].lower() in types
-    ]
+    return [s for s in _glob(p) if _os.path.splitext(s)[1][1:].lower() in types]
 
 
 def parallelize(func):
