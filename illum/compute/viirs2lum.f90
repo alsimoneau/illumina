@@ -1,4 +1,4 @@
-SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
+SUBROUTINE VIIRS2LUM(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
                      nlamps, nlops, nspcts, viirs, zones, angles, wav, bands, &
                      sens, lops, spcts, sources, ivtr, pixsize, reflect, lumlp)
   ! =====================================================
@@ -48,7 +48,7 @@ SUBROUTINE viirs2lum(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   REAL(8) :: ratio(nbands, nzones, nsources)
 
   ! Constants
-  REAL(8), PARAMETER :: pi = 4 * ATAN(1.D0)
+  REAL(8), PARAMETER :: PI = 4 * ATAN(1.D0)
 
 !$ CALL OMP_SET_NESTED(.TRUE.)
 

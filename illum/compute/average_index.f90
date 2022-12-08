@@ -1,4 +1,4 @@
-SUBROUTINE average_index(arr, indices, average, n, m)
+SUBROUTINE AVERAGE_INDEX(arr, indices, average, n, m)
 
 !$ USE OMP_LIB
 
