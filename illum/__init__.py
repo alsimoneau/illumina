@@ -3,7 +3,6 @@ __version__ = "2.2.4"
 import importlib.resources
 
 from . import AngularPowerDistribution as APD
-from . import MultiScaleData as MSD
 from . import PolarArray as PA
 from . import SpectralPowerDistribution as SPD
 from . import compute, utils
