@@ -488,7 +488,7 @@ PROGRAM illumina
   ! reading lamp heights
   CALL twodin(nbx, nby, alfile, lampal)
   ! reading subgrid obstacles average height
-  CALL twodin(nbx, nby, ohfile, osbH)
+  CALL twodin(nbx, nby, ohfile, obsH)
   ! reading subgrid obstacles average distance
   CALL twodin(nbx, nby, odfile, drefle)
   drefle = drefle / 2.0
@@ -1382,7 +1382,7 @@ PROGRAM illumina
                                   ! computation of the composante along x of the fourth vector.
                                   r4x = xc + DBLE(dxp) / 2.0 - xn
                                   ! computation of the composante along y of the fourth vector.
-                                  r4y = yc - DBLE(dyp) / 2.0 -
+                                  r4y = yc - DBLE(dyp) / 2.0 - yn
                                   ! computation of the composante en z of the fourth vector.
                                   r4z = zc + TAN(DBLE(epsilx)) * DBLE(dxp) / 2.0 &
                                         - TAN(DBLE(epsily)) * DBLE(dyp) / 2.0 - zn
