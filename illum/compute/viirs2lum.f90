@@ -50,7 +50,7 @@ SUBROUTINE VIIRS2LUM(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   REAL(8) :: ratio(nbands, nzones, nsources)
 
   ! Constants
-  REAL(8), PARAMETER :: PI = 4 * ATAN(1.D0)
+  REAL(8), PARAMETER :: PI = 4 * ATAN(1.0D0)
 
 !$ CALL OMP_SET_NESTED(.TRUE.)
 

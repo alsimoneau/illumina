@@ -8,7 +8,7 @@ FUNCTION CLOUD_REFLECTANCE(zenith_angle, cloud_type) RESULT(refl)
   REAL(8), INTENT(IN) :: zenith_angle
   REAL(8) :: refl, POLYNOMIAL
 
-  REAL(8) :: c(4), z
+  REAL(8) :: c(4)
 
   SELECT CASE (cloud_type)
   CASE (1)  ! thin cirrus & cirrostratus
@@ -37,7 +37,7 @@ FUNCTION CLOUD_TRANSMITTANCE(zenith_angle, cloud_type) RESULT(trans)
   REAL(8), INTENT(IN) :: zenith_angle
   REAL(8) :: trans, POLYNOMIAL
 
-  REAL(8) :: c(4), z
+  REAL(8) :: c(4)
 
   SELECT CASE (cloud_type)
   CASE (1)        ! thin cirrus & cirrostratus
