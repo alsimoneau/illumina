@@ -2,7 +2,7 @@ FUNCTION POLYNOMIAL(x, c, n) RESULT(y)
 
   IMPLICIT NONE
 
-!f2py intent(hide) n
+!F2PY INTENT(HIDE) n
   REAL(8), INTENT(in) :: x, c(n)
   REAL(8) :: y
 

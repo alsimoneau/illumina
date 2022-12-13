@@ -10,6 +10,8 @@ SUBROUTINE VIIRS2LUM(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
   IMPLICIT NONE
 
   ! Array lenghts
+  !F2PY INTENT(HIDE) Nt, Nr, nzones, nangles, nwav, nbands
+  !F2PY INTENT(HIDE) nsources, nlamps, nlops, nspct
   INTEGER(4), INTENT(IN) :: Nt, Nr
   INTEGER(4), INTENT(IN) :: nzones
   INTEGER(4), INTENT(IN) :: nangles
@@ -194,16 +196,16 @@ SUBROUTINE VIIRS2LUM(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
           END DO
         END IF
       END DO
-      !$END PARALLEL DO
+      !$OMP END PARALLEL DO
       !$OMP PARALLEL DO COLLAPSE(2)
       DO s = 1, nsources
         DO b = 1, nbands
           lumlp(b, s, i, j) = lumlp(b, s, i, j) * phie(i, j)
         END DO
       END DO
-      !$END PARALLEL DO
+      !$OMP END PARALLEL DO
     END DO
   END DO
-  !$END PARALLEL DO
+  !$OMP END PARALLEL DO
 
 END SUBROUTINE

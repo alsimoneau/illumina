@@ -4,7 +4,7 @@ SUBROUTINE AVERAGE_INDEX(arr, indices, average, n, m)
 
   IMPLICIT NONE
 
-!f2py intent(hide) n, m
+!F2PY INTENT(HIDE) n, m
   INTEGER(4), INTENT(IN) :: n, m
   INTEGER(4), INTENT(IN) :: indices(n)
   REAL(8), INTENT(IN) :: arr(m, n)
