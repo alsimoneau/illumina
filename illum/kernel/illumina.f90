@@ -209,7 +209,7 @@ PROGRAM illumina
   INTEGER :: nss                                                         ! number of skipped 2nd scat elements
   INTEGER :: ndi                                                         ! number of cell under ground
   REAL :: diamobj                                                        ! instrument objective diameter
-  INTEGER :: i, j, k, id, jd
+  INTEGER :: i, j, id, jd
   REAL :: tranam, tranaa                                                 ! atmospheric transmittancess of a path (molecular, aerosol)
   REAL :: zhoriz                                                         ! zenith angle of the horizon
   REAL :: direct                                                         ! direct radiance from sources on a surface normal to the line of sight (no scattering)
@@ -501,7 +501,8 @@ PROGRAM illumina
   ! reading subgrid obstacles filling factor
   CALL twodin(nbx, nby, offile, ofill)
   ! reading viirs flag
-  CALL twodin(nbx, nby, vifile, viirs)
+  CALL twodin(nbx, nby, vifile, val2d)
+  viirs = INT(val2d)
 
   ! reading of the scattering parameters for background aerosols
   ! opening file containing the scattering parameters
