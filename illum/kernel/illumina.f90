@@ -1851,7 +1851,8 @@ PROGRAM illumina
                         ! correct for the field of view of the observer
                         isourc = isourc * portio
                         ! include clouds in the total intensity
-                        isourc = isourc + icloud
+                        ! TODO: PROBABLY AN ERROR, VALIDATE
+                        ! isourc = isourc + icloud
 
                         IF ((itodif < 0.0) .OR. (itotrd < 0.0)) THEN
                           PRINT *, intdir, itotind, itodif, itotrd

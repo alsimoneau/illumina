@@ -88,7 +88,7 @@ SUBROUTINE diffusion(angdif, tranam, tranaa, tranal, un, secdif, secdil, &
     STOP
   END IF
   IF (prob_m < 0.0) THEN
-    PRINT *, 'prob_m`¸^<0.0.'
+    PRINT *, 'prob_m<0.0.'
     STOP
   END IF
   IF (prob_l > 1.0) THEN
@@ -96,7 +96,7 @@ SUBROUTINE diffusion(angdif, tranam, tranaa, tranal, un, secdif, secdil, &
     STOP
   END IF
   IF (prob_l < 0.0) THEN
-    PRINT *, 'prob_l`¸^<0.0.'
+    PRINT *, 'prob_l<0.0.'
     STOP
   END IF
   IF (pdif > 1.0) THEN
