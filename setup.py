@@ -73,7 +73,7 @@ def sort_dependancies(files):
 
     ordered = list(topological_sort(depends.items()))
 
-    return reversed(ordered)
+    return ordered
 
 
 class f2py_Build(build_ext):
@@ -82,11 +82,13 @@ class f2py_Build(build_ext):
         build_ext.run(self)
 
     def build_extension(self, ext):
-        os.system(
+        build_cmd = (
             "f2py -c"
             f" {' '.join(sort_dependancies(ext.sources))} --fcompiler=gfortran"
             f" --f90flags='-fopenmp' -lgomp -m {ext.name}"
         )
+        print(build_cmd)
+        os.system(build_cmd)
 
         build_py = self.get_finalized_command("build_py")
         src_file, dst_file = self._get_inplace_equivalent(build_py, ext)

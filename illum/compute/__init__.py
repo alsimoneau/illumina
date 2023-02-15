@@ -12,12 +12,12 @@ def average_index(arr, indices):
 
     The first n dimensions must be the same.
     """
-    from .compute import average_index
+    from .compute import funcs_m
 
     idx = _np.asarray(indices, int)
     n = int(_np.prod(arr.shape[idx.ndim :]))
     return (
-        average_index(arr.reshape((-1, n)).T, idx.flatten())
+        funcs_m.average_index(arr.reshape((-1, n)).T, idx.flatten())
         .T.reshape(arr.shape)
         .astype(arr.dtype)
     )
@@ -32,7 +32,7 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
         zonData: inventory, as returned by 'illum.utils.inputs.parse_inventory'
         inputs: obtained from 'illum.utils.inputs.prep_inputs'
     """
-    from .compute import viirs2lum
+    from .compute import viirs2lum_m
 
     spct_keys = list(inputs["spcts"].keys())
     lop_keys = list(inputs["lops"].keys())
@@ -50,7 +50,7 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
     sources_idx = [list(sources).index(k) if k in sources else -1 for k in lop_keys]
     sources_idx = _np.array(sources_idx) + 1
 
-    return viirs2lum(
+    return viirs2lum_m.viirs2lum(
         nzones=len(zonData),
         nsources=len(sources),
         viirs=viirs_dat.data,
@@ -66,7 +66,3 @@ def viirs2lum(viirs_dat, zones, zonData, inputs):
         pixsize=zones.area(),
         reflect=inputs["refls"],
     )
-
-
-def kernel():
-    from .compute import kernel
