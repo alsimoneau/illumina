@@ -2,17 +2,17 @@
 
 MODULE CLOUDS_M
 
-  USE MATH_M
+  USE MATH_M, ONLY POLYNOMIAL
   IMPLICIT NONE
 
 CONTAINS
 
-  FUNCTION CLOUD_REFLECTANCE(zenith_angle, cloud_type) RESULT(refl)
+  REAL(8) FUNCTION CLOUD_REFLECTANCE(zenith_angle, cloud_type) RESULT(refl)
 
     INTEGER(4), INTENT(IN) :: cloud_type
     REAL(8), INTENT(IN) :: zenith_angle
 
-    REAL(8) :: refl, coeffs(4)
+    REAL(8) :: coeffs(4)
 
     SELECT CASE (cloud_type)
     CASE (1)  ! thin cirrus & cirrostratus
@@ -33,13 +33,12 @@ CONTAINS
 
   END FUNCTION CLOUD_REFLECTANCE
 
-  FUNCTION CLOUD_TRANSMITTANCE(zenith_angle, cloud_type) RESULT(trans)
+  REAL(8) FUNCTION CLOUD_TRANSMITTANCE(zenith_angle, cloud_type) RESULT(trans)
 
     IMPLICIT NONE
 
     INTEGER(4), INTENT(IN) :: cloud_type
     REAL(8), INTENT(IN) :: zenith_angle
-    REAL(8) :: trans
 
     REAL(8) :: coeffs(4)
 
