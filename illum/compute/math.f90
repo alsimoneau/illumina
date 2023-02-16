@@ -1,10 +1,88 @@
 MODULE MATH_M
 
   IMPLICIT NONE
+  PRIVATE
+  PUBLIC PI, POINT, DEG2RAD, RAD2DEG, POLYNOMIAL
 
   REAL(8), PARAMETER :: PI = 4 * ATAN(1.0D0)
 
+  TYPE POINT
+    REAL(8), DIMENSION(3) :: arr = [0, 0, 0]
+
+  CONTAINS
+    PROCEDURE, PASS(self) :: x, y, z
+    PROCEDURE, PRIVATE, PASS(SELF) :: pt_add_pt, pt_sub_pt
+    PROCEDURE, PRIVATE, PASS(self) :: pt_mul_pt, pt_mul_real, pt_div_real
+    GENERIC :: OPERATOR(+) => pt_add_pt
+    GENERIC :: OPERATOR(-) => pt_sub_pt
+    GENERIC :: OPERATOR(*) => pt_mul_pt, pt_mul_real
+    GENERIC :: OPERATOR(/) => pt_div_real
+  END TYPE
+
 CONTAINS
+
+  FUNCTION x(self)
+    CLASS(POINT), INTENT(IN) :: self
+    REAL(8) :: x
+    x = self % arr(1)
+  END FUNCTION x
+
+  FUNCTION y(self)
+    CLASS(POINT), INTENT(IN) :: self
+    REAL(8) :: y
+    y = self % arr(2)
+  END FUNCTION y
+
+  FUNCTION z(self)
+    CLASS(POINT), INTENT(IN) :: self
+    REAL(8) :: z
+    z = self % arr(3)
+  END FUNCTION z
+
+  FUNCTION pt_add_pt(self, pt) RESULT(res)
+    CLASS(POINT), INTENT(IN) :: self
+    TYPE(POINT), INTENT(IN) :: pt
+    TYPE(POINT) :: res
+
+    res % arr = self % arr + pt % arr
+
+  END FUNCTION pt_add_pt
+
+  FUNCTION pt_sub_pt(self, pt) RESULT(res)
+    CLASS(POINT), INTENT(IN) :: self
+    TYPE(POINT), INTENT(IN) :: pt
+    TYPE(POINT) :: res
+
+    res % arr = self % arr - pt % arr
+
+  END FUNCTION pt_sub_pt
+
+  FUNCTION pt_mul_pt(self, pt) RESULT(res)
+    CLASS(POINT), INTENT(IN) :: self
+    TYPE(POINT), INTENT(IN) :: pt
+    REAL(8) :: res
+
+    res = SUM(self % arr * pt % arr)
+
+  END FUNCTION pt_mul_pt
+
+  FUNCTION pt_mul_real(self, val) RESULT(res)
+    CLASS(POINT), INTENT(IN) :: self
+    REAL(8), INTENT(IN) :: val
+    TYPE(POINT) :: res
+
+    res % arr = self % arr * val
+
+  END FUNCTION pt_mul_real
+
+  FUNCTION pt_div_real(self, val) RESULT(res)
+    CLASS(POINT), INTENT(IN) :: self
+    REAL(8), INTENT(IN) :: val
+    TYPE(POINT) :: res
+
+    res % arr = self % arr / val
+
+  END FUNCTION pt_div_real
 
   FUNCTION DEG2RAD(deg) RESULT(rad)
 
@@ -24,18 +102,18 @@ CONTAINS
 
   END FUNCTION RAD2DEG
 
-  FUNCTION POLYNOMIAL(x, coeffs) RESULT(y)
+  FUNCTION POLYNOMIAL(val, coeffs) RESULT(p)
 
-    REAL(8), INTENT(IN) :: x, coeffs(:)
-    REAL(8) :: y
+    REAL(8), INTENT(IN) :: val, coeffs(:)
+    REAL(8) :: p
     INTEGER(4) :: i
 
-    y = 0
+    p = 0
 
     DO i = 1, SIZE(coeffs)
-      y = y + coeffs(i) * x**(i - 1)
+      p = p + coeffs(i) * val**(i - 1)
     END DO
 
-  END FUNCTION
+  END FUNCTION POLYNOMIAL
 
 END MODULE MATH_M
