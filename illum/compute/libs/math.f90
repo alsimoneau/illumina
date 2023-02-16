@@ -10,79 +10,79 @@ MODULE MATH_M
     REAL(8), DIMENSION(3) :: arr = [0, 0, 0]
 
   CONTAINS
-    PROCEDURE, PASS(self) :: x, y, z
-    PROCEDURE, PRIVATE, PASS(SELF) :: pt_add_pt, pt_sub_pt
-    PROCEDURE, PRIVATE, PASS(self) :: pt_mul_pt, pt_mul_real, pt_div_real
-    GENERIC :: OPERATOR(+) => pt_add_pt
-    GENERIC :: OPERATOR(-) => pt_sub_pt
-    GENERIC :: OPERATOR(*) => pt_mul_pt, pt_mul_real
-    GENERIC :: OPERATOR(/) => pt_div_real
+    PROCEDURE, PASS(self) :: X, Y, Z
+    PROCEDURE, PRIVATE, PASS(self) :: PT_ADD_PT, PT_SUB_PT
+    PROCEDURE, PRIVATE, PASS(self) :: PT_MUL_PT, PT_MUL_REAL, PT_DIV_REAL
+    GENERIC :: OPERATOR(+) => PT_ADD_PT
+    GENERIC :: OPERATOR(-) => PT_SUB_PT
+    GENERIC :: OPERATOR(*) => PT_MUL_PT, PT_MUL_REAL
+    GENERIC :: OPERATOR(/) => PT_DIV_REAL
   END TYPE
 
 CONTAINS
 
-  FUNCTION x(self)
+  FUNCTION X(self)
     CLASS(POINT), INTENT(IN) :: self
     REAL(8) :: x
     x = self % arr(1)
-  END FUNCTION x
+  END FUNCTION X
 
-  FUNCTION y(self)
+  FUNCTION Y(self)
     CLASS(POINT), INTENT(IN) :: self
     REAL(8) :: y
     y = self % arr(2)
-  END FUNCTION y
+  END FUNCTION Y
 
-  FUNCTION z(self)
+  FUNCTION Z(self)
     CLASS(POINT), INTENT(IN) :: self
     REAL(8) :: z
     z = self % arr(3)
-  END FUNCTION z
+  END FUNCTION Z
 
-  FUNCTION pt_add_pt(self, pt) RESULT(res)
+  FUNCTION PT_ADD_PT(self, pt) RESULT(res)
     CLASS(POINT), INTENT(IN) :: self
     TYPE(POINT), INTENT(IN) :: pt
     TYPE(POINT) :: res
 
     res % arr = self % arr + pt % arr
 
-  END FUNCTION pt_add_pt
+  END FUNCTION PT_ADD_PT
 
-  FUNCTION pt_sub_pt(self, pt) RESULT(res)
+  FUNCTION PT_SUB_PT(self, pt) RESULT(res)
     CLASS(POINT), INTENT(IN) :: self
     TYPE(POINT), INTENT(IN) :: pt
     TYPE(POINT) :: res
 
     res % arr = self % arr - pt % arr
 
-  END FUNCTION pt_sub_pt
+  END FUNCTION PT_SUB_PT
 
-  FUNCTION pt_mul_pt(self, pt) RESULT(res)
+  FUNCTION PT_MUL_PT(self, pt) RESULT(res)
     CLASS(POINT), INTENT(IN) :: self
     TYPE(POINT), INTENT(IN) :: pt
     REAL(8) :: res
 
     res = SUM(self % arr * pt % arr)
 
-  END FUNCTION pt_mul_pt
+  END FUNCTION PT_MUL_PT
 
-  FUNCTION pt_mul_real(self, val) RESULT(res)
+  FUNCTION PT_MUL_REAL(self, val) RESULT(res)
     CLASS(POINT), INTENT(IN) :: self
     REAL(8), INTENT(IN) :: val
     TYPE(POINT) :: res
 
     res % arr = self % arr * val
 
-  END FUNCTION pt_mul_real
+  END FUNCTION PT_MUL_REAL
 
-  FUNCTION pt_div_real(self, val) RESULT(res)
+  FUNCTION PT_DIV_REAL(self, val) RESULT(res)
     CLASS(POINT), INTENT(IN) :: self
     REAL(8), INTENT(IN) :: val
     TYPE(POINT) :: res
 
     res % arr = self % arr / val
 
-  END FUNCTION pt_div_real
+  END FUNCTION PT_DIV_REAL
 
   FUNCTION DEG2RAD(deg) RESULT(rad)
 
