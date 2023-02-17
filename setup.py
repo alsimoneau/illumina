@@ -10,12 +10,12 @@ from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 
 
-def sort_dependancies(files):
+def sort_dependencies(files):
     def topological_sort(source):
         """perform topo sort on elements.
 
-        :arg source: list of ``(name, set(names of dependancies))`` pairs
-        :returns: list of names, with dependancies listed first
+        :arg source: list of ``(name, set(names of dependencies))`` pairs
+        :returns: list of names, with dependencies listed first
 
         Taken from stackoverflow.com/q/11557241
         """
@@ -35,7 +35,7 @@ def sort_dependancies(files):
                     next_emitted.append(name)
             if not next_emitted:
                 raise ValueError(
-                    "cyclic dependancy detected: %s %r" % (name, (next_pending,))
+                    "cyclic dependency detected: %s %r" % (name, (next_pending,))
                 )
             pending = next_pending
             emitted = next_emitted
@@ -84,7 +84,7 @@ class f2py_Build(build_ext):
     def build_extension(self, ext):
         build_cmd = (
             "f2py -c"
-            f" {' '.join(sort_dependancies(ext.sources))} --fcompiler=gfortran"
+            f" {' '.join(sort_dependencies(ext.sources))} --fcompiler=gfortran"
             f" --f90flags='-fopenmp' -lgomp -m {ext.name}"
         )
         print(build_cmd)
