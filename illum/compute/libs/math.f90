@@ -6,22 +6,6 @@ MODULE MATH_M
 
 CONTAINS
 
-  REAL(8) FUNCTION DEG2RAD(deg) RESULT(rad)
-
-    REAL(8), INTENT(IN) :: deg
-
-    rad = deg * PI / 180
-
-  END FUNCTION DEG2RAD
-
-  REAL(8) FUNCTION RAD2DEG(rad) RESULT(deg)
-
-    REAL(8), INTENT(IN) :: rad
-
-    deg = rad * 180 / PI
-
-  END FUNCTION RAD2DEG
-
   REAL(8) FUNCTION POLYNOMIAL(val, coeffs) RESULT(p)
 
     REAL(8), INTENT(IN) :: val, coeffs(:)
@@ -34,5 +18,14 @@ CONTAINS
     END DO
 
   END FUNCTION POLYNOMIAL
+
+  INTEGER FUNCTION RAD2RANK(rad, N_angle) RESULT(rank)
+
+    REAL(8), INTENT(IN) :: rad
+    INTEGER, INTENT(IN) :: N_angle
+
+    rank = INT(rad / PI * (N_angle - 1)) + 1
+
+  END FUNCTION RAD2RANK
 
 END MODULE MATH_M

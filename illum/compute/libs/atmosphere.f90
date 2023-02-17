@@ -1,6 +1,6 @@
 MODULE ATMOSPHERE_M
 
-  USE MATH_M
+  USE MATH_M, ONLY: PI, RAD2RANK
   IMPLICIT NONE
 
 CONTAINS
@@ -59,6 +59,9 @@ CONTAINS
                      transmittance_aerosol, scale_height_aerosol, phase_function_aerosol, &
                      N_aerosol_layer, N_angle)
 
+    ! Calculate scattering probability per unit of steradian for a voxel of 1x1x1m
+    ! Refers to equation 1 in Aubé et al. (2020)
+
     ! Array sizes
     !F2PY INTENT(HIDE) N_aerosol_layer, N_angle
     INTEGER, INTENT(IN) :: N_aerosol_layer, N_angle
@@ -82,8 +85,7 @@ CONTAINS
     angle = scattering_angle
     IF (angle < 0) angle = -angle
     IF (angle - PI > 0.0001) angle = PI
-    angle = angle * 180 / PI
-    rang = INT(angle) + 1
+    rang = RAD2RANK(angle, N_angle)
 
     phase_function_molecular = 0.75 * (1 + COS(angle)**2) / (4 * PI)
     diffusion = phase_function_molecular &

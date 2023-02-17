@@ -25,6 +25,7 @@ CONTAINS
   END FUNCTION AZIMUTH_ANGLE
 
   REAL(8) FUNCTION ANGLE3PT(point1, point2, point3) RESULT(angle)
+
     REAL(8), DIMENSION(3), INTENT(IN) :: point1, point2, point3
     REAL(8) :: arg
 
