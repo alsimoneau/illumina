@@ -17,7 +17,7 @@ depend: $(DEP_FILE)
 $(DEP_FILE): $(LIBS)
 	@echo "Generating dependencies tree..."
 	@mkdir -p $(@D)
-	@python fortdepends.py $(LIBS)
+	@python bin/fortdepends.py $(LIBS)
 
 include $(DEP_FILE)
 
