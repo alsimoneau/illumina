@@ -6,25 +6,31 @@ F2PY := $(wildcard illum/compute/*.f90)
 PYSO := illum/compute/compute.so
 LIBS := $(wildcard illum/compute/libs/*.f90)
 OBJS := $(LIBS:illum/compute/libs/%.f90=lib/%.o)
+DEP_FILE := lib/depends.mk
 
-.PHONY: all libs f2py clean
+.PHONY: all depend libs f2py clean
 
-all: libs f2py
+all: depend libs f2py
 
-f2py: ${PYSO}
+depend: $(DEP_FILE)
 
-libs: lib/math.o $(OBJS)
+$(DEP_FILE): $(LIBS)
+	@echo "Generating dependencies tree..."
+	@mkdir -p $(@D)
+	@python fortdepends.py $(LIBS)
+
+include $(DEP_FILE)
+
+libs: $(OBJS)
 
 lib/%.o: illum/compute/libs/%.f90
-	@mkdir -p $(@D)
 	$(FORT) -fPIC -Jlib -O3 -c $< -o $@
+
+f2py: ${PYSO}
 
 %.so: ${F2PY}
 	f2py3 --fcompiler=$(FORT) --f90flags='-fopenmp' -lgomp -Ilib -c ${F2PY} ${OBJS} -m compute
 	@mv compute.*.so $@
-
-print:  
-	@echo $(MODS)
 
 clean:
 	rm -rf lib
