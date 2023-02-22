@@ -64,7 +64,7 @@ CONTAINS
 
     ! Array sizes
     !F2PY INTENT(HIDE) N_aerosol_layer, N_angle
-    INTEGER, INTENT(IN) :: N_aerosol_layer, N_angle
+    INTEGER(4), INTENT(IN) :: N_aerosol_layer, N_angle
 
     ! Inputs
     REAL(8), INTENT(IN) :: scattering_angle, altitude

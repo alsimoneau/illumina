@@ -1,6 +1,8 @@
-SUBROUTINE VIIRS2LUM(Nt, Nr, nzones, nangles, nwav, nbands, nsources, &
-                     nlamps, nlops, nspcts, viirs, zones, angles, wav, bands, &
-                     sens, lops, spcts, sources, ivtr, pixsize, reflect, lumlp)
+SUBROUTINE VIIRS2LUM( &
+  viirs, zones, angles, wav, bands, sens, &
+  lops, spcts, sources, ivtr, pixsize, reflect, lumlp, &
+  Nt, Nr, nzones, nangles, nwav, nbands, &
+  nsources, nlamps, nlops, nspcts)
   ! =====================================================
   ! Computes light sources power from the viirs image
   ! =====================================================

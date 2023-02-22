@@ -22,7 +22,7 @@ CONTAINS
   INTEGER FUNCTION RAD2RANK(rad, N_angle) RESULT(rank)
 
     REAL(8), INTENT(IN) :: rad
-    INTEGER, INTENT(IN) :: N_angle
+    INTEGER(4), INTENT(IN) :: N_angle
 
     rank = INT(rad / PI * (N_angle - 1)) + 1
 
