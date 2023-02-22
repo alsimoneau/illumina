@@ -24,15 +24,22 @@
 !    Contact: martin.aube@cegepsherbrooke.qc.ca
 
 SUBROUTINE horizon(x, y, z, dx, dy, altsol, anga, zhoriz, d)
+
+  IMPLICIT NONE
+
   ! matrix dimension in length/width and height
-  INTEGER :: width
-  PARAMETER(width=512)
-  INTEGER :: x, y, nx, ny
-  REAL :: dx, dy, altsol(width, width), anga, zout, pi, angaz1, ix, iy
+  INTEGER, PARAMETER :: width = 512
+  REAL, PARAMETER :: pi = 3.141592654
+
+  INTEGER, INTENT(IN) :: x, y
+  REAL, INTENT(IN) :: z, dx, dy, altsol(width, width), anga
+  REAL, INTENT(OUT) :: zhoriz, d
+
+  INTEGER :: nx, ny
+  REAL :: zout, angaz1, ix, iy
   ! earth curvature terrain
   REAL :: hcur, distc
-  REAL :: posx, posy, scalef, zhoriz, z, d, dout
-  pi = 3.141592654
+  REAL :: posx, posy, scalef, dout
 
   angaz1 = anga
   ! viewing vector components

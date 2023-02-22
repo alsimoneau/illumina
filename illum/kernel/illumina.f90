@@ -192,7 +192,7 @@ PROGRAM illumina
   REAL :: stoplim                                                        ! stop computation when the new voxel contribution is less than 1/stoplim of the cumulated flux
   REAL :: ff, ff2, hh                                                    ! temporary obstacle filling factor and horizon blocking factor
   REAL :: cloudbase, cloudtop                                            ! cloud base and top altitude (m)
-  REAL :: distd                                                          ! distance to compute the scattering probability
+  REAL :: distd                                                          ! dizhorizstance to compute the scattering probability
   REAL :: volu                                                           ! volume of a voxel
   REAL :: scal                                                           ! stepping along the line of sight
   REAL :: scalo                                                          ! previous value of scal
@@ -221,8 +221,8 @@ PROGRAM illumina
   REAL :: ddir_obs                                                       ! distance between the source and the observer
   REAL :: rx, ry, rz                                                     ! driving vector for the calculation of the projection angle for direct radiance. it is 20km long
   REAL :: dfov                                                           ! field of view in degrees for the calculation of the direct radiance this number will be a kind of smoothing effect. the angular grid resolution to create a direct radiance panorama should be finer than that number
-  REAL :: fo                                                             ! flux correction factor for obstacles
-  REAL :: thetali                                                        ! limit angle for the obstacles blocking of viirs
+  REAL :: fo(width, width)                                               ! flux correction factor for obstacles
+  REAL :: thetali(width, width)                                          ! limit angle for the obstacles blocking of viirs
   INTEGER :: viirs(width, width)                                         ! viirs flag 1=yes 0 = no
   CHARACTER*72 :: vifile                                                 ! name of the viirs flag file
   REAL :: dh0, dhmax                                                     ! horizontal distance along the line of sight and maximum distance before beeing blocked by topography
@@ -444,37 +444,15 @@ PROGRAM illumina
 
   ! computation of the tilt of the pixels along x and along y
   ! beginning of the loop over the column (longitude) of the domain.
-  DO i = 1, nbx
-    ! beginning of the loop over the rows (latitu) of the domain.
-    DO j = 1, nby
-      ! specific case close to the border of the domain (vertical side left).
-      IF (i == 1) THEN
-        ! computation of the tilt along x of the surface.
-        inclix(i, j) = ATAN((altsol(i + 1, j) - altsol(i, j)) / REAL(dx))
-        ! specific case close to the border of the domain (vertical side right).
-      ELSE IF (i == nbx) THEN
-        ! computation of the tilt along x of the surface.
-        inclix(i, j) = ATAN((altsol(i - 1, j) - altsol(i, j)) / (REAL(dx)))
-      ELSE
-        ! computation of the tilt along x of the surface.
-        inclix(i, j) = ATAN((altsol(i + 1, j) - altsol(i - 1, j)) / (2.0 * REAL(dx)))
-      END IF
-      ! specific case close to the border of the domain (horizontal side down).
-      IF (j == 1) THEN
-        ! computation of the tilt along y of the surface.
-        incliy(i, j) = ATAN((altsol(i, j + 1) - altsol(i, j)) / (REAL(dy)))
-        ! specific case close to the border of the domain (horizontal side up).
-      ELSE IF (j == nby) THEN
-        ! computation of the tilt along y of the surface.
-        incliy(i, j) = ATAN((altsol(i, j - 1) - altsol(i, j)) / (REAL(dy)))
-      ELSE
-        ! computation of the tilt along y of the surface
-        incliy(i, j) = ATAN((altsol(i, j + 1) - altsol(i, j - 1)) / (2.0 * REAL(dy)))
-      END IF
-      ! end of the loop over the rows (latitu) of the domain
-    END DO
-    ! end of the loop over the column (longitude) of the domain
-  END DO
+! Computation of tilt along x of the surface
+  inclix(:, 1) = ATAN((altsol(:, 2) - altsol(:, 1)) / dx)
+  inclix(:, 2:nby - 1) = ATAN((altsol(:, 3:nby) - altsol(:, 1:nby - 2)) / (2.0 * dx))
+  inclix(:, nby) = ATAN((altsol(:, nby - 1) - altsol(:, nby)) / dx)
+
+  ! Computation of tilt along y of the surface
+  incliy(1, :) = ATAN((altsol(2, :) - altsol(1, :)) / dy)
+  incliy(2:nbx - 1, :) = ATAN((altsol(3:nbx, :) - altsol(1:nbx - 2, :)) / (2.0 * dy))
+  incliy(nbx, :) = ATAN((altsol(nbx - 1, :) - altsol(nbx, :)) / dy)
 
   ! reading of the values of P(theta), height, luminosities and positions
   ! of the sources, obstacle height and distance
@@ -492,12 +470,7 @@ PROGRAM illumina
   ! reading subgrid obstacles average distance
   CALL twodin(nbx, nby, odfile, drefle)
   drefle = drefle / 2.0
-  DO i = 1, nbx
-    DO j = 1, nby
-      ! when outside a zone, block to the size of the cell (typically 1km)
-      IF (drefle(i, j) == 0.0) drefle(i, j) = dx
-    END DO
-  END DO
+  drefle = MERGE(drefle, dx, drefle == 0.0)
   ! reading subgrid obstacles filling factor
   CALL twodin(nbx, nby, offile, ofill)
   ! reading viirs flag
@@ -561,9 +534,7 @@ PROGRAM illumina
     CLOSE (1)
 
     ! normalisation of the photometric function.
-    DO i = 1, 181
-      IF (pvalto /= 0.0) pvalno(i, stype) = pval(i, stype) / pvalto
-    END DO
+    IF (pvalto /= 0.0) pvalno(:, stype) = pval(:, stype) / pvalto
 
     ! reading luminosity files
     CALL twodin(nbx, nby, lufile, val2d)
@@ -578,68 +549,33 @@ PROGRAM illumina
 
     ! searching of the smallest rectangle containing the zone
     ! of non-null luminosity to speedup the calculation
+    imin(stype) = 1
+    imax(stype) = nbx
+    jmin(stype) = 1
+    jmax(stype) = nby
     DO i = 1, nbx
       DO j = 1, nby
         IF (val2d(i, j) /= 0.0) THEN
-          IF (i - 1 < imin(stype)) imin(stype) = i - 2
-          IF (imin(stype) < 1) imin(stype) = 1
-          GOTO 333
+          imin(stype) = MAX(imin(stype), i - 2)
+          imax(stype) = MIN(imax(stype), i + 2)
+          jmin(stype) = MAX(jmin(stype), j - 2)
+          jmax(stype) = MIN(jmax(stype), j + 2)
         END IF
       END DO
     END DO
-    imin(stype) = 1
-333 DO i = nbx, 1, -1
-      DO j = 1, nby
-        IF (val2d(i, j) /= 0.0) THEN
-          IF (i + 1 > imax(stype)) imax(stype) = i + 2
-          IF (imax(stype) > nbx) imax(stype) = nbx
-          GOTO 334
-        END IF
-      END DO
-    END DO
-    imax(stype) = 1
-334 DO j = 1, nby
-      DO i = 1, nbx
-        IF (val2d(i, j) /= 0.0) THEN
-          IF (j - 1 < jmin(stype)) jmin(stype) = j - 2
-          IF (jmin(stype) < 1) jmin(stype) = 1
-          GOTO 335
-        END IF
-      END DO
-    END DO
-    jmin(stype) = 1
-335 DO j = nby, 1, -1
-      DO i = 1, nbx
-        IF (val2d(i, j) /= 0.0) THEN
-          IF (j + 1 > jmax(stype)) jmax(stype) = j + 2
-          IF (jmax(stype) > nby) jmax(stype) = nby
-          GOTO 336
-        END IF
-      END DO
-    END DO
-    jmax(stype) = 1
 
-336 DO i = 1, nbx
-      DO j = 1, nby
-        lamplu(i, j, stype) = val2d(i, j)
-        ! remplir the array of the lamp type: stype
-        ! Atmospheric correction and obstacles masking corrections to the lamp
-        ! flux arrays (lumlp)
-        IF (viirs(i, j) == 1) THEN
-          lamplu(i, j, stype) = lamplu(i, j, stype) / (tranam * tranaa * tranal)
-          thetali = ATAN2(drefle(i, j), obsH(i, j))
-          IF (thetali < 70.0 * pi / 180.0) THEN
-            Fo = (1.0 - COS(70.0 * pi / 180.0)) / (1.0 - ofill(i, j) * COS(thetali) + &
-                                                   (ofill(i, j) - 1.0) * COS(70.0 * pi / 180.0))
-            lamplu(i, j, stype) = lamplu(i, j, stype) * Fo
-          ELSE
-            Fo = 1.0
-          END IF
-        END IF
-        ! the total lamp flux should be non-null to proceed to the calculations
-        totlu(stype) = totlu(stype) + lamplu(i, j, stype)
-      END DO
-    END DO
+    lamplu(:, :, stype) = val2d(:, :)
+    WHERE (viirs == 1)
+      lamplu(:, :, stype) = lamplu(:, :, stype) / (tranam * tranaa * tranal)
+
+      thetali = ATAN2(drefle, obsH)
+      WHERE (thetali < 70.0 * pi / 180.0)
+        Fo = (1.0 - COS(70.0 * pi / 180.0)) &
+             / (1.0 - ofill * COS(thetali) &
+                + (ofill - 1.0) * COS(70.0 * pi / 180.0))
+        lamplu(:, :, stype) = lamplu(:, :, stype) * Fo
+      END WHERE
+    END WHERE
     ! end of the loop 1 over the nzon types of sources.
   END DO
 
@@ -715,36 +651,20 @@ PROGRAM illumina
               CALL angleazimutal(rx_obs, ry_obs, rx_s, ry_s, angazi)
 
               ! 45deg. it is unlikely to have a 1km high mountain less than 1
-              IF (dzen > pi / 4.0) THEN
-                CALL horizon(x_obs, y_obs, z_obs, dx, dy, altsol, angazi, zhoriz, dh)
-                IF (dh <= dho) THEN
-                  ! shadow the path line of sight-source is not below the horizon => we compute
-                  IF (dzen - zhoriz < 0.00001) THEN
-                    hh = 1.0
-                  ELSE
-                    hh = 0.0
-                  END IF
-                ELSE
-                  hh = 1.0
-                END IF
-              ELSE
-                hh = 1.0
+              hh = 1.0
+              IF (angzen > (pi / 4.0)) THEN
+                CALL horizon(x_sr, y_sr, z_sr, dx, dy, altsol, angazi, zhoriz, dh)
+                hh = MERGE(0.0, 1.0, dh <= dho .AND. angzen - zhoriz < 0.00001)
               END IF
 
               ff = 0.0
-              ! sub-grid obstacles
-              IF (obsobs == 1) THEN
-                ! light path to observer larger than the mean free path -> subgrid obstacles
-                IF (dho > drefle(x_obs, y_obs) + drefle(x_s, y_s)) THEN
-                  angmin = pi / 2.0 - ATAN2((altsol(x_obs, y_obs) + obsH(x_obs, y_obs) - z_obs), &
-                                            drefle(x_obs, y_obs))
-                  ! condition sub-grid obstacles direct.
-                  IF (dzen < angmin) THEN
-                    ff = 0.0
-                  ELSE
-                    ff = ofill(x_obs, y_obs)
+              IF (x_dif >= 1 .AND. x_dif <= nbx .AND. y_dif >= 1 .AND. y_dif <= nbx) THEN
+                dho = SQRT((rx_dif - rx_c)**2.0 + (ry_dif - ry_c)**2.0)
+                IF (dho <= drefle(x_dif, y_dif)) THEN
+                  angmin = pi / 2.0 - ATAN2((obsH(x_dif, y_dif) + altsol(x_dif, y_dif) - z_dif), drefle(x_dif, y_dif))
+                  IF (angzen >= angmin) THEN
+                    ff = ofill(x_dif, y_dif)
                   END IF
-                  ! end light path to the observer larger than mean free path
                 END IF
               END IF
 
@@ -756,9 +676,7 @@ PROGRAM illumina
                 angmin = pi / 2.0 - ATAN2((altsol(x_s, y_s) + obsH(x_s, y_s) - z_s), &
                                           drefle(x_s, y_s))
                 ! condition sub-grid obstacles direct.
-                IF (dzen < angmin) THEN
-                  ff2 = 0.0
-                ELSE
+                IF (dzen >= angmin) THEN
                   ff2 = ofill(x_s, y_s)
                 END IF
                 ! end light path to the observer larger than mean free path
@@ -855,24 +773,10 @@ PROGRAM illumina
                       epsily = incliy(x_sr, y_sr)  ! tilt along x of the ground reflectance
 
                       ! use a sub-grid surface when the reflectance radius is smaller than the cell size
-                      IF (dx > reflsiz) THEN
-                        IF ((x_sr == x_s) .AND. (y_sr == y_s)) THEN
-                          dxp = reflsiz
-                        ELSE
-                          dxp = dx
-                        END IF
-                      ELSE
-                        dxp = dx
-                      END IF
-                      IF (dy > reflsiz) THEN
-                        IF ((x_sr == x_s) .AND. (y_sr == y_s)) THEN
-                          dyp = reflsiz
-                        ELSE
-                          dyp = dy
-                        END IF
-                      ELSE
-                        dyp = dy
-                      END IF
+                      dxp = MIN(dxp, reflsiz)
+                      IF ((x_sr /= x_s) .OR. (y_sr /= y_s)) dxp = dx
+                      dyp = MIN(dyp, reflsiz)
+                      IF ((x_sr /= x_s) .OR. (y_sr /= y_s)) dyp = dy
 
                       ! computation of the composante along x of the first vector.
                       r1x = xc - DBLE(dxp) / 2.0 - xn
@@ -963,36 +867,21 @@ PROGRAM illumina
                         CALL angleazimutal(rx_obs, ry_obs, rx_sr, ry_sr, angazi)
 
                         ! 45deg. it is unlikely to have a 1km high mountain less than 1
-                        IF (dzen > pi / 4.0) THEN
-                          CALL horizon(x_obs, y_obs, z_obs, dx, dy, altsol, angazi, zhoriz, dh)
-                          IF (dh <= dho) THEN
-                            ! shadow the path line of sight-source is not below the horizon => we compute
-                            IF (dzen - zhoriz < 0.00001) THEN
-                              hh = 1.0
-                            ELSE
-                              hh = 0.0
-                            END IF
-                          ELSE
-                            hh = 1.0
-                          END IF
-                        ELSE
-                          hh = 1.0
+                        hh = 1.0
+                        IF (angzen > (pi / 4.0)) THEN
+                          CALL horizon(x_sr, y_sr, z_sr, dx, dy, altsol, angazi, zhoriz, dh)
+                          hh = MERGE(0.0, 1.0, dh <= dho .AND. angzen - zhoriz < 0.00001)
                         END IF
 
                         ! sub-grid obstacles
                         ff = 0.0
-                        IF (obsobs == 1) THEN
-                          ! light path to observer larger than the mean free path -> subgrid obstacles
-                          IF (dho > drefle(x_obs, y_obs) + drefle(x_sr, y_sr)) THEN
-                            angmin = pi / 2.0 - ATAN2((altsol(x_obs, y_obs) + obsH(x_obs, y_obs) - z_obs), &
-                                                      drefle(x_obs, y_obs))
-                            ! condition sub-grid obstacles direct.
-                            IF (dzen < angmin) THEN
-                              ff = 0.0
-                            ELSE
-                              ff = ofill(x_obs, y_obs)
+                        IF (x_dif >= 1 .AND. x_dif <= nbx .AND. y_dif >= 1 .AND. y_dif <= nbx) THEN
+                          dho = SQRT((rx_dif - rx_c)**2.0 + (ry_dif - ry_c)**2.0)
+                          IF (dho <= drefle(x_dif, y_dif)) THEN
+                            angmin = pi / 2.0 - ATAN2((obsH(x_dif, y_dif) + altsol(x_dif, y_dif) - z_dif), drefle(x_dif, y_dif))
+                            IF (angzen >= angmin) THEN
+                              ff = ofill(x_dif, y_dif)
                             END IF
-                            ! end light path to the observer larger than mean free path
                           END IF
                         END IF
 
@@ -1004,9 +893,7 @@ PROGRAM illumina
                           angmin = pi / 2.0 - ATAN2((altsol(x_sr, y_sr) + obsH(x_sr, y_sr) - z_sr), &
                                                     drefle(x_sr, y_sr))
                           ! condition sub-grid obstacles direct.
-                          IF (dzen < angmin) THEN
-                            ff2 = 0.0
-                          ELSE
+                          IF (dzen >= angmin) THEN
                             ff2 = ofill(x_sr, y_sr)
                           END IF
                         END IF
@@ -1203,20 +1090,10 @@ PROGRAM illumina
                           CALL angleazimutal(rx_s, ry_s, rx_c, ry_c, angazi)
 
                           ! 45deg. it is unlikely to have a 1km high mountain less than 1
-                          IF (angzen > pi / 4.0) THEN
-                            CALL horizon(x_s, y_s, z_s, dx, dy, altsol, angazi, zhoriz, dh)
-                            IF (dh <= dho) THEN
-                              ! shadow the path line of sight-source is not below the horizon => we compute
-                              IF (angzen - zhoriz < 0.00001) THEN
-                                hh = 1.0
-                              ELSE
-                                hh = 0.0
-                              END IF
-                            ELSE
-                              hh = 1.0
-                            END IF
-                          ELSE
-                            hh = 1.0
+                          hh = 1.0
+                          IF (angzen > (pi / 4.0)) THEN
+                            CALL horizon(x_sr, y_sr, z_sr, dx, dy, altsol, angazi, zhoriz, dh)
+                            hh = MERGE(0.0, 1.0, dh <= dho .AND. angzen - zhoriz < 0.00001)
                           END IF
                           ! sub-grid obstacles
                           ff = 0.0
@@ -1225,9 +1102,7 @@ PROGRAM illumina
                             angmin = pi / 2.0 - ATAN2((altsol(x_s, y_s) + obsH(x_s, y_s) - z_s), &
                                                       drefle(x_s, y_s))
                             ! condition sub-grid obstacles direct.
-                            IF (angzen < angmin) THEN
-                              ff = 0.0
-                            ELSE
+                            IF (angzen >= angmin) THEN
                               ff = ofill(x_s, y_s)
                             END IF
                           END IF
@@ -1340,24 +1215,10 @@ PROGRAM illumina
                                   epsily = incliy(x_sr, y_sr)  ! tilt along x of the ground reflectance
 
                                   ! use a sub-grid surface when the reflectance radius is smaller than the cell size
-                                  IF (dx > reflsiz) THEN
-                                    IF ((x_sr == x_s) .AND. (y_sr == y_s)) THEN
-                                      dxp = reflsiz
-                                    ELSE
-                                      dxp = dx
-                                    END IF
-                                  ELSE
-                                    dxp = dx
-                                  END IF
-                                  IF (dy > reflsiz) THEN
-                                    IF ((x_sr == x_s) .AND. (y_sr == y_s)) THEN
-                                      dyp = reflsiz
-                                    ELSE
-                                      dyp = dy
-                                    END IF
-                                  ELSE
-                                    dyp = dy
-                                  END IF
+                                  dxp = MIN(dxp, reflsiz)
+                                  IF ((x_sr /= x_s) .OR. (y_sr /= y_s)) dxp = dx
+                                  dyp = MIN(dyp, reflsiz)
+                                  IF ((x_sr /= x_s) .OR. (y_sr /= y_s)) dyp = dy
 
                                   ! computation of the composante along x of the first vector.
                                   r1x = xc - DBLE(dxp) / 2.0 - xn
@@ -1482,9 +1343,7 @@ PROGRAM illumina
                                           IF (dho > drefle(x_sr, y_sr)) THEN
                                             angmin = pi / 2.0 - ATAN2(obsH(x_sr, y_sr), drefle(x_sr, y_sr))
                                             ! condition obstacle reflechi->scattered
-                                            IF (angzen < angmin) THEN
-                                              ff = 0.0
-                                            ELSE
+                                            IF (angzen >= angmin) THEN
                                               ff = ofill(x_sr, y_sr)
                                             END IF
                                           END IF
@@ -1525,19 +1384,12 @@ PROGRAM illumina
                                           ! computation of the azimutal angle surf refl-scattering voxel
                                           CALL angleazimutal(rx_dif, ry_dif, rx_c, ry_c, angazi)
                                           ! subgrid obstacles
-                                          IF ((x_dif < 1) .OR. (x_dif > nbx) .OR. (y_dif < 1) .OR. (y_dif > nbx)) THEN
-                                            ff = 0.0
-                                          ELSE
+                                          ff = 0.0
+                                          IF (x_dif >= 1 .AND. x_dif <= nbx .AND. y_dif >= 1 .AND. y_dif <= nbx) THEN
                                             dho = SQRT((rx_dif - rx_c)**2.0 + (ry_dif - ry_c)**2.0)
-                                            ff = 0.0
-                                            ! light path to observer larger than the mean free path -> subgrid obstacles
-                                            IF (dho > drefle(x_dif, y_dif)) THEN
-                                              angmin = pi / 2.0 - ATAN2((obsH(x_dif, y_dif) + altsol(x_dif, y_dif) - z_dif), &
-                                                                        drefle(x_dif, y_dif))
-                                              ! condition subgrid obstacle scattering -> line of sight
-                                              IF (angzen < angmin) THEN
-                                                ff = 0.0
-                                              ELSE
+                                            IF (dho <= drefle(x_dif, y_dif)) THEN
+                                angmin = pi / 2.0 - ATAN2((obsH(x_dif, y_dif) + altsol(x_dif, y_dif) - z_dif), drefle(x_dif, y_dif))
+                                              IF (angzen >= angmin) THEN
                                                 ff = ofill(x_dif, y_dif)
                                               END IF
                                             END IF
@@ -1660,9 +1512,7 @@ PROGRAM illumina
                                                 angmin = pi / 2.0 - ATAN2((obsH(x_dif, y_dif) + altsol(x_dif, y_dif) - z_dif), &
                                                                           drefle(x_dif, y_dif))
                                                 ! condition obstacles scattering->line of sight
-                                                IF (angzen < angmin) THEN
-                                                  ff = 0.0
-                                                ELSE
+                                                IF (angzen >= angmin) THEN
                                                   ff = ofill(x_dif, y_dif)
                                                 END IF
                                               END IF
@@ -1744,21 +1594,11 @@ PROGRAM illumina
                                   dho = SQRT((rx_sr - rx_c)**2.0 + (ry_sr - ry_c)**2.0)
 
                                   ! 45deg. it is unlikely to have a 1km high mountain less than 1
+                                  hh = 1
                                   IF (angzen > pi / 4.0) THEN
                                     CALL horizon(x_sr, y_sr, z_sr, dx, dy, altsol, angazi, zhoriz, dh)
-                                    IF (dh <= dho) THEN
-                                      ! the path line of sight-reflec is not below the horizon => we compute
-                                      IF (angzen - zhoriz < 0.00001) THEN
-                                        hh = 1.0
-                                      ELSE
-                                        hh = 0.0
-                                        ! end condition reflecting surf. above horizon
-                                      END IF
-                                    ELSE
-                                      hh = 1.0
-                                    END IF
-                                  ELSE
-                                    hh = 1.0
+                                    ! the path line of sight-reflec is not below the horizon => we compute
+                                    hh = MERGE(1, 0, (dh <= dho) .AND. (angzen - zhoriz < 0.00001))
                                   END IF
 
                                   irefl = irefl1
@@ -1772,9 +1612,7 @@ PROGRAM illumina
                                     IF (dho > drefle(x_sr, y_sr)) THEN
                                       angmin = pi / 2.0 - ATAN2(obsH(x_sr, y_sr), drefle(x_sr, y_sr))
                                       ! condition obstacle reflected.
-                                      IF (angzen < angmin) THEN
-                                        ff = 0.0
-                                      ELSE
+                                      IF (angzen >= angmin) THEN
                                         ff = ofill(x_sr, y_sr)
                                       END IF
                                     END IF
