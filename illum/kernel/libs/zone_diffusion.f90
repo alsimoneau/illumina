@@ -26,49 +26,44 @@
 !    Contact: martin.aube@cegepsherbrooke.qc.ca
 
 SUBROUTINE zone_diffusion(effet, zondif, ncell, stepdi, siz)
+
   IMPLICIT NONE
+
+  REAL, INTENT(IN) :: effet, siz
+  INTEGER, INTENT(IN) :: stepdi
+  REAL, INTENT(OUT) :: zondif(3000000, 3)
+  INTEGER, INTENT(OUT) :: ncell
+
   INTEGER :: i, j, k
-  INTEGER :: ncell, neffet, imin, imax, jmin, jmax, kmin, kmax
-  INTEGER :: keep, stepdi
+  INTEGER :: neffet, keep
   REAL :: x0, y0, z0
-  REAL :: effet, dmin, d
-  REAL :: zondif(3000000, 3), siz
-  REAL :: pi
-  pi = 3.141592654
+  REAL :: d2, siz2, dmin2
 
-  keep = 0
   neffet = NINT(effet / siz)
-  dmin = effet
-  stepdi = 1
 
-  ! limits of the calculations loops
-  imin = -neffet
-  imax = +neffet
-  jmin = -neffet
-  jmax = +neffet
-  kmin = -neffet
-  kmax = neffet
   ncell = 0
+  siz2 = siz**2
+  dmin2 = effet**2
+  keep = 0
 
-  DO i = imin, imax
+  DO i = -neffet, neffet
     x0 = REAL(i) * siz
-    DO j = jmin, jmax
+    DO j = -neffet, neffet
       y0 = REAL(j) * siz
-      DO k = kmin, kmax
+      DO k = -neffet, neffet
         z0 = REAL(k) * siz
-        d = SQRT(x0**2.0 + y0**2.0 + z0**2.0)
-        IF (d <= dmin) THEN
+        d2 = x0**2.0 + y0**2.0 + z0**2.0
+        IF (d2 <= dmin2) THEN
           keep = keep + 1
           IF (keep == stepdi) THEN
             keep = 0
             ncell = ncell + 1
-            zondif(ncell, 1) = x0
-            zondif(ncell, 2) = y0
-            zondif(ncell, 3) = z0
+            zondif(ncell, :) = [x0, y0, z0]
           END IF
         END IF
       END DO
     END DO
   END DO
+
   RETURN
 END SUBROUTINE zone_diffusion
