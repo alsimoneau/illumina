@@ -35,8 +35,11 @@ class AngularPowerDistribution:
     def normalize(self, *args, **kwargs):
         return normalize(self, *args, **kwargs)
 
-    def plot(self, *args, **kwargs):
-        return plot(self, *args, **kwargs)
+    def plot1d(self, *args, **kwargs):
+        return plot1d(self, *args, **kwargs)
+
+    def plot2d(self, *args, **kwargs):
+        return plot2d(self, *args, **kwargs)
 
     def plot3d(self, *args, **kwargs):
         return plot3d(self, *args, **kwargs)
@@ -136,7 +139,7 @@ def vertical_profile(apd, /, *, integrated=False):
     profile = (
         np.average(apd.data, axis=1, weights=np.diff(mids(apd.horizontal_angles)))
         if len(apd.horizontal_angles) > 1
-        else apd.data[:, 0]
+        else apd.data[:, 0].copy()
     )
     if integrated:
         profile *= 2 * np.pi * np.diff(-np.cos(np.deg2rad(mids(apd.vertical_angles))))
@@ -200,7 +203,14 @@ def interpolate(apd, /, *, step=1, method="linear"):
     )
 
 
-def plot(
+def plot1d(apd, /, ax=None, **kwargs):
+    if ax is None:
+        ax = mpl.pyplot.gca()
+
+    return ax.plot(apd.vertical_angles, apd.vertical_profile(), **kwargs)
+
+
+def plot2d(
     apd,
     /,
     ax=None,
