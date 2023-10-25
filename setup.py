@@ -138,6 +138,5 @@ setup(
     """,
     ext_modules=[Extension("illum.compute.compute", glob("illum/compute/*.f90"))],
     cmdclass=dict(build_ext=f2py_Build),
-    include_package_data=True,
-    package_data={"illum": ["compute/*", "data/*"]},
+    package_data={"illum": ["compute/**/*", "data/**/*"]},
 )
