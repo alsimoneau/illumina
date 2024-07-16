@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 from dataclasses import dataclass
 
 import matplotlib as mpl
@@ -81,14 +80,11 @@ def from_ies(filename, /):
 
 
 def to_ies(filename, apd, /):
-    if os.path.splitext(filename)[1].lower() != ".ies":
-        filename += ".ies"
-
     out = [
         "IES:LM-63-2019",
         "TILT=NONE",
-        f"1 {apd.lumens} 1.0"
-        f" {apd.data.shape[0]} {apd.data.shape[1]} {apd.type} 1 0 0 0",
+        f"1 {apd.lumens} 1.0 {apd.data.shape[0]} {apd.data.shape[1]} "  # cont.
+        f"{apd.type} 1 0 0 0",
         "1.0 1.0 0.0",
     ]
     with open(filename, "w") as f:
@@ -113,23 +109,9 @@ def from_txt(filename, /):
 
 
 def to_txt(filename, apd, /, **kwargs):
-    if not os.path.splitext(filename)[1]:
-        filename += ".lop"
-
     ang = np.arange(181)
-    data = np.interp(
-        ang, apd.vertical_angles, apd.vertical_profile()[::-1], left=0, right=0
-    )
+    data = np.interp(ang, apd.vertical_angles, apd.vertical_profile(), left=0, right=0)
     np.savetxt(filename, np.stack((data, 180 - ang), axis=1), **kwargs)
-
-
-def from_file(filename, /):
-    name, ext = os.path.splitext(filename)
-    funcs = dict(ies=from_ies, lop=from_txt)
-    try:
-        return funcs[ext[1:].lower()](filename)
-    except KeyError:
-        raise ValueError(f"Unknown file type '{ext}'.")
 
 
 def vertical_profile(apd, /, *, integrated=False):
@@ -137,7 +119,11 @@ def vertical_profile(apd, /, *, integrated=False):
         raise NotImplementedError(f"Type {apd._type_letter} not supported.")
 
     profile = (
-        np.average(apd.data, axis=1, weights=np.diff(mids(apd.horizontal_angles)))
+        np.average(
+            apd.data,
+            axis=1,
+            weights=np.diff(mids(apd.horizontal_angles)),
+        )
         if len(apd.horizontal_angles) > 1
         else apd.data[:, 0].copy()
     )
@@ -199,7 +185,10 @@ def interpolate(apd, /, *, step=1, method="linear"):
     )
 
     return AngularPowerDistribution(
-        lumens=apd.lumens, vertical_angles=V, horizontal_angles=H, data=interp
+        lumens=apd.lumens,
+        vertical_angles=V,
+        horizontal_angles=H,
+        data=interp,
     )
 
 

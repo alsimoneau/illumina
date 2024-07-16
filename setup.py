@@ -128,13 +128,13 @@ setup(
         "pyproj",
         "pyyaml",
         "rasterio",
-        "scipy",
+        "scipy<1.14",
         "xmltodict",
     ],
     extras_require={"dev": ["black", "flake8", "ipython", "isort"]},
     entry_points="""
         [console_scripts]
-        illum=illum.UI.main:main
+        illum=illum.main:illum
     """,
     ext_modules=[Extension("illum.compute.compute", glob("illum/compute/*.f90"))],
     cmdclass=dict(build_ext=f2py_Build),

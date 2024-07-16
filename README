@@ -4,12 +4,12 @@ GNU General Public License as published by the Free Software Foundation, version
 Cite: Martin Aube <martin.aube@cegepsherbrooke.qc.ca>
 
 
-                         *                          *                       iii                   *     *
-                                                                           iiiii
-  IIIIII    lLLLL    *    lLLLL         UUU    UUU      MMMMM      MMMMM    iii        NNNN     NN          AAAA
-   IIII     LLLL          LLLL   *     UUU      UUU     MMMMMMM  MMMMMMM          *    NNNNN    NN        AAAaaAAA
-   IIII     LLLL          LLLL        UUU *      UUU    MMM MMMMMMMM MMM    iii        NNNNNN   NN       AAA    AAA
-   IIII     LLLL   *      LLLL        UUU        UUU    MMM *        MMM  iii          NNN  NNN NN     AAAAAAAAAAAAAA
-   IIII     LLLl          LLLl        UUUu      uUUU    MMM          MMM  iiii    ii   NNN   NNNNN    AAAa        aAAA
-   IIII    LLLLLLLLLL    LLLLLLLLLL    UUUUUuuUUUUU     MMM          MMM   iiiiiiiii   NNN    NNNN   aAAA    *     AAAa
-  IIIIII   LLLLLLLLLLL   LLLLLLLLLLL     UUUUUUUU      mMMMm        mMMMm   iiiiiii   nNNNn    NNNn  aAAA          AAAa
+                      *                         *                      iii                  *     *
+                                                                      iiiii
+ IIIIII   lLLLL    *   lLLLL        UUU    UUU     MMMMM      MMMMM    iii       NNNN     NN         AAAA
+  IIII    LLLL         LLLL   *    UUU      UUU    MMMMMMM  MMMMMMM          *   NNNNN    NN       AAAaaAAA
+  IIII    LLLL         LLLL       UUU *      UUU   MMM MMMMMMMM MMM    iii       NNNNNN   NN      AAA    AAA
+  IIII    LLLL   *     LLLL       UUU        UUU   MMM *        MMM  iii         NNN  NNN NN     AAAAAAAAAAAA
+  IIII    LLLl         LLLl       UUUu      uUUU   MMM          MMM  iiii    ii  NNN   NNNNN    AAAa      aAAA
+  IIII   LLLLLLLLLL   LLLLLLLLLL   UUUUUuuUUUUU    MMM          MMM   iiiiiiiii  NNN    NNNN   aAAA   *    AAAa
+ IIIIII  LLLLLLLLLLL  LLLLLLLLLLL    UUUUUUUU     mMMMm        mMMMm   iiiiiii  nNNNn    NNNn  aAAA        AAAa
