@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 from dataclasses import dataclass
 
 import matplotlib as mpl
@@ -20,10 +21,7 @@ class AngularPowerDistribution:
     lumens: float = -1
 
     def __repr__(self):
-        return f"APD<{self.data.shape}:{self._type_letter()}>"
-
-    def _type_letter(self):
-        return "CBA"[self.type - 1]
+        return f"APD<{self.data.shape}>"
 
     def cycle(self, *args, **kwargs):
         return cycle(self, *args, **kwargs)
@@ -34,8 +32,11 @@ class AngularPowerDistribution:
     def normalize(self, *args, **kwargs):
         return normalize(self, *args, **kwargs)
 
-    def plot1d(self, *args, **kwargs):
-        return plot1d(self, *args, **kwargs)
+    def plotV(self, *args, **kwargs):
+        return plotV(self, *args, **kwargs)
+
+    def plotH(self, *args, **kwargs):
+        return plotH(self, *args, **kwargs)
 
     def plot2d(self, *args, **kwargs):
         return plot2d(self, *args, **kwargs)
@@ -43,43 +44,66 @@ class AngularPowerDistribution:
     def plot3d(self, *args, **kwargs):
         return plot3d(self, *args, **kwargs)
 
-    def to_ies(self, filename, *args, **kwargs):
-        return to_ies(filename, self, *args, **kwargs)
-
-    def to_txt(self, filename, *args, **kwargs):
-        return to_txt(filename, self, *args, **kwargs)
+    def save(self, filename, *args, **kwargs):
+        return save(filename, self, *args, **kwargs)
 
     def vertical_profile(self, *args, **kwargs):
         return vertical_profile(self, *args, **kwargs)
 
+    def horizontal_profile(self, *args, **kwargs):
+        return horizontal_profile(self, *args, **kwargs)
 
-def from_ies(filename, /):
+
+def load(filename, /, facing=None, **kwargs):
+    match os.path.splitext(filename)[1].lower():
+        case ".ies":
+            apd, f = from_iesna(filename, **kwargs), 0
+            f = 0
+        case ".cib" | ".tml" | ".c1s" | ".cc":
+            apd, f = from_cibse(filename, **kwargs), 90
+        case ".ldt" | ".exl":
+            apd, f = from_eulumdat(filename, **kwargs), 90
+        case _:
+            apd, f = from_ascii(filename, **kwargs), 0
+
+    apd.horizontal_angles -= facing if facing is not None else f
+    return apd.cycle()
+
+
+def save(filename, apd, /, **kwargs):
+    match os.path.splitext(filename)[1].lower():
+        case ".ies":
+            to_iesna(filename, **kwargs)
+        case ".cib" | ".tml" | ".c1s" | ".cc":
+            to_cibse(filename, **kwargs)
+        case ".ldt" | ".exl":
+            to_eulumdat(filename, **kwargs)
+        case _:
+            to_ascii(filename, **kwargs)
+
+
+def from_iesna(filename, /, facing=0):
     with open(filename) as f:
         for line in f:
             if line.startswith("TILT="):
                 break
         skip = 0 if "NONE" in line else 4
         data = f.read().replace(",", " ").split()[skip:]
-        lumens = int(data[0]) * float(data[1])
-        factor = float(data[2])
-        nV = int(data[3])
-        nH = int(data[4])
-        type = int(data[5])
-        data = data[13:]
-        va, data = np.array(data[:nV], dtype="float32"), data[nV:]
-        ha, data = np.array(data[:nH], dtype="float32"), data[nH:]
-        data = np.reshape(data, (nH, nV)).T.astype("float32") * factor
+    lumens = int(data[0]) * float(data[1])
+    factor = float(data[2])
+    nV = int(data[3])
+    nH = int(data[4])
+    data = data[13:]
+    va, data = np.array(data[:nV], dtype="float32"), data[nV:]
+    ha, data = np.array(data[:nH], dtype="float32"), data[nH:]
+    data = np.reshape(data, (nH, nV)).T.astype("float32") * factor
 
-        return AngularPowerDistribution(
-            lumens=lumens,
-            type=type,
-            vertical_angles=va,
-            horizontal_angles=ha,
-            data=data,
-        )
+    return AngularPowerDistribution(
+        lumens=lumens, vertical_angles=va, horizontal_angles=ha, data=data
+    )
 
 
-def to_ies(filename, apd, /):
+def to_iesna(filename, apd, /, facing=0):
     out = [
         "IES:LM-63-2019",
         "TILT=NONE",
@@ -98,7 +122,52 @@ def to_ies(filename, apd, /):
             f.write("\n")
 
 
-def from_txt(filename, /):
+def from_cibse(filename, /, facing=90):
+    with open(filename) as f:
+        for i, line in enumerate(f):
+            if i == 7:
+                break
+        data = f.read().split()
+        factor = float(data[5])
+        nV = int(data[9])
+        nH = int(data[10])
+        data = data[11:]
+        va, data = np.array(data[:nV], dtype="float32"), data[nV:]
+        ha, data = np.array(data[:nH], dtype="float32"), data[nH:]
+        data = data[: nV * nH]
+        data = np.reshape(data, (nH, nV)).T.astype("float32") * factor
+
+    return AngularPowerDistribution(
+        lumens=1, vertical_angles=va, horizontal_angles=ha, data=data
+    )
+
+
+def to_cibse(filename, apd, /, facing=90):
+    raise NotImplementedError
+
+
+def from_eulumdat(filename, /, facing=90):
+    with open(filename) as f:
+        data = f.readlines()
+    nH = int(data[3])
+    nV = int(data[5])
+    factor = float(data[23])
+    lumens = float(data[28])
+    data = data[42:]
+    ha, data = np.array(data[:nH], dtype="float32"), data[nH:]
+    va, data = np.array(data[:nV], dtype="float32"), data[nV:]
+    data = np.reshape(data[: nH * nV], (nH, nV)).T.astype("float32") * factor
+
+    return AngularPowerDistribution(
+        lumens=lumens, vertical_angles=va, horizontal_angles=ha, data=data
+    )
+
+
+def to_eulumdat(filename, apd, /, facing=90):
+    raise NotImplementedError
+
+
+def from_ascii(filename, /):
     data, ang = np.loadtxt(filename)[::-1].T
     return AngularPowerDistribution(
         type=1,
@@ -108,28 +177,62 @@ def from_txt(filename, /):
     )
 
 
-def to_txt(filename, apd, /, **kwargs):
+def to_ascii(filename, apd, /, **kwargs):
     ang = np.arange(181)
     data = np.interp(ang, apd.vertical_angles, apd.vertical_profile(), left=0, right=0)
     np.savetxt(filename, np.stack((data, 180 - ang), axis=1), **kwargs)
 
 
-def vertical_profile(apd, /, *, integrated=False):
-    if apd._type_letter() in "AB":
-        raise NotImplementedError(f"Type {apd._type_letter} not supported.")
+def cycle(apd, /):
+    ha = apd.horizontal_angles
+    data = apd.data
 
+    if len(ha) == 1:
+        ha = np.array([0, 90])
+        data = np.repeat(data, 2, axis=1)
+
+    rad = np.deg2rad(ha)
+    sin = np.sin(rad)
+    cos = np.cos(rad)
+
+    if np.abs(np.min(cos)) < 1e-5 or np.max(cos) < 1e-5:
+        ha = np.concatenate([ha[:-1], 180 - ha[::-1]])
+        data = np.concatenate([data[:, :-1], data[:, ::-1]], axis=1)
+    if np.abs(np.min(sin)) < 1e-5 or np.max(sin) < 1e-5:
+        ha = np.concatenate([ha[:-1], 360 - ha[::-1]])
+        data = np.concatenate([data[:, :-1], data[:, ::-1]], axis=1)
+
+    ha %= 360
+    idx = np.argsort(ha)
+    data = data[:, idx]
+    data = np.concatenate([data, data[:, 0:1]], axis=1)
+    ha = ha[idx]
+    ha = np.concatenate([ha, ha[0:1] + 360])
+    ha, idx = np.unique(ha, return_index=True)
+    data = data[:, idx]
+
+    return AngularPowerDistribution(
+        lumens=apd.lumens,
+        vertical_angles=apd.vertical_angles,
+        horizontal_angles=ha,
+        data=data,
+    )
+
+
+def vertical_profile(apd, /, *, integrated=False):
     profile = (
-        np.average(
-            apd.data,
-            axis=1,
-            weights=np.diff(mids(apd.horizontal_angles)),
-        )
+        np.average(apd.data, axis=1, weights=np.diff(mids(apd.horizontal_angles)))
         if len(apd.horizontal_angles) > 1
         else apd.data[:, 0].copy()
     )
     if integrated:
         profile *= 2 * np.pi * np.diff(-np.cos(np.deg2rad(mids(apd.vertical_angles))))
     return profile
+
+
+def horizontal_profile(apd, /):
+    profile = apd.data.mean(0)
+    return profile / profile.max()
 
 
 def normalize(apd):
@@ -141,32 +244,6 @@ def normalize(apd):
         horizontal_angles=apd.horizontal_angles,
         data=data,
     )
-
-
-def cycle(apd, /, *, step=1, kind="linear"):
-    if apd._type_letter() in "AB":
-        raise NotImplementedError(f"Type {apd._type_letter} not supported.")
-
-    ha = apd.horizontal_angles
-    data = apd.data
-    if len(ha) == 1:
-        ha = np.array([0, 90])
-        data = np.repeat(data, 2, axis=1)
-    if ha[-1] == 90:
-        ha = np.concatenate([ha[:-1], 180 - ha[::-1]])
-        data = np.concatenate([data[:, :-1], data[:, ::-1]], axis=1)
-    if ha[-1] == 180:
-        ha = np.concatenate([ha[:-1], 360 - ha[::-1]])
-        data = np.concatenate([data[:, :-1], data[:, ::-1]], axis=1)
-
-    apd_cycle = AngularPowerDistribution(
-        lumens=apd.lumens,
-        vertical_angles=apd.vertical_angles,
-        horizontal_angles=ha,
-        data=data,
-    )
-
-    return apd_cycle
 
 
 def interpolate(apd, /, *, step=1, method="linear"):
@@ -185,18 +262,26 @@ def interpolate(apd, /, *, step=1, method="linear"):
     )
 
     return AngularPowerDistribution(
-        lumens=apd.lumens,
-        vertical_angles=V,
-        horizontal_angles=H,
-        data=interp,
+        lumens=apd.lumens, vertical_angles=V, horizontal_angles=H, data=interp
     )
 
 
-def plot1d(apd, /, ax=None, **kwargs):
-    if ax is None:
-        ax = mpl.pyplot.gca()
+def plotV(apd, /, polar=False, **kwargs):
+    if polar:
+        mpl.pyplot.polar(
+            np.deg2rad(apd.vertical_angles), apd.vertical_profile(), **kwargs
+        )
+    else:
+        mpl.pyplot.plot(apd.vertical_angles, apd.vertical_profile(), **kwargs)
 
-    return ax.plot(apd.vertical_angles, apd.vertical_profile(), **kwargs)
+
+def plotH(apd, /, polar=False, **kwargs):
+    if polar:
+        mpl.pyplot.polar(
+            np.deg2rad(apd.horizontal_angles), apd.horizontal_profile(), **kwargs
+        )
+    else:
+        mpl.pyplot.plot(apd.horizontal_angles, apd.horizontal_profile(), **kwargs)
 
 
 def plot2d(
