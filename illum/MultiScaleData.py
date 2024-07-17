@@ -61,7 +61,7 @@ class MultiScaleData:
         lat, lon = coords
         wgs84 = _pyproj.CRS.from_epsg(4326)
         proj = _pyproj.CRS.from_user_input(self._attrs["srs"])
-        transform = _pyproj.Transformer.from_crs(wgs84,proj,always_xy=True).transform
+        transform = _pyproj.Transformer.from_crs(wgs84, proj, always_xy=True).transform
         x, y = transform(lon, lat)
         return x, y
 

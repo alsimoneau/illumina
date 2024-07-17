@@ -71,10 +71,7 @@ def OPAC(wavelengths):
                 )
                 OPAC_filename = f"{mie_path}/OPAC_data/{type}{RH:02}"
                 wl_prop = np.genfromtxt(
-                    OPAC_filename,
-                    skip_header=17,
-                    skip_footer=120,
-                    comments=None,
+                    OPAC_filename, skip_header=17, skip_footer=120, comments=None
                 )[:, 1:]
                 pf_array = np.loadtxt(OPAC_filename)
                 scat_angle = pf_array[:, 0]

@@ -196,8 +196,7 @@ def from_zones(
 
     phie = [
         pt.safe_divide(
-            viirs_dat[i] * S[i],
-            np.sum(zon_mask[i] * integral[:, None, None], 0),
+            viirs_dat[i] * S[i], np.sum(zon_mask[i] * integral[:, None, None], 0)
         )
         for i in range(len(S))
     ]

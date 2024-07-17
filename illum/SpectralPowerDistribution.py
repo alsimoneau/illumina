@@ -146,9 +146,7 @@ def interpolate(spd, wavelengths):
     # Interpolate the integral, then derivate
 
     integral = scipy.integrate.cumulative_trapezoid(
-        y=spd.data,
-        x=spd.wavelengths,
-        initial=0,
+        y=spd.data, x=spd.wavelengths, initial=0
     )
     interpolator = scipy.interpolate.CubicHermiteSpline(
         x=spd.wavelengths,

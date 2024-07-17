@@ -14,7 +14,6 @@ from functools import partial
 from glob import glob
 from itertools import product
 
-import click
 import numpy as np
 import yaml
 from progressbar import progressbar
@@ -38,42 +37,6 @@ def MSDOpen(filename, cached={}):
     ds = MSD.Open(filename)
     cached[filename] = ds
     return ds
-
-
-@click.command(name="batches")
-@click.argument("input_path", type=click.Path(exists=True), default=".")
-@click.argument("batch_name", required=False)
-@click.option(
-    "-c",
-    "--compact",
-    is_flag=True,
-    help="If given, will chain similar executions. Reduces the overall number "
-    "of runs at the cost of longuer individual executions.",
-)
-@click.option(
-    "-N",
-    "--batch_size",
-    type=int,
-    default=300,
-    show_default=True,
-    help="Number of runs per produced batch file.",
-)
-@click.option(
-    "-s",
-    "--scheduler",
-    type=click.Choice(["parallel", "sequential", "slurm"]),
-    default="sequential",
-    help="Job scheduler",
-)
-def CLI_batches(input_path, compact, batch_size, scheduler, batch_name=None):
-    """Makes the execution batches.
-
-    INPUT_PATH is the path to the folder containing the inputs.
-
-    BATCH_NAME is an optional name for the produced batch files.
-    It overwrites the one defined in 'inputs_params.in' is given.
-    """
-    batches(input_path, compact, batch_size, scheduler, batch_name)
 
 
 def batches(
@@ -226,8 +189,7 @@ def batches(
             for i, lamp in enumerate(lamps, 1):
                 os.symlink(
                     os.path.relpath(
-                        f"fctem_wl_{wavelength}_lamp_{lamp}.dat",
-                        fold_name,
+                        f"fctem_wl_{wavelength}_lamp_{lamp}.dat", fold_name
                     ),
                     fold_name + exp_name + "_fctem_%03d.dat" % i,
                 )
@@ -253,8 +215,7 @@ def batches(
             for name in ["obstd", "obsth", "obstf", "altlp"]:
                 os.symlink(
                     os.path.relpath(
-                        os.path.join(obs_fold, f"{exp_name}_{name}.bin"),
-                        fold_name,
+                        os.path.join(obs_fold, f"{exp_name}_{name}.bin"), fold_name
                     ),
                     fold_name + f"{exp_name}_{name}.bin",
                 )
@@ -263,8 +224,7 @@ def batches(
                 os.symlink(
                     os.path.relpath(
                         os.path.join(
-                            obs_fold,
-                            f"{exp_name}_{wavelength}_lumlp_{lamp}.bin",
+                            obs_fold, f"{exp_name}_{wavelength}_lumlp_{lamp}.bin"
                         ),
                         fold_name,
                     ),

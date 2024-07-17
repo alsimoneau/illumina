@@ -326,10 +326,7 @@ def plot_allsky(phi, r, data, n=100, **kwargs):
                 data[:, :, i] = interp(nphi, nr)
         else:
             interp = _I.interp2d(
-                _np.concatenate([phi, [phi[0] + 360]]),
-                r,
-                ndata,
-                kind=kwargs["interp"],
+                _np.concatenate([phi, [phi[0] + 360]]), r, ndata, kind=kwargs["interp"]
             )
             data = interp(nphi, nr)
         phi = nphi

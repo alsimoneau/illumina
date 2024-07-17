@@ -1,26 +1,10 @@
 #!/usr/bin/env python
 
-import click
 import geopandas as gpd
 import numpy as np
 import rasterio as rio
 
 from illum import MultiScaleData as MSD
-
-
-@click.command(name="convert")
-@click.option("--vector/--raster", "-v/-r", default=True, help="Output type.")
-@click.option("-log", is_flag=True, help="Logarithmic scale (base 10)")
-@click.option("-area", is_flag=True, help="Normalized by pixel area (in km²)")
-@click.argument("filename", type=click.Path(exists=True))
-@click.argument("outname")
-def CLI_convert(filename, outname, vector, log, area):
-    """Convert an Illumina HDF file to a georeferenced format.
-
-    Converts FILENAME to OUTNAME.EXT where ext is defined based on the output
-    format. The output format is either vector (GeoJSON) or raster (Tiff).
-    """
-    convert(filename, outname, vector, log, area)
 
 
 def convert(filename, outname, vector=True, log=False, area=False):
@@ -50,11 +34,11 @@ def convert(filename, outname, vector=True, log=False, area=False):
                 width=data.shape[1],
                 height=data.shape[0],
                 count=1,
-                crs=rio.CRS.from_user_input(hdf._attrs['srs']),
-                transform=rio.transform.from_origin(xmin,ymax,pix_size,pix_size),
+                crs=rio.CRS.from_user_input(hdf._attrs["srs"]),
+                transform=rio.transform.from_origin(xmin, ymax, pix_size, pix_size),
             )
 
-            with rio.open(f"{outname}_{i}.tif", 'w', **profile) as dst:
+            with rio.open(f"{outname}_{i}.tif", "w", **profile) as dst:
                 dst.write(data.astype(rio.float64), 1)
 
     elif vector:

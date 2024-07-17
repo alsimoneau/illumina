@@ -11,7 +11,6 @@ import os
 import shutil
 from glob import glob
 
-import click
 import numpy as np
 import yaml
 from scipy.interpolate import griddata
@@ -23,12 +22,6 @@ import illum.pytools as pt
 import illum.SpectralPowerDistribution as SPD
 from illum.inventory import from_lamps, from_zones
 from illum.OPAC import OPAC
-
-
-@click.command(name="inputs")
-def CLI_inputs():
-    """Prepares the executions inputs."""
-    inputs()
 
 
 def inputs():

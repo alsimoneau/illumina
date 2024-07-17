@@ -2,7 +2,6 @@
 
 import math
 
-import click
 import numpy as np
 import pyproj
 import yaml
@@ -29,17 +28,6 @@ def eng_format(x, unit=""):
 
 def round_odd(n):
     return int(n - n % 2 + 1)
-
-
-@click.command(name="domain")
-def CLI_domain():
-    """Defines the simulation domain.
-
-    Reads domain definition parameters from 'domain_params.in'.
-
-    Outputs the definition in 'domain.ini'.
-    """
-    domain()
 
 
 def domain():
