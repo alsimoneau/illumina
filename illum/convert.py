@@ -3,6 +3,7 @@
 import click
 import geopandas as gpd
 import numpy as np
+import rasterio as rio
 
 from illum import MultiScaleData as MSD
 
@@ -28,11 +29,7 @@ def convert(filename, outname, vector=True, log=False, area=False):
     hdf.set_overlap(-1)
 
     if not vector:
-        from osgeo import gdal, osr
-
-        driver = gdal.GetDriverByName("GTiff")
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(int(hdf._attrs["srs"].split(":")[1]))
+        profile = rio.default_gtiff_profile.copy()
 
         for i, data in enumerate(hdf):
             pix_size = hdf._attrs["layers"][i]["pixel_size"]
@@ -45,17 +42,20 @@ def convert(filename, outname, vector=True, log=False, area=False):
                 data /= (hdf.pixel_size(i) / 1000.0) ** 2
             if log:
                 data = np.log10(data)
-            ds = driver.Create(
-                outname + "_%d.tif" % i,
-                data.shape[1],
-                data.shape[0],
-                1,
-                gdal.GDT_Float64,
+
+            profile = dict(
+                driver="GTiff",
+                dtype=rio.float64,
+                nodata=-np.inf if log else -1,
+                width=data.shape[1],
+                height=data.shape[0],
+                count=1,
+                crs=rio.CRS.from_user_input(hdf._attrs['srs']),
+                transform=rio.transform.from_origin(xmin,ymax,pix_size,pix_size),
             )
-            ds.SetProjection(srs.ExportToWkt())
-            ds.SetGeoTransform((xmin, pix_size, 0, ymax, 0, -pix_size))
-            ds.GetRasterBand(1).WriteArray(data)
-            ds.GetRasterBand(1).SetNoDataValue(-np.inf if log else -1)
+
+            with rio.open(f"{outname}_{i}.tif", 'w', **profile) as dst:
+                dst.write(data.astype(rio.float64), 1)
 
     elif vector:
         points = {"x": [], "y": [], "val": []}
