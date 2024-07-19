@@ -11,23 +11,29 @@ def recursive_glob(rootdir=".", pattern="*"):
             yield os.path.join(root, filename)
 
 
-def failed(executable=False):
-    if executable:
+def failed(scheduler=None):
+    if scheduler is not None or scheduler != "none":
+
+        execute = dict(
+            parallel="./execute &", sequential="./execute", slurm="sbatch ./execute"
+        )
+        execute_str = execute[scheduler] + "\n"
 
         def failed(dirname):
-            print("cd " + os.path.abspath(dirname))
-            print("sbatch ./execute")
-            print("sleep 0.05")
+            return "\n".join(
+                ["cd " + os.path.abspath(dirname), execute_str, "sleep 0.05"]
+            )
 
     else:
 
         def failed(dirname):
-            print(dirname)
+            return dirname
 
+    out = []
     for dirname in recursive_glob(pattern="illumina"):
         dirname = os.path.dirname(dirname)
         if not os.path.isfile(os.path.join(dirname, "illumina.in")):
-            failed(dirname)
+            out.append(failed(dirname))
         else:
             with open(os.path.join(dirname, "illumina.in")) as f:
                 basename = f.readlines()[1].split()[0]
@@ -37,14 +43,16 @@ def failed(executable=False):
 
             if nb_in <= 2:
                 if len(outnames) == 0:
-                    failed(dirname)
+                    out.append(failed(dirname))
                 else:
                     with open(outnames[0]) as f:
                         lines = f.readlines()
                     if len(lines) < 2 or "Diffuse radiance" not in lines[-2]:
-                        failed(dirname)
+                        out.append(failed(dirname))
             elif (
                 os.path.isfile(os.path.join(dirname, basename + ".out"))
                 or len(outnames) + 1 != nb_in
             ):
-                failed(dirname)
+                out.append(failed(dirname))
+
+    return out

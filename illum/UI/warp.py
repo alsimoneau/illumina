@@ -256,7 +256,7 @@ def warp(output_name=None, infiles=[]):
             ]
             save(params, data, "water_mask")
 
-        for fname in glob("tmp_*"):
-            os.remove(fname)
+    for fname in glob("tmp_*"):
+        os.remove(fname)
 
     print("Done.")

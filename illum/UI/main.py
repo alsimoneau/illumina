@@ -187,14 +187,15 @@ def extract(exec_dir, contrib, params, full, profile):
 # failed
 @main.command
 @click.option(
-    "-e",
-    "--executable",
-    is_flag=True,
-    help="If given, returns the executable code to rerun failed executions.",
+    "-s",
+    "--scheduler",
+    type=click.Choice(["none", "parallel", "sequential", "slurm"]),
+    default="none",
+    help="Job scheduler",
 )
-def failed(executable):
+def failed(scheduler):
     "Find failed ILLUMINA executions."
-    illum.failed(executable)
+    print("\n".join(illum.failed(scheduler)))
 
 
 # init

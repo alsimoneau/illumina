@@ -68,10 +68,9 @@ def inputs():
         if len(failed):
             for i, lat, lon, zon_ind in sorted(failed):
                 print(
-                    "WARNING: Lamp #%d (%.06g,%.06g) falls within non-null zone #%d"
-                    % (i, lat, lon, zon_ind)
+                    f"WARNING: Lamp #{i} ({lat:.06g},{lon:.06g}) "
+                    f"falls within non-null zone #{zon_ind}"
                 )
-            raise SystemExit()
 
     out_name = params["exp_name"]
 
