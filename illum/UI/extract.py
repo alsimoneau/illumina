@@ -15,6 +15,7 @@ from functools import partial
 from glob import glob
 
 import numpy as np
+import pandas as pd
 
 from illum import MultiScaleData as MSD
 from illum.pytools import load_bin
@@ -43,6 +44,7 @@ def add_arrays(a, b):
 def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
     regex_layer = re.compile(r"-layer_(\d+)")
     regex_coords = re.compile(r"observer_coordinates_(-?\d+\.\d+_-?\d+\.\d+)")
+    regex_key = re.compile(r"([a-z_]*)_(-?[\d\.]*)")
 
     skyglow = ddict(float)
     if full:
@@ -152,17 +154,28 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
                 contributions[key][n_layer] = pcl_data[b:-b, b:-b] if b else pcl_data
 
     if full:
-        results_names = ["Case"] + [s[: s.index("(")] for s in lines[idx_results::2]]
-        print("\t".join(results_names))
-        for key, vals in outputs.items():
-            print(key, *vals, sep="\t")
+        results_names = [s[: s.index("(")].strip for s in lines[idx_results::2]]
+        data = pd.DataFrame.from_dict(
+            outputs, "index", columns=results_names
+        ).reset_index()
+        out = pd.DataFrame(list(data.pop("index").map(parse_key)))
+        out = pd.concat([out, data], axis=1).sort_values(list(out.columns))
+        out.to_csv("illumina.out", index=False)
+
         if contrib:
-            contributions[key].save(key)
-    else:
-        for key, val in skyglow.items():
-            print(key, val, sep="\t")
-            if contrib:
+            for key in outputs:
                 contributions[key].save(key)
+    else:
+        data = pd.DataFrame.from_dict(skyglow, "index").reset_index()
+        out = pd.DataFrame(list(data.index.map(parse_key)))
+        out["Total Radiance"] = data[0]
+        out = out.sort_values(list(out.columns))
+        out.to_csv("illumina.out", index=False)
+
+        if contrib:
+            for key in skyglow:
+                contributions[key].save(key)
+
     if profile:
         length = np.diff(prof_dist, prepend=0)
         for key, val in profiles.items():
