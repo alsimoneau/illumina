@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+find . -name execute | parallel --bar "cd {//} ; ./execute &>/dev/null"
