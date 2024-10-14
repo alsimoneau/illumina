@@ -12,7 +12,7 @@ def recursive_glob(rootdir=".", pattern="*"):
 
 
 def failed(scheduler=None):
-    if scheduler is not None or scheduler != "none":
+    if scheduler is not None and scheduler != "none":
 
         execute = dict(
             parallel="./execute &", sequential="./execute", slurm="sbatch ./execute"
