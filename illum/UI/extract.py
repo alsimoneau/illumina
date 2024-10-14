@@ -46,6 +46,8 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
     regex_coords = re.compile(r"observer_coordinates_(-?\d+\.\d+_-?\d+\.\d+)")
     regex_key = re.compile(r"([a-z_]*)_(-?[\d\.]*)")
 
+    parse_key = lambda key: dict(re.findall(regex_key, key))
+
     skyglow = ddict(float)
     if full:
         outputs = ddict(partial(np.zeros, 6))
@@ -154,7 +156,7 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
                 contributions[key][n_layer] = pcl_data[b:-b, b:-b] if b else pcl_data
 
     if full:
-        results_names = [s[: s.index("(")].strip for s in lines[idx_results::2]]
+        results_names = [s[: s.index("(")].strip() for s in lines[idx_results::2]]
         data = pd.DataFrame.from_dict(
             outputs, "index", columns=results_names
         ).reset_index()
@@ -167,7 +169,7 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
                 contributions[key].save(key)
     else:
         data = pd.DataFrame.from_dict(skyglow, "index").reset_index()
-        out = pd.DataFrame(list(data.index.map(parse_key)))
+        out = pd.DataFrame(list(data.pop("index").map(parse_key)))
         out["Total Radiance"] = data[0]
         out = out.sort_values(list(out.columns))
         out.to_csv("illumina.out", index=False)
