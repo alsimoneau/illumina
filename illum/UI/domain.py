@@ -26,10 +26,6 @@ def eng_format(x, unit=""):
     return f"{significand:.2f}{prefix}{unit}"
 
 
-def round_odd(n):
-    return int(n - n % 2 + 1)
-
-
 def domain():
     with open("domain_params.in") as f:
         domain = yaml.safe_load(f)
