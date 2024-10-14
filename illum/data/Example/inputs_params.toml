@@ -1,0 +1,72 @@
+# Illumina input parameters
+# parameters marked with an [*] can be passed as lists
+
+exp_name = "Hawaii"
+batch_file_name = "batch"
+# estimated computing time per case
+estimated_computing_time = 1 # h
+
+relative_humidity = 80 # %
+# lowest domain level atmospheric pressure
+air_pressure = 101.3 # kPa [*]
+
+# Model the blocking effect of obstacles around the observer
+observer_obstacles = false
+# elevation above ground level
+observer_elevation = 10 # m [*]
+
+# radius around light sources where reflections can occur
+reflection_radius = 9.99 # m [*]
+# Stop computation when the new voxel contribution is less than 1/stoplim of the cumulated flux
+stop_limit = 5000 # [*]
+
+
+[scattering]
+single = true # [*]
+double = true # [*]
+
+
+[viewing_angles]
+# The final azimuth angles will be determined relative to the direction between the observer
+# and the nearest point of the nearest road instead of relative to the north.
+# WARNING: Can be slow for large domains
+road_orientation = false
+elevation = [90]                      # [*]
+azimuth = [0, 60, 120, 180, 240, 300] # [*]
+# Field of view for the direct radiance calculations
+direct_fov = 5 # deg [*]
+
+
+[inventory]
+zones = "inventory.txt"
+lamps = ""
+
+
+[wavelengths]
+nb_bins = 9
+min = 470   # [nm]
+max = 740   # [nm]
+
+
+[reflectance]
+# ground types must reference ASTER files in the 'Lights' folder
+asphalt = 0.8
+grass = 0.2
+snow = 0
+
+
+[clouds]
+# 0=Clear, 1=Thin Cirrus/Cirrostratus, 2=Thick Cirrus/Cirrostratus
+# 3=Altostratus/Altocumulus, 4=Stratocumulus,  5=Cumulus/Cumulonimbus
+model = 0    # [*]
+base = 0     # m [*]
+fraction = 0 # % [*]
+
+
+# Aerosol profile. Repeat for multiple layers. See 'aerosol_guide.txt'
+[[aerosols]]
+# 'CC','CA','CP','U','D'.'MC','MP','ART','ANT','Manual'.
+profile = "U"
+optical_depth = 0.1        # [*]
+angstrom_coefficient = 0.7 # [*]
+scale_heigth = 2000        # m [*]

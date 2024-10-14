@@ -60,6 +60,7 @@ c----------------------------------------
       else
          prob_a=0.
       endif      
+
       if ((tranal.le.1.).and.(tranal.gt.0.)) then
          fonc_le=fonc_l(rang)                                             ! value of the layer phase function
          prob_l=(1.-exp(log(tranal)*exp(-1.*altit/hlay)*un/hlay))*           

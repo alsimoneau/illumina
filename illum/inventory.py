@@ -30,10 +30,10 @@ def from_lamps(
     print("Building inputs from discrete inventory.")
 
     # lamps distribution
-    inv_name = params["lamps_inventory"]
+    inv_name = params["inventory"]["lamps"]
     lampsData = np.loadtxt(inv_name, usecols=list(range(7)), ndmin=2)
     photometry = np.loadtxt(inv_name, usecols=[-2, -1], dtype=str, ndmin=2)
-    domain = MSD.from_domain("domain.ini")
+    domain = MSD.from_domain()
 
     sources = np.unique(photometry[:, 1])
 
@@ -62,12 +62,12 @@ def from_lamps(
 
     geometry = dict()
     for geo in ["obsth", "obstd", "obstf", "altlp", "lights"]:
-        geometry[geo] = MSD.from_domain("domain.ini")
+        geometry[geo] = MSD.from_domain()
 
     lumlp = dict()
     for s in sources:
         for wl in x:
-            lumlp[s, wl] = MSD.from_domain("domain.ini")
+            lumlp[s, wl] = MSD.from_domain()
 
     for layer, pts in points.items():
         cols, rows, inds = pts
@@ -141,8 +141,8 @@ def from_zones(
 
     print("Making zone properties files.")
 
-    circles = MSD.from_domain("domain.ini")  # Same geolocalisation
-    zonfile = np.loadtxt(params["zones_inventory"], usecols=list(range(7)), ndmin=2)
+    circles = MSD.from_domain()  # Same geolocalisation
+    zonfile = np.loadtxt(params["inventory"]["zones"], usecols=list(range(7)), ndmin=2)
 
     # zone number
     for i, dat in enumerate(zonfile, 1):
@@ -209,7 +209,7 @@ def from_zones(
             for layer in range(len(phie))
         ]
         for i, s in enumerate(sources):
-            new = MSD.from_domain("domain.ini")
+            new = MSD.from_domain()
             for layer in range(len(new)):
                 new[layer] = phie[layer] * r[layer][i]
             new.save(dir_name + f"{out_name}_{x[n]:g}_lumlp_{s}")

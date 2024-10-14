@@ -19,12 +19,12 @@ def main():
     1. init -- Prep the experiment folder.
 
     2. domain -- Define the simulation domain once the desired values
-    are set in `domain_params.in`.
+    are set in `domain_params.toml`.
 
     3. warp -- Process the satellite imagery.
 
     4a. inputs -- Prepare the execution folder once the desired values
-    are set in `inputs_params.in`.
+    are set in `inputs_params.toml`.
 
     4b. alternate -- (Optionnal) Prepare conversion scenarios to be executed.
 
@@ -117,7 +117,7 @@ def batches(input_path, compact, batch_size, scheduler, batch_name=None):
     INPUT_PATH is the path to the folder containing the inputs.
 
     BATCH_NAME is an optional name for the produced batch files.
-    It overwrites the one defined in 'inputs_params.in' is given.
+    It overwrites the one defined in 'inputs_params.toml' is given.
     """
     illum.batches(input_path, compact, batch_size, scheduler, batch_name)
 
@@ -143,9 +143,9 @@ def convert(filename, outname, vector, log, area):
 def domain():
     """Defines the simulation domain.
 
-    Reads domain definition parameters from 'domain_params.in'.
+    Reads domain definition parameters from 'domain_params.toml'.
 
-    Outputs the definition in 'domain.ini'.
+    Outputs the definition in 'domain.toml'.
     """
     illum.domain()
 
@@ -219,8 +219,7 @@ def inputs():
 def warp(output_name=None, infiles=[]):
     """Warps the satellite imagery.
 
-    Warps the satellite imagery based on the domain defined in
-    'domain.ini'.
+    Warps the satellite imagery based on the domain defined in 'domain.toml'.
 
     \b
     Requires the folowing data:

@@ -15,7 +15,7 @@ import matplotlib.colors as _colors
 import matplotlib.pyplot as _plt
 import numpy as _np
 import pyproj as _pyproj
-import yaml as _yaml
+import toml as _toml
 from h5py import File as _HDFile
 
 
@@ -315,10 +315,10 @@ def scatter(ds, fmt=".", n_layer=None, area=False, **options):
     return R, Y
 
 
-def from_domain(params, data=None):
+def from_domain(params=".", data=None):
     if isinstance(params, str):
-        with open(params) as f:
-            params = _yaml.safe_load(f)
+        with open(params + "/domain.toml") as f:
+            params = _toml.load(f)
     attrs = {k: v for k, v in list(params.items()) if k not in ["extents", "observers"]}
     attrs["obs_lat"] = [d["latitude"] for d in params["observers"]]
     attrs["obs_lon"] = [d["longitude"] for d in params["observers"]]

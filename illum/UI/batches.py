@@ -15,7 +15,7 @@ from glob import glob
 from itertools import product
 
 import numpy as np
-import yaml
+import toml
 from progressbar import progressbar
 
 import illum
@@ -53,8 +53,8 @@ def batches(
 
     os.chdir(input_path)
 
-    with open("inputs_params.in") as f:
-        params = yaml.safe_load(f)
+    with open("inputs_params.toml") as f:
+        params = toml.load(f)
 
     if batch_name is not None:
         params["batch_file_name"] = batch_name
@@ -121,7 +121,15 @@ def batches(
     os.makedirs(dir_name)
 
     count = 0
-    multival = [k for k in params if isinstance(params[k], list)]
+    params.update(
+        {
+            f"{t}_{key}": val
+            for t, k in params.items()
+            if isinstance(k, dict)
+            for key, val in k.items()
+        }
+    )
+    multival = [k for k in params if isinstance(params[k], list) and k != "aerosols"]
     multival = sorted(multival, key=len, reverse=True)  # Semi-arbitrary sort
     param_space = [params[k] for k in multival]
 
@@ -130,9 +138,9 @@ def batches(
         local_params = OrderedDict(zip(multival, param_vals))
         P = ChainMap(local_params, params)
         if (
-            "azimuth_angle" in multival
-            and P["elevation_angle"] == 90
-            and params["azimuth_angle"].index(P["azimuth_angle"]) != 0
+            "viewing_angles_azimuth" in multival
+            and P["viewing_angles_elevation"] == 90
+            and params["viewing_angles_azimuth"].index(P["viewing_angles_azimuth"]) != 0
         ):
             continue
 
@@ -176,10 +184,12 @@ def batches(
         if not os.path.isdir(fold_name):
             os.makedirs(fold_name)
             # Linking files
-            mie_file = "{}_{}.txt".format(params["aerosol_profile"], wavelength)
-            os.symlink(os.path.relpath(mie_file, fold_name), fold_name + "aerosol.txt")
-            layer_file = "{}_{}.txt".format(params["layer_type"], wavelength)
-            os.symlink(os.path.relpath(layer_file, fold_name), fold_name + "layer.txt")
+            for i, aerosols in enumerate(params["aerosols"], 1):
+                mie_file = "{}_{}.txt".format(aerosols["profile"], wavelength)
+                os.symlink(
+                    os.path.relpath(mie_file, fold_name),
+                    fold_name + f"aerosols_{i}.txt",
+                )
 
             os.symlink(
                 os.path.relpath("MolecularAbs.txt", fold_name),
@@ -232,47 +242,37 @@ def batches(
                 )
 
         # Create illumina.in
-        input_data = (
+        input_data = [
             (("", "Input file for ILLUMINA"),),
             ((exp_name, "Root file name"),),
+            (("", ""),),
             (
                 (ds.pixel_size(layer), "Cell size along X [m]"),
                 (ds.pixel_size(layer), "Cell size along Y [m]"),
             ),
-            (("aerosol.txt", "Aerosol optical cross section file"),),
-            (
-                ("layer.txt", "Layer optical cross section file"),
-                (P["layer_aod"], "Layer aerosol optical depth at 500nm"),
-                (P["layer_alpha"], "Layer angstom coefficient"),
-                (P["layer_height"], "Layer scale height [m]"),
-            ),
-            ((P["double_scattering"] * 1, "Double scattering activated"),),
-            ((P["single_scattering"] * 1, "Single scattering activated"),),
-            ((wavelength, "Wavelength [nm]"), (bandwidth, "Bandwidth [nm]")),
-            ((reflectance, "Reflectance"),),
-            ((P["air_pressure"], "Ground level pressure [kPa]"),),
-            (
-                (P["aerosol_optical_depth"], "Aerosol optical depth at 500nm"),
-                (P["angstrom_coefficient"], "Angstrom exponent"),
-                (P["aerosol_height"], "Aerosol scale height [m]"),
-            ),
-            ((len(lamps), "Number of source types"),),
-            ((P["stop_limit"], "Contribution threshold"),),
-            (("", ""),),
             (
                 (256, "Observer X position"),
                 (256, "Observer Y position"),
                 (P["observer_elevation"], "Observer elevation above ground [m]"),
             ),
-            ((P["observer_obstacles"] * 1, "Obstacles around observer"),),
+            ((len(lamps), "Number of source types"),),
+            ((wavelength, "Wavelength [nm]"), (bandwidth, "Bandwidth [nm]")),
+            (("", ""),),
             (
-                (P["elevation_angle"], "Elevation viewing angle"),
-                ((P["azimuth_angle"] + bearing) % 360, "Azimuthal viewing angle"),
+                (P["viewing_angles_elevation"], "Elevation viewing angle"),
+                (
+                    (P["viewing_angles_azimuth"] + bearing) % 360,
+                    "Azimuthal viewing angle",
+                ),
             ),
-            ((P["direct_fov"], "Direct field of view"),),
+            ((P["viewing_angles_direct_fov"], "Direct field of view"),),
             (("", ""),),
+            ((P["stop_limit"], "Contribution threshold"),),
+            ((P["scattering_single"] * 1, "Single scattering activated"),),
+            ((P["scattering_double"] * 1, "Double scattering activated"),),
             (("", ""),),
-            (("", ""),),
+            ((P["observer_obstacles"] * 1, "Obstacles around observer"),),
+            ((reflectance, "Reflectance"),),
             (
                 (
                     P["reflection_radius"],
@@ -281,7 +281,7 @@ def batches(
             ),
             (
                 (
-                    P["cloud_model"],
+                    P["clouds_model"],
                     "Cloud model: "
                     "0=clear, "
                     "1=Thin Cirrus/Cirrostratus, "
@@ -290,11 +290,22 @@ def batches(
                     "4=Cumulus/Cumulonimbus, "
                     "5=Stratocumulus",
                 ),
-                (P["cloud_base"], "Cloud base altitude [m]"),
-                (P["cloud_fraction"], "Cloud fraction"),
+                (P["clouds_base"], "Cloud base altitude [m]"),
+                (P["clouds_fraction"], "Cloud fraction"),
             ),
             (("", ""),),
-        )
+            ((P["air_pressure"], "Ground level pressure [kPa]"),),
+            ((len(P["aerosols"]), "Number of aerosols layers"),),
+        ]
+        for i, aerosols in enumerate(P["aerosols"], 1):
+            input_data.append(
+                (
+                    (f"aerosols_{i}.txt", "Optical cross section file"),
+                    (aerosols["optical_depth"], "Optical depth at 500nm"),
+                    (aerosols["angstrom_coefficient"], "Angstom coefficient"),
+                    (aerosols["scale_heigth"], "Scale height [m]"),
+                )
+            )
 
         with open(fold_name + unique_ID + ".in", "w") as f:
             lines = (input_line(*zip(*line_data)) for line_data in input_data)

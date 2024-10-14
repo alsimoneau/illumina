@@ -5,7 +5,7 @@ import re
 
 import numpy as np
 import pyproj
-import yaml
+import toml
 from matplotlib.path import Path
 
 from illum.pytools import load_bin
@@ -13,7 +13,7 @@ from illum.pytools import load_bin
 parser = argparse.ArgumentParser(
     description="Integrates Illumina binary file over a polygon."
 )
-parser.add_argument("domain", help="Domain characteristics file [domain.ini].")
+parser.add_argument("domain", help="Domain characteristics file [domain.toml].")
 parser.add_argument("bin", help="Binary file to integrate.")
 parser.add_argument(
     "kml",
@@ -43,7 +43,7 @@ for kml_file in p.kml:
 # Project zone coordinates
 
 with open(p.domain) as f:
-    domain = yaml.load(f)
+    domain = toml.load(f)
 
 domain["xmin"], domain["ymin"], domain["xmax"], domain["ymax"] = list(
     map(float, domain["bbox"].split())

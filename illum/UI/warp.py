@@ -5,7 +5,7 @@ from glob import glob
 from subprocess import call
 
 import numpy as np
-import yaml
+import toml
 from PIL import Image
 
 from illum import MultiScaleData as MSD
@@ -170,8 +170,8 @@ def warp(output_name=None, infiles=[]):
         )
         raise SystemExit
 
-    with open(glob("*.ini")[0]) as f:
-        params = yaml.safe_load(f)
+    with open("domain.toml") as f:
+        params = toml.load(f)
 
     if len(infiles):
         data = [

@@ -12,7 +12,7 @@ import shutil
 from glob import glob
 
 import numpy as np
-import yaml
+import toml
 from scipy.interpolate import griddata
 
 import illum
@@ -31,26 +31,26 @@ def inputs():
     dir_name = "Inputs/"
     shutil.rmtree(dir_name, True)
     os.makedirs(dir_name)
-    shutil.copy("inputs_params.in", dir_name + "inputs_params.in")
+    shutil.copy("inputs_params.toml", dir_name + "inputs_params.toml")
 
-    with open("inputs_params.in") as f:
-        params = yaml.safe_load(f)
+    with open("inputs_params.toml") as f:
+        params = toml.load(f)
 
-    if params["zones_inventory"] is not None and params["lamps_inventory"] is not None:
+    if params["inventory"]["zones"] and params["inventory"]["lamps"]:
 
         print("Validating the inventories.")
 
-        lamps = np.loadtxt(params["lamps_inventory"], usecols=[0, 1])
-        zones = np.loadtxt(params["zones_inventory"], usecols=[0, 1, 2])
-        zonData = pt.parse_inventory(params["zones_inventory"], 7)
+        lamps = np.loadtxt(params["inventory"]["lamps"], usecols=[0, 1])
+        zones = np.loadtxt(params["inventory"]["zones"], usecols=[0, 1, 2])
+        zonData = pt.parse_inventory(params["inventory"]["zones"], 7)
 
         hasLights = [sum(x[0] for x in z) != 0 for z in zonData]
 
-        circles = MSD.from_domain("domain.ini")
+        circles = MSD.from_domain()
         for dat, b in zip(zones, hasLights):
             circles.set_circle((dat[0], dat[1]), dat[2] * 1000, b)
 
-        zones_ind = MSD.from_domain("domain.ini")
+        zones_ind = MSD.from_domain()
         for i, dat in enumerate(zones, 1):
             zones_ind.set_circle((dat[0], dat[1]), dat[2] * 1000, i)
 
@@ -74,14 +74,14 @@ def inputs():
 
     out_name = params["exp_name"]
 
-    if params["road_orientation"]:
+    if params["viewing_angles"]["road_orientation"]:
         print("Computing road orientation (Can be slow for large domains)")
         from illum.street_orientation import street_orientation
 
-        with open("domain.ini") as f:
-            domain_params = yaml.safe_load(f)
+        with open("domain.toml") as f:
+            domain_params = toml.load(f)
         srs = domain_params["srs"]
-        lats, lons = MSD.from_domain("domain.ini").get_obs_pos()
+        lats, lons = MSD.from_domain().get_obs_pos()
         bearings = street_orientation(lats, lons, srs)
         np.savetxt(dir_name + "/brng.lst", bearings, fmt="%g")
 
@@ -114,9 +114,9 @@ def inputs():
         bins = np.loadtxt("spectral_bands.dat", delimiter=",")
         n_bins = bins.shape[0]
     else:
-        n_bins = params["nb_bins"]
-        lmin = params["lambda_min"]
-        lmax = params["lambda_max"]
+        n_bins = params["wavelengths"]["nb_bins"]
+        lmin = params["wavelengths"]["min"]
+        lmax = params["wavelengths"]["max"]
 
         limits = np.linspace(lmin, lmax, n_bins + 1)
         bins = np.stack([limits[:-1], limits[1:]], axis=1)
@@ -160,9 +160,9 @@ def inputs():
     with open(dir_name + "/wav.lst", "w") as zfile:
         zfile.write("".join(f"{w:g} {b:g}\n" for w, b in zip(x, bw)))
 
-    if params["zones_inventory"] is not None:
+    if params["inventory"]["zones"]:
         dir_name = ".Inputs_zones/"
-        inv_name = params["zones_inventory"]
+        inv_name = params["inventory"]["zones"]
         n_inv = 7
         shutil.rmtree(dir_name, True)
         os.makedirs(dir_name)
@@ -183,7 +183,7 @@ def inputs():
             bool_array,
         )
 
-    if params["lamps_inventory"] is not None:
+    if params["inventory"]["lamps"]:
         dir_name = ".Inputs_lamps/"
         shutil.rmtree(dir_name, True)
         os.makedirs(dir_name)
@@ -230,7 +230,7 @@ def inputs():
         else:
             print("WARNING: File %s not merged properly." % fname)
     if "origin.hdf5" not in zfiles:
-        origin = MSD.from_domain("domain.ini")
+        origin = MSD.from_domain()
         origin.save("Inputs/origin")
     shutil.rmtree(".Inputs_lamps", True)
     shutil.rmtree(".Inputs_zones", True)

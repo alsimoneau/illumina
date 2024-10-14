@@ -242,6 +242,7 @@ c                                                                         ! a li
       integer viirs(width,width)                                          ! viirs flag 1=yes 0=no
       character*72 vifile                                                 ! name of the viirs flag file
       real dh0,dhmax                                                      ! horizontal distance along the line of sight and maximum distance before beeing blocked by topography
+      integer nlay
       character*72 layfile                                                ! filename of the optical properties of the particle layer
       real layaod                                                         ! 500 nm aod of the particle layer
       real layalp                                                         ! spectral exponent of the aod for the particle layer
@@ -274,28 +275,42 @@ c reading of the fichier d'entree (illumina.in)
       open(unit=1,file='illumina.in',status='old')
         read(1,*)
         read(1,*) basenm
-        read(1,*) dx,dy
-        read(1,*) diffil
-        read(1,*) layfile, layaod, layalp, hlay
-        read(1,*) ssswit
-        read(1,*) fsswit
-        read(1,*) lambda,bandw
-        read(1,*) srefl
-        read(1,*) pressi
-        read(1,*) taua,alpha,haer
-        read(1,*) ntype
-        read(1,*) stoplim
         read(1,*)
+        read(1,*) dx,dy
         read(1,*) x_obs,y_obs,z_o
-        read(1,*) obsobs
+        read(1,*) ntype
+        read(1,*) lambda,bandw
+        read(1,*)
         read(1,*) angvis,azim
         read(1,*) dfov
         read(1,*)
+        read(1,*) stoplim
+        read(1,*) fsswit
+        read(1,*) ssswit
         read(1,*)
-        read(1,*)
+        read(1,*) obsobs
+        read(1,*) srefl
         read(1,*) reflsiz
         read(1,*) cloudt, cloudbase, cloudfrac
         read(1,*)
+        read(1,*) pressi
+        read(1,*) nlay
+        if (nlay.eq.0) then
+          diffil = ""
+          taua = 0
+          alpha = 0
+          haer = 1
+        else
+          read(1,*) diffil, taua, alpha, haer
+        endif
+        if (nlay.gt.1) then
+          read(1,*) layfile, layaod, layalp, hlay
+        else
+          layfile = ""
+          layaod = 0
+          layalp = 0
+          hlay = 1
+        endif
       close(1)
       if (angvis.gt.90.) then
          print*,'Error: elevation angle larger than 90 deg'
@@ -534,15 +549,21 @@ c reading viirs flag
           enddo                                                           ! end of the loop over all cells along y.
         enddo
 c reading of the scattering parameters for background aerosols
-        open(unit = 1, file = diffil,status= 'old')                       ! opening file containing the scattering parameters
-          read(1,*)  secdif                                               ! the scattering / extinction ratio
-          read(1,*)
-          do i=1,181
-            read(1,*) anglea(i), fdifa(i)                                 ! reading of the scattering functions
-            fdifan(i)=fdifa(i)/pix4                                       ! The integral of the imported phase fonction over sphere = 4 pi) We divide by 4 pi to get it per unit of solid angle
-          enddo
-        close(1)
+        if (nlay.gt.0) then
+          open(unit = 1, file = diffil,status= 'old')                       ! opening file containing the scattering parameters
+            read(1,*)  secdif                                               ! the scattering / extinction ratio
+            read(1,*)
+            do i=1,181
+              read(1,*) anglea(i), fdifa(i)                                 ! reading of the scattering functions
+              fdifan(i)=fdifa(i)/pix4                                       ! The integral of the imported phase fonction over sphere = 4 pi) We divide by 4 pi to get it per unit of solid angle
+            enddo
+          close(1)
+        else
+          secdif = 0
+          fdifan = 0
+        endif
 c reading scattering parameters of particle layer
+        if (nlay.gt.1) then
          open(unit = 1, file = layfile,status= 'old')                     ! opening file containing the scattering parameters
           read(1,*)  secdil                                               ! the scattering / extinction ratio of particle layer
           read(1,*)
@@ -551,6 +572,10 @@ c reading scattering parameters of particle layer
             fdifl(i)=fdifl(i)/pix4                                        ! The integral of the imported phase fonction over sphere = 4 pi) We divide by 4 pi to get it per unit of solid angle
           enddo
         close(1)
+      else
+        secdil = 0
+        fdifl = 0
+      endif
 c Some preliminary tasks
         do stype=1,ntype                                                  ! beginning of the loop 1 for the nzon types of sources.
           imin(stype)=nbx

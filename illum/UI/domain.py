@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 import pyproj
-import yaml
+import toml
 
 
 def eng_format(x, unit=""):
@@ -27,8 +27,8 @@ def eng_format(x, unit=""):
 
 
 def domain():
-    with open("domain_params.in") as f:
-        domain = yaml.safe_load(f)
+    with open("domain_params.toml") as f:
+        domain = toml.load(f)
 
     obs_lat = domain.pop("latitude")
     obs_lon = domain.pop("longitude")
@@ -114,8 +114,8 @@ def domain():
 
     domain.pop("buffer")
 
-    with open("domain.ini", "w") as f:
-        yaml.safe_dump(domain, f, default_flow_style=False)
+    with open("domain.toml", "w") as f:
+        toml.dump(domain, f)
 
     # print lon/lat bbox formatted for earthdata
     transform = pyproj.Transformer.from_crs(proj, wgs84, always_xy=True).transform

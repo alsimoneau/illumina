@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 from collections import OrderedDict
 
 import numpy as np
-import yaml
+import toml
 from scipy import interpolate
 
 import illum
 from illum.pytools import LOP_norm
 
 
+def ordinal(n):
+    return str(n) + {1: "st", 2: "nd", 3: "rd"}.get(n, "th")
+
+
 def OPAC(wavelengths):
     # READ DATA FROM INPUT FILES
     mie_path = illum.path + "/data/Aerosol_optics/"
 
-    with open("inputs_params.in") as f:
-        params = yaml.safe_load(f)
-    layer = (params["aerosol_profile"], params["layer_type"])
+    with open("inputs_params.toml") as f:
+        params = toml.load(f)
+    layer = [aero["profile"] for aero in params["aerosols"]]
 
     aerosol_types = OrderedDict(
         (
@@ -37,18 +40,15 @@ def OPAC(wavelengths):
     )
     N_types = len(aerosol_types)
 
-    for contlayer, combination_type in enumerate(layer):
+    for contlayer, combination_type in enumerate(layer, 1):
         N = np.zeros(N_types)
         if combination_type.lower() == "manual":
-            if contlayer == 0:
-                print("Particle concentration of the first layer (manual)")
-            elif contlayer == 1:
-                print("Particle concentration of the second layer (manual)")
+            print(f"Particle concentration of the {ordinal(contlayer)} layer (manual)")
             for i, descr in enumerate(aerosol_types.values()):
                 N[i] = float(input(f"Particle concentration of {descr}:"))
         else:
             with open(mie_path + "combination_types") as f:
-                combination_types = yaml.safe_load(f)
+                combination_types = toml.load(f)
             if combination_type not in combination_types:
                 print(
                     "ERROR. Incorret aerosol combination definition. "

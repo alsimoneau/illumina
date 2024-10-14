@@ -5,7 +5,7 @@ import shutil
 from glob import glob
 
 import numpy as np
-import yaml
+import toml
 
 import illum.AngularPowerDistribution as APD
 import illum.MultiScaleData as MSD
@@ -25,24 +25,24 @@ def alternate(name, zones, lights):
         shutil.rmtree(dirname)
     os.makedirs(dirname)
 
-    with open("inputs_params.in") as f:
-        params = yaml.safe_load(f)
+    with open("inputs_params.toml") as f:
+        params = toml.load(f)
 
     if zones is not None and lights is not None:
 
         print("Validating the inventories.")
 
         lamps = np.loadtxt(lights, usecols=[0, 1])
-        zones = np.loadtxt(params["zones_inventory"], usecols=[0, 1, 2])
+        zones = np.loadtxt(params["inventory"]["zones"], usecols=[0, 1, 2])
         zonData = pt.parse_inventory(zones, 0)
 
         hasLights = [sum(x[0] for x in z) != 0 for z in zonData]
 
-        circles = MSD.from_domain("domain.ini")
+        circles = MSD.from_domain()
         for dat, b in zip(zones, hasLights):
             circles.set_circle((dat[0], dat[1]), dat[2] * 1000, b)
 
-        zones_ind = MSD.from_domain("domain.ini")
+        zones_ind = MSD.from_domain()
         for i, dat in enumerate(zones, 1):
             zones_ind.set_circle((dat[0], dat[1]), dat[2] * 1000, i)
 
@@ -65,7 +65,7 @@ def alternate(name, zones, lights):
                 )
             raise SystemExit()
 
-    shutil.copy("Inputs/inputs_params.in", dirname)
+    shutil.copy("Inputs/inputs_params.toml", dirname)
 
     print("\nLoading data...")
 
@@ -95,9 +95,9 @@ def alternate(name, zones, lights):
         bins = np.loadtxt("spectral_bands.dat", delimiter=",")
         n_bins = bins.shape[0]
     else:
-        n_bins = params["nb_bins"]
-        lmin = params["lambda_min"]
-        lmax = params["lambda_max"]
+        n_bins = params["wavelengths"]["nb_bins"]
+        lmin = params["wavelengths"]["min"]
+        lmax = params["wavelengths"]["max"]
 
         limits = np.linspace(lmin, lmax, n_bins + 1)
         bins = np.stack([limits[:-1], limits[1:]], axis=1)
@@ -136,9 +136,9 @@ def alternate(name, zones, lights):
     with open(dirname + "/wav.lst", "w") as zfile:
         zfile.write("".join(f"{w:g} {b:g}\n" for w, b in zip(x, bw)))
 
-    if params["zones_inventory"] is not None:
+    if params["inventory"]["zones"]:
         dir_name = ".Inputs_zones/"
-        inv_name = params["zones_inventory"]
+        inv_name = params["inventory"]["zones"]
         n_inv = 7
         shutil.rmtree(dir_name, True)
         os.makedirs(dir_name)
@@ -159,21 +159,21 @@ def alternate(name, zones, lights):
             bool_array,
         )
 
-        oldlumlp = MSD.from_domain("domain.ini")
+        oldlumlp = MSD.from_domain()
         for fname in glob("Inputs/*lumlp*"):
             ds = MSD.Open(fname)
             wl = int(fname.split("_")[1])
             for i, dat in enumerate(ds):
                 oldlumlp[i] += dat * nspct[x.index(wl)]
 
-        newlumlp = MSD.from_domain("domain.ini")
+        newlumlp = MSD.from_domain()
         for fname in glob(os.path.join(dir_name, "*lumlp*")):
             ds = MSD.Open(fname)
             wl = int(fname.split("_")[2])
             for i, dat in enumerate(ds):
                 newlumlp[i] += dat * nspct[x.index(wl)]
 
-        ratio = MSD.from_domain("domain.ini")
+        ratio = MSD.from_domain()
         for i in range(len(ratio)):
             ratio[i] = pt.safe_divide(oldlumlp[i], newlumlp[i])
 
@@ -183,7 +183,7 @@ def alternate(name, zones, lights):
                 ds[i] *= dat
             ds.save(fname)
 
-    if params["lamps_inventory"] is not None:
+    if params["inventory"]["lamps"]:
         dir_name = ".Inputs_lamps/"
         shutil.rmtree(dir_name, True)
         os.makedirs(dir_name)
@@ -229,7 +229,7 @@ def alternate(name, zones, lights):
         else:
             print("WARNING: File %s not merged properly." % fname)
     if "origin.hdf5" not in zfiles:
-        origin = MSD.from_domain("domain.ini")
+        origin = MSD.from_domain()
         origin.save(dirname + "/origin")
     shutil.rmtree(".Inputs_lamps", True)
     shutil.rmtree(".Inputs_zones", True)
