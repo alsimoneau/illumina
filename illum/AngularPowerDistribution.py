@@ -58,7 +58,6 @@ def load(filename, /, facing=None, **kwargs):
     match os.path.splitext(filename)[1].lower():
         case ".ies":
             apd, f = from_iesna(filename, **kwargs), 0
-            f = 0
         case ".cib" | ".tml" | ".c1s" | ".cc":
             apd, f = from_cibse(filename, **kwargs), 90
         case ".ldt" | ".exl":

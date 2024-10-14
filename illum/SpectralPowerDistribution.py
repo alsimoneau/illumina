@@ -52,11 +52,30 @@ class SpectralPowerDistribution:
     def plot(self, *args, **kwargs):
         return plot(self, *args, **kwargs)
 
-    def to_txt(self, filename, *args, **kwargs):
-        return to_txt(filename, self, *args, **kwargs)
+    def save(self, filename, *args, **kwargs):
+        return save(filename, self, *args, **kwargs)
 
-    def to_spdx(self, filename, *args, **kwargs):
-        return to_spdx(filename, self, *args, **kwargs)
+
+def load(filename, /, **kwargs):
+    match os.path.splitext(filename)[1].lower():
+        case ".spdx":
+            spd = from_spdx(filename, **kwargs)
+        case ".aster":
+            spd = from_aster(filename, **kwargs)
+        case _:
+            spd = from_ascii(filename, **kwargs)
+
+    return spd
+
+
+def save(filename, apd, /, **kwargs):
+    match os.path.splitext(filename)[1].lower():
+        case ".spdx":
+            to_spdx(filename, **kwargs)
+        case ".aster":
+            to_aster(filename, **kwargs)
+        case _:
+            to_ascii(filename, **kwargs)
 
 
 def from_spdx(filename):
@@ -103,17 +122,6 @@ def to_spdx(filename, spd):
         xmltodict.unparse(content, f, pretty=True)
 
 
-def from_txt(filename, skiprows=1, **kwargs):
-    data = np.loadtxt(filename, skiprows=skiprows, **kwargs)
-
-    return SpectralPowerDistribution(
-        wavelengths=data[:, 0],
-        data=data[:, 1],
-        description=os.path.basename(filename),
-        quantity="other",
-    )
-
-
 def from_aster(filename):
     data = np.loadtxt(filename)
 
@@ -125,7 +133,22 @@ def from_aster(filename):
     )
 
 
-def to_txt(filename, spd, /, *, sep="  ", header=True):
+def to_aster(filename):
+    raise NotImplementedError
+
+
+def from_ascii(filename, skiprows=1, **kwargs):
+    data = np.loadtxt(filename, skiprows=skiprows, **kwargs)
+
+    return SpectralPowerDistribution(
+        wavelengths=data[:, 0],
+        data=data[:, 1],
+        description=os.path.basename(filename),
+        quantity="other",
+    )
+
+
+def to_ascii(filename, spd, /, *, sep="  ", header=True):
     if header is True:
         header = ["wavelength", "relativeIntensity"]
 

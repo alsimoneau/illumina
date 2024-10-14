@@ -75,36 +75,19 @@ def alternate(name, zones, lights):
 
     angles = np.arange(181)
     lop = {
-        parse_key(fname): APD.from_txt(fname).normalize()
-        for fname in glob("Lights/*.lop") + glob("Lights/*.LOP")
+        parse_key(fname): APD.load(fname).normalize().interpolate(step=1)
+        for fname in glob("data_files/lop/*")
     }
-    lop.update(
-        {
-            parse_key(fname): APD.from_ies(fname).normalize()
-            for fname in glob("Lights/*.ies") + glob("Lights/*.IES")
-        }
-    )
-    lop = {key: apd.normalize().interpolate(step=1) for key, apd in lop.items()}
 
     # Spectral distribution (normalised with scotopric vision to 1 lm / W)
-    norm_spectrum = SPD.from_txt("Lights/photopic.dat").normalize()
-    norm_spectrum.data *= 683.002
-    wav = norm_spectrum.wavelengths
-    viirs = SPD.from_txt("Lights/viirs.dat").interpolate(norm_spectrum).normalize()
+    norm = SPD.load("data_files/photopic.dat").normalize()
+    norm.data *= 683.002
+    wav = norm.wavelengths
+    viirs = SPD.load("data_files/viirs.dat").interpolate(norm).normalize()
 
     spct = {
-        parse_key(fname): SPD.from_txt(fname)
-        for fname in glob("Lights/*.spct") + glob("Lights/*.SPCT")
-    }
-    spct.update(
-        {
-            parse_key(fname): SPD.from_spdx(fname)
-            for fname in glob("Lights/*.spdx") + glob("Lights/*.SPDX")
-        }
-    )
-    spct = {
-        key: spd.interpolate(norm_spectrum).normalize(norm_spectrum)
-        for key, spd in spct.items()
+        parse_key(fname): SPD.load(fname).interpolate(norm).normalize(norm)
+        for fname in glob("data_files/spct/*")
     }
 
     # Make bins
@@ -126,8 +109,8 @@ def alternate(name, zones, lights):
     out_name = params["exp_name"]
 
     aster = {
-        parse_key(fname): SPD.from_aster(fname).interpolate(wav)
-        for fname in glob("Lights/*.aster") + glob("Lights/*.ASTER")
+        parse_key(fname): SPD.load(fname).interpolate(wav)
+        for fname in glob("data_files/refl/*")
     }
 
     sum_coeffs = sum(params["reflectance"][type] for type in params["reflectance"])
@@ -140,7 +123,7 @@ def alternate(name, zones, lights):
     )
 
     reflect = [np.mean(refl[mask]) for mask in bool_array]
-    nspct = [np.mean(norm_spectrum.data[mask] for mask in bool_array)]
+    nspct = [np.mean(norm.data[mask] for mask in bool_array)]
 
     with open(dirname + "/refl.lst", "w") as zfile:
         zfile.write("\n".join(["%.06g" % n for n in reflect]) + "\n")
