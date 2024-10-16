@@ -106,8 +106,6 @@ def alternate(name, zones, lights):
     x = bins.mean(1).tolist()
     bw = bins[:, 1] - bins[:, 0]
 
-    out_name = params["exp_name"]
-
     aster = {
         parse_key(fname): SPD.load(fname).interpolate(wav)
         for fname in glob("data_files/refl/*")
@@ -148,7 +146,6 @@ def alternate(name, zones, lights):
             n_inv,
             n_bins,
             params,
-            out_name,
             x,
             lop,
             angles,
@@ -191,7 +188,6 @@ def alternate(name, zones, lights):
             dir_name,
             n_bins,
             params,
-            out_name,
             x,
             lop,
             angles,

@@ -44,7 +44,7 @@ def batches(
     compact=False,
     batch_size=300,
     scheduler="sequential",
-    batch_name=None,
+    batch_name="batch",
 ):
     execute = dict(
         parallel="./execute &", sequential="./execute", slurm="sbatch ./execute"
@@ -56,13 +56,8 @@ def batches(
     with open("inputs_params.toml") as f:
         params = toml.load(f)
 
-    if batch_name is not None:
-        params["batch_file_name"] = batch_name
-
-    for fname in glob("%s*" % params["batch_file_name"]):
+    for fname in glob(batch_name + "*"):
         os.remove(fname)
-
-    exp_name = params["exp_name"]
 
     ds = MSD.Open(glob("*.hdf5")[0])
 
@@ -201,7 +196,7 @@ def batches(
                     os.path.relpath(
                         f"fctem_wl_{wavelength}_lamp_{lamp}.dat", fold_name
                     ),
-                    fold_name + exp_name + "_fctem_%03d.dat" % i,
+                    fold_name + "fctem_%03d.dat" % i,
                 )
 
             illumpath = os.path.dirname(illum.__path__[0])
@@ -214,7 +209,7 @@ def batches(
 
             os.symlink(
                 os.path.relpath(os.path.join(obs_fold, "srtm.bin"), fold_name),
-                fold_name + exp_name + "_topogra.bin",
+                fold_name + "topogra.bin",
             )
 
             os.symlink(
@@ -224,27 +219,22 @@ def batches(
 
             for name in ["obstd", "obsth", "obstf", "altlp"]:
                 os.symlink(
-                    os.path.relpath(
-                        os.path.join(obs_fold, f"{exp_name}_{name}.bin"), fold_name
-                    ),
-                    fold_name + f"{exp_name}_{name}.bin",
+                    os.path.relpath(os.path.join(obs_fold, f"{name}.bin"), fold_name),
+                    fold_name + f"{name}.bin",
                 )
 
             for i, lamp in enumerate(lamps, 1):
                 os.symlink(
                     os.path.relpath(
-                        os.path.join(
-                            obs_fold, f"{exp_name}_{wavelength}_lumlp_{lamp}.bin"
-                        ),
+                        os.path.join(obs_fold, f"{wavelength}_lumlp_{lamp}.bin"),
                         fold_name,
                     ),
-                    fold_name + "%s_lumlp_%03d.bin" % (exp_name, i),
+                    fold_name + f"lumlp_{i:03d}.bin",
                 )
 
         # Create illumina.in
         input_data = [
             (("", "Input file for ILLUMINA"),),
-            ((exp_name, "Root file name"),),
             (("", ""),),
             (
                 (ds.pixel_size(layer), "Cell size along X [m]"),
@@ -316,16 +306,13 @@ def batches(
             with open(fold_name + "execute", "w") as f:
                 f.write("#!/bin/sh\n")
                 f.write("#SBATCH --job-name=Illumina\n")
-                f.write(
-                    "#SBATCH --time=%d:00:00\n" % params["estimated_computing_time"]
-                )
                 f.write("#SBATCH --mem=2G\n")
                 f.write("cd %s\n" % os.path.abspath(fold_name))
                 f.write("umask 0011\n")
             os.chmod(fold_name + "execute", 0o777)
 
             # Append execution to batch list
-            with open(f"{params['batch_file_name']}_{(count//batch_size)+1}", "a") as f:
+            with open(f"{"batch_name"}_{(count//batch_size)+1}", "a") as f:
                 f.write("cd %s\n" % os.path.abspath(fold_name))
                 f.write(execute_str)
                 f.write("sleep 0.05\n")
@@ -336,8 +323,8 @@ def batches(
         with open(fold_name + "execute", "a") as f:
             f.write("cp %s.in illumina.in\n" % unique_ID)
             f.write("./illumina\n")
-            f.write(f"mv {exp_name}.out {exp_name}_{unique_ID}.out\n")
-            f.write(f"mv {exp_name}_pcl.bin {exp_name}_pcl_{unique_ID}.bin\n")
+            f.write(f"mv illumina.out {unique_ID}.out\n")
+            f.write(f"mv illumina_pcl.bin pcl_{unique_ID}.bin\n")
 
     print("Final count:", count)
 

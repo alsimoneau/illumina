@@ -88,7 +88,7 @@ def alternate(name, zones, lights):
 # batches
 @main.command
 @click.argument("input_path", type=click.Path(exists=True), default=".")
-@click.argument("batch_name", required=False)
+@click.argument("batch_name", default="batch")
 @click.option(
     "-c",
     "--compact",
@@ -111,7 +111,7 @@ def alternate(name, zones, lights):
     default="sequential",
     help="Job scheduler",
 )
-def batches(input_path, compact, batch_size, scheduler, batch_name=None):
+def batches(input_path, compact, batch_size, scheduler, batch_name):
     """Makes the execution batches.
 
     INPUT_PATH is the path to the folder containing the inputs.

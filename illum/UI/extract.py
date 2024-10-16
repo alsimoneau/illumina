@@ -61,22 +61,13 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
         if not os.path.isfile(os.path.join(dirpath, "illumina.in")):
             continue
 
-        with open(os.path.join(dirpath, "illumina.in")) as f:
-            basename = f.readlines()[1].split()[0]
-
-        out_names = [
-            fname
-            for fname in filenames
-            if fname.endswith(".out") and fname.startswith(basename + "_")
-        ]
-        if not out_names:
-            out_names = [basename + ".out"]
+        out_names = [fname for fname in filenames if fname.endswith(".out")]
 
         for oname in out_names:
-            if oname == basename + ".out":
+            if oname == "illumina.out":
                 params_name = dirpath.split("exec" + os.sep)[1].replace(os.sep, "-")
             else:
-                params_name = oname[len(basename) + 1 : -4]
+                params_name = oname[:-4]
 
             key = regex_layer.sub("", params_name)
 
@@ -145,10 +136,10 @@ def extract(exec_dir, contrib=False, params=(), full=False, profile=False):
 
                     contributions[key] = copy(MSDOpen(blank))
 
-                if oname == basename + ".out":
+                if oname == "illumina.out":
                     pcl_name = [s for s in filenames if "pcl.bin" in s][0]
                 else:
-                    pcl_name = "_".join([basename, "pcl", params_name + ".bin"])
+                    pcl_name = "_".join(["pcl", params_name + ".bin"])
                 pcl_path = os.path.join(dirpath, pcl_name)
                 pcl_data = load_bin(pcl_path)
                 pcl_data *= val / pcl_data.sum()

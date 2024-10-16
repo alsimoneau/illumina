@@ -16,7 +16,6 @@ def from_lamps(
     dir_name,
     n_bins,
     params,
-    out_name,
     x,
     lop,
     angles,
@@ -98,11 +97,11 @@ def from_lamps(
     print("Saving data.")
 
     for geo, ds in geometry.items():
-        ds.save(dir_name + out_name + "_" + geo)
+        ds.save(dir_name + geo)
 
     for key, ds in lumlp.items():
         s, wl = key
-        ds.save(dir_name + f"{out_name}_{wl:g}_lumlp_{s}")
+        ds.save(dir_name + f"{wl:g}_lumlp_{s}")
 
 
 def from_zones(
@@ -111,7 +110,6 @@ def from_zones(
     n_inv,
     n_bins,
     params,
-    out_name,
     x,
     lop,
     angles,
@@ -147,7 +145,7 @@ def from_zones(
     # zone number
     for i, dat in enumerate(zonfile, 1):
         circles.set_circle((dat[0], dat[1]), dat[2] * 1000, i)
-    circles.save(dir_name + out_name + "_zone")
+    circles.save(dir_name + "zone")
 
     weights = [sum(z[0] for z in zone) for zone in zonData]
     for w, dat in zip(weights, zonfile):
@@ -157,7 +155,7 @@ def from_zones(
     for n, name in zip(range(3, 7), ["obsth", "obstd", "obstf", "altlp"]):
         for i, dat in enumerate(zonfile, 1):
             circles.set_circle((dat[0], dat[1]), dat[2] * 1000, dat[n])
-        circles.save(dir_name + out_name + "_" + name)
+        circles.save(dir_name + name)
 
     print("Inverting lamp intensity.")
 
@@ -170,7 +168,7 @@ def from_zones(
     for i, wm in enumerate(water_mask):
         viirs_dat[i][wm == 0] = 0.0
 
-    circles = MSD.Open(dir_name + out_name + "_zone.hdf5")
+    circles = MSD.Open(dir_name + "zone.hdf5")
     zon_mask = np.empty(len(circles), dtype=object)
     for i in range(len(zon_mask)):
         zon_mask[i] = np.arange(1, len(zonfile) + 1)[:, None, None] == circles[i]
@@ -212,4 +210,4 @@ def from_zones(
             new = MSD.from_domain()
             for layer in range(len(new)):
                 new[layer] = phie[layer] * r[layer][i]
-            new.save(dir_name + f"{out_name}_{x[n]:g}_lumlp_{s}")
+            new.save(dir_name + f"{x[n]:g}_lumlp_{s}")

@@ -82,7 +82,6 @@ c
       character*72 outfile                                                ! Results file
       character*72 pclf,pclgp                                             ! Files containing contribution and sensitivity maps
       character*72 pclimg,pcwimg
-      character*72 basenm                                                 ! Base name of files
       integer lenbase                                                     ! Length of the Base name of the experiment
       real lambda,pressi,drefle(width,width)                              ! Wavelength (nanometer), atmospheric pressure (kPa), mean free path to the ground (meter).
       real reflsiz                                                        ! Size of the reflecting surface
@@ -274,7 +273,6 @@ c reading of the fichier d'entree (illumina.in)
       print*,'Reading illumina.in input file'
       open(unit=1,file='illumina.in',status='old')
         read(1,*)
-        read(1,*) basenm
         read(1,*)
         read(1,*) dx,dy
         read(1,*) x_obs,y_obs,z_o
@@ -365,14 +363,13 @@ c computing the actual AOD at the wavelength lambda
      +',alpha
       taua=taua*(lambda/500.)**(-1.*alpha)
       layaod=layaod*(lambda/500.)**(-1.*layalp)
-c  determine the Length of basenm
-      lenbase=index(basenm,' ')-1
-      mnaf=basenm(1:lenbase)//'_topogra.bin'                              ! determine the names of input and output files
-      outfile=basenm(1:lenbase)//'.out'
-      pclf=basenm(1:lenbase)//'_pcl.txt'
-      pclimg=basenm(1:lenbase)//'_pcl.bin'
-      pcwimg=basenm(1:lenbase)//'_pcw.bin'
-      pclgp=basenm(1:lenbase)//'_pcl.gplot'
+c  fixed filenames
+      mnaf='topogra.bin'                              ! determine the names of input and output files
+      outfile='illumina.out'
+      pclf='illumina_pcl.txt'
+      pclimg='illumina_pcl.bin'
+      pcwimg='illumina_pcw.bin'
+      pclgp='illumina_pcl.gplot'
 c opening output file
       open(unit=2,file=outfile,status='unknown')
         write(2,*) "ILLUMINA version __version__"
@@ -506,10 +503,10 @@ c computation of the tilt of the pixels along x and along y
         enddo                                                             ! end of the loop over the column (longitude) of the domain
 c reading of the values of P(theta), height, luminosities and positions
 c of the sources, obstacle height and distance
-        ohfile=basenm(1:lenbase)//'_obsth.bin'
-        odfile=basenm(1:lenbase)//'_obstd.bin'
-        alfile=basenm(1:lenbase)//'_altlp.bin'                            ! setting the file name of height of the sources lumineuse.
-        offile=basenm(1:lenbase)//'_obstf.bin'
+        ohfile='obsth.bin'
+        odfile='obstd.bin'
+        alfile='altlp.bin'                                                ! setting the file name of height of the sources lumineuse.
+        offile='obstf.bin'
         vifile='origin.bin'
         dtheta=.017453293                                                 ! one degree
 c reading lamp heights
@@ -584,8 +581,8 @@ c Some preliminary tasks
           jmax(stype)=1
           pvalto=0.
           write(lampno, '(I3.3)' ) stype                                  ! support of nzon different sources (3 digits)
-          pafile=basenm(1:lenbase)//'_fctem_'//lampno//'.dat'             ! setting the file name of angular photometry.
-          lufile=basenm(1:lenbase)//'_lumlp_'//lampno//'.bin'             ! setting the file name of the luminosite of the cases.
+          pafile='fctem_'//lampno//'.dat'             ! setting the file name of angular photometry.
+          lufile='lumlp_'//lampno//'.bin'             ! setting the file name of the luminosite of the cases.
 c reading photometry files
           open(UNIT=1, FILE=pafile,status='OLD')                          ! opening file pa#.dat, angular photometry.
             do i=1,181                                                    ! beginning of the loop for the 181 data points
@@ -1959,7 +1956,7 @@ c          open(unit=9,file=pclgp,status='unknown')
 c            write(9,*) 'sand dgrid3d',nbx,',',nby
 c            write(9,*) 'sand hidden3d'
 c            write(9,*) 'sand pm3d'
-c            write(9,*) 'splot "'//basenm(1:lenbase)//'_pcl.txt"
+c            write(9,*) 'splot "'//'illumina_pcl.txt"
 c     +      with dots'
 c          close(unit=9)
         endif                                                             ! end of condition for creating contrib and sensit maps

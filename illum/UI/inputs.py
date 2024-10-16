@@ -72,8 +72,6 @@ def inputs():
                     f"falls within non-null zone #{zon_ind}"
                 )
 
-    out_name = params["exp_name"]
-
     if params["viewing_angles"]["road_orientation"]:
         print("Computing road orientation (Can be slow for large domains)")
         from illum.street_orientation import street_orientation
@@ -172,7 +170,6 @@ def inputs():
             n_inv,
             n_bins,
             params,
-            out_name,
             x,
             lop,
             angles,
@@ -191,7 +188,6 @@ def inputs():
             dir_name,
             n_bins,
             params,
-            out_name,
             x,
             lop,
             angles,
@@ -237,14 +233,14 @@ def inputs():
 
     # Interpolation of the obstacles properties
     defined = MSD.Open(dir_name + "origin.hdf5")
-    lights_file = dir_name + out_name + "_lights.hdf5"
+    lights_file = dir_name + "lights.hdf5"
     if os.path.isfile(lights_file):
         lights = MSD.Open(lights_file)
         for i, layer in enumerate(lights):
             defined[i] += layer
 
     for geo in ["obsth", "obstd", "obstf", "altlp"]:
-        geometry = MSD.Open(dir_name + out_name + "_" + geo + ".hdf5")
+        geometry = MSD.Open(dir_name + geo + ".hdf5")
         for i, mask in enumerate(defined):
             geometry[i] = (
                 griddata(
@@ -256,6 +252,6 @@ def inputs():
                 if mask.any()
                 else np.zeros_like(geometry[i])
             )
-        geometry.save(dir_name + out_name + "_" + geo)
+        geometry.save(dir_name + geo)
 
     print("Done.")
